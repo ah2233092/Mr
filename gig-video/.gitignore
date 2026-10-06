@@ -6,3 +6,4 @@ analysis/*
 !analysis/asr.py
 !analysis/words.json
 pipeline/_graphics_built.html
+__pycache__/
