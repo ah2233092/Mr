@@ -45,25 +45,23 @@ function shelfUnit(x, w, shelves) {
   });
 }
 const rows = [[40, 230], [292, 230], [544, 230], [796, 230], [1048, 230]];
-shelfUnit(720, 560, rows);
-shelfUnit(1306, 640, rows.map(([t, h]) => [t - 30, h]));
-[[700], [1280], [1946]].forEach(([x]) => { const d = document.createElement('div'); d.className = 'upright'; d.style.left = x + 'px'; R.appendChild(d); });
-// left: darker wall with a reading lamp (space for titles)
-const lamp = document.createElement('div'); lamp.className = 'glow';
-lamp.style.cssText = 'left:-260px;top:520px;width:820px;height:820px;background:radial-gradient(circle,rgba(255,170,90,.38),rgba(255,140,60,.10) 42%,transparent 70%)'; R.appendChild(lamp);
+// full-width library: three shelving bays, symmetric around the talent
+shelfUnit(-30, 660, rows.map(([t, h]) => [t - 20, h]));
+shelfUnit(656, 610, rows);
+shelfUnit(1292, 660, rows.map(([t, h]) => [t - 20, h]));
+[[630], [1266], [1952]].forEach(([x]) => { const d = document.createElement('div'); d.className = 'upright'; d.style.left = x + 'px'; R.appendChild(d); });
+// warm practicals: two table lamps far left and far right, a soft glow behind the head
 R.insertAdjacentHTML('beforeend', `
-  <div style="position:absolute;left:96px;top:820px;width:120px;height:86px;clip-path:polygon(18% 0,82% 0,100% 100%,0 100%);background:linear-gradient(180deg,#f9e2b8,#e6ae66);box-shadow:0 0 80px 30px rgba(255,180,100,.5)"></div>
-  <div style="position:absolute;left:151px;top:906px;width:10px;height:120px;background:#3a2a1c"></div>
-  <div style="position:absolute;left:110px;top:1020px;width:92px;height:16px;border-radius:8px;background:#2a1d12"></div>
-  <div style="position:absolute;left:0;top:1030px;width:700px;height:60px;background:linear-gradient(180deg,#2a1c12,#140d08)"></div>
-  <div style="position:absolute;left:0;top:0;width:700px;height:1080px;background:repeating-linear-gradient(90deg,transparent 0 172px,rgba(0,0,0,.25) 172px 176px,rgba(255,255,255,.035) 176px 178px)"></div>
-  <div style="position:absolute;left:-200px;top:-300px;width:1100px;height:900px;border-radius:50%;background:radial-gradient(circle,rgba(110,160,180,.16),transparent 65%)"></div>`);
-// warm bokeh points (become discs after the lens blur)
-for (let k = 0; k < 26; k++) {
+  <div class="glow" style="left:-300px;top:500px;width:900px;height:900px;background:radial-gradient(circle,rgba(255,170,90,.30),transparent 65%)"></div>
+  <div class="glow" style="left:1320px;top:500px;width:900px;height:900px;background:radial-gradient(circle,rgba(255,170,90,.30),transparent 65%)"></div>
+  <div class="glow" style="left:560px;top:-120px;width:800px;height:700px;background:radial-gradient(circle,rgba(255,190,120,.16),transparent 70%)"></div>
+  <div style="position:absolute;left:70px;top:860px;width:120px;height:86px;clip-path:polygon(18% 0,82% 0,100% 100%,0 100%);background:linear-gradient(180deg,#f9e2b8,#e6ae66);box-shadow:0 0 80px 30px rgba(255,180,100,.5)"></div>
+  <div style="position:absolute;left:1730px;top:860px;width:120px;height:86px;clip-path:polygon(18% 0,82% 0,100% 100%,0 100%);background:linear-gradient(180deg,#f9e2b8,#e6ae66);box-shadow:0 0 80px 30px rgba(255,180,100,.5)"></div>`);
+for (let k = 0; k < 40; k++) {
   const b = document.createElement('div'); b.className = 'bulb'; const s = 12 + rnd() * 14;
-  b.style.cssText = `left:${720 + rnd() * 1220}px;top:${40 + Math.floor(rnd() * 5) * 252 + 8 + rnd() * 10}px;width:${s}px;height:${s}px;opacity:${.5 + rnd() * .5}`;
+  b.style.cssText = `left:${rnd() * 1920}px;top:${30 + Math.floor(rnd() * 5) * 252 + 8 + rnd() * 10}px;width:${s}px;height:${s}px;opacity:${.45 + rnd() * .5}`;
   R.appendChild(b);
 }
-const hz = document.createElement('div'); hz.className = 'haze'; R.appendChild(hz);
+
 window.ready = document.fonts.ready;
 </script></body></html>

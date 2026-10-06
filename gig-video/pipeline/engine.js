@@ -25,6 +25,11 @@
     cutOut:  {k: [{opacity: 1}, {opacity: 0}], d: .001, e: 'linear'},
     vanish:  {k: [{opacity: 1, filter: 'none'}, {opacity: .06, filter: 'blur(6px)'}], d: .5, e: 'ease-in-out'},
     draw:    {k: [{strokeDashoffset: 1}, {strokeDashoffset: 0}], d: .9, e: INOUT},
+    charIn:  {k: [{opacity: 0, transform: 'translateY(.35em) scale(1.08)', filter: 'blur(14px)'}, {opacity: 1, transform: 'none', filter: 'none'}], d: .75},
+    flip:    {k: [{opacity: 0, transform: 'perspective(900px) rotateX(-85deg) translateY(.2em)', filter: 'blur(6px)'}, {opacity: 1, transform: 'none', filter: 'none'}], d: .9},
+    charOut: {k: [{opacity: 1, transform: 'none', filter: 'none'}, {opacity: 0, transform: 'translateY(-.25em)', filter: 'blur(12px)'}], d: .45, e: 'cubic-bezier(.5,0,.75,0)'},
+    shine:   {k: [{backgroundPosition: '170% 0, 0 0'}, {backgroundPosition: '-70% 0, 0 0'}], d: 1.4, e: INOUT},
+    drift:   {k: [{transform: 'scale(1)'}, {transform: 'scale(1.035)'}], d: 6, e: 'linear'},
   };
   E.P = P;
   E.init = function (words) {
@@ -42,19 +47,24 @@
   };
   E.CUES = [];
   E.bind = function (root) {
-    root.querySelectorAll('[data-in],[data-out]').forEach(el => {
+    root.querySelectorAll('[data-in],[data-out],[data-shine]').forEach(el => {
       if (el.dataset.in) el.dataset.in.split(';').forEach(spec => {
         const [name, tok, dur, stag] = spec.trim().split(/\s+/);
         const t0 = E.T(tok);
-        if (el.hasAttribute('data-split')) {
+        if (el.hasAttribute('data-chars')) {
+          E.chars(el).forEach((c, i) => E.anim(c, name === 'flip' ? 'flip' : 'charIn', t0 + i * (+(stag || .035)), dur && +dur));
+        } else if (el.hasAttribute('data-split')) {
           E.split(el).forEach((w, i) => E.anim(w, 'rise', t0 + i * (+(stag || .08)), dur && +dur));
         } else E.anim(el, name, t0, dur && +dur);
         if (el.dataset.sfx) E.CUES.push({t: t0, type: el.dataset.sfx});
       });
       if (el.dataset.out) {
-        const [name, tok, dur] = el.dataset.out.split(/\s+/);
-        E.anim(el, name, E.T(tok), dur && +dur, true);
+        const [name, tok, dur, stag] = el.dataset.out.split(/\s+/);
+        if (name === 'charOut' && el._chars) el._chars.forEach((c, i) => E.anim(c, 'charOut', E.T(tok) + i * (+(stag || .02)), dur && +dur, true));
+        else E.anim(el, name, E.T(tok), dur && +dur, true);
       }
+      if (el.dataset.shine) el.dataset.shine.split(';').forEach(tok => (el._chars || [el]).forEach((c, i) =>
+        E.anim(c, 'shine', E.T(tok.trim()) + i * .02, 1.4, true)));
     });
   };
   E.split = function (el) {               // masked word-by-word reveal
@@ -70,6 +80,27 @@
     const wis = [...el.querySelectorAll('.wi')];
     if (el.classList.contains('goldg')) { el.classList.remove('goldg'); wis.forEach(w => w.classList.add('goldg')); }
     return wis;
+  };
+  E.chars = function (el) {                // per-character spans (keeps word wrapping)
+    const out = [];
+    const walk = (node, cls) => [...node.childNodes].forEach(n => {
+      if (n.nodeType === 3) {
+        const frag = document.createDocumentFragment();
+        n.textContent.split(/(\s+)/).forEach(word => {
+          if (!word) return;
+          if (/^\s+$/.test(word)) { frag.appendChild(document.createTextNode(' ')); return; }
+          const w = document.createElement('span'); w.style.display = 'inline-block'; w.style.whiteSpace = 'nowrap';
+          [...word].forEach(ch => { const c = document.createElement('span'); c.className = 'ch ' + cls; c.textContent = ch; w.appendChild(c); out.push(c); });
+          frag.appendChild(w);
+        });
+        n.replaceWith(frag);
+      } else walk(n, cls + ' ' + (n.className || ''));
+    });
+    walk(el, el.classList.contains('goldg') ? 'goldg' : '');
+    if (el.classList.contains('goldg')) el.classList.remove('goldg');
+    el.querySelectorAll('span:not(.ch)').forEach(sp => { if (sp.classList.contains('goldg')) sp.classList.remove('goldg'); });
+    el._chars = out;
+    return out;
   };
   E.ticks = [];                            // per-frame JS hooks: fn(t)
   E.renderAt = function (t) {

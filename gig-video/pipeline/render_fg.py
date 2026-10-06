@@ -5,6 +5,7 @@ skin retouch, grade, rim light. Cached as build/fg/rgb_N.jpg + build/fg/a_N.png
 usage: python3 render_fg.py <a> <b>"""
 import json, os, subprocess, sys, time
 import cv2, numpy as np
+cv2.setNumThreads(2)
 sys.path.insert(0, os.path.dirname(__file__))
 import look
 
@@ -48,6 +49,7 @@ for j, (n, need) in enumerate(zip(range(a0, b0), idx)):
     fg = look.retouch(fg, a, fbox)
     fg = look.grade_fg(fg)
     fg = np.clip(fg + look.rim_light(a), 0, 1)
+    fg, a = look.extend_arm(fg, a)                          # padded canvas, boom arm runs off frame
     cv2.imwrite(f"build/fg/rgb_{n:05d}.jpg", (fg[:, :, ::-1] * 255 + .5).astype(np.uint8), [cv2.IMWRITE_JPEG_QUALITY, 96])
     cv2.imwrite(f"build/fg/a_{n:05d}.png", (a * 255 + .5).astype(np.uint8))
     if j % 20 == 0:

@@ -87,9 +87,9 @@ def render(n):
     t = n / FPS
     cam = camera(t)
     # ---- background plate with parallax
-    s, fx, fy = cam if cam else (1.0, 2570, 700)
+    s, fx, fy = cam if cam else (1.0, 1920, 700)
     bs = 1 + (s - 1) * 0.22
-    px = (fx - 2570) * 0.14 + np.sin(t * 0.21) * 9
+    px = (fx - 1920) * 0.14 + np.sin(t * 0.21) * 9
     py = (fy - 700) * 0.10 + np.cos(t * 0.17) * 5
     M = np.float32([[bs, 0, W / 2 - bs * PW / 2 + px], [0, bs, H / 2 - bs * PH / 2 + py]]) * SCALE
     bg = cv2.warpAffine(plate, M, (OW, OH), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)

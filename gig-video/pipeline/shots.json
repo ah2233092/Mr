@@ -1,34 +1,128 @@
 {
-  "_comment": "framing per shot. preset: WIDE (talent right third), MED (tighter, right), CLOSE (centred close-up), BROLL (talent hidden). Times are output seconds; changes happen on the jump cuts.",
-  "presets": {
-    "WIDE":  {"s": 1.00, "fx": 2570, "fy": 700},
-    "MED":   {"s": 1.13, "fx": 2520, "fy": 720},
-    "CLOSE": {"s": 1.48, "fx": 1920, "fy": 850}
+ "_comment": "framing per shot. preset: WIDE (talent right third), MED (tighter, right), CLOSE (centred close-up), BROLL (talent hidden). Times are output seconds; changes happen on the jump cuts.",
+ "presets": {
+  "WIDE": {
+   "s": 1.0,
+   "fx": 1920,
+   "fy": 700
   },
-  "face": [2100, 700],
-  "shots": [
-    {"t": 0.00,  "p": "WIDE",  "push": 0.030},
-    {"t": 1.81,  "p": "CLOSE", "push": 0.035},
-    {"t": 3.57,  "p": "WIDE",  "push": 0.030},
-    {"t": 8.75,  "p": "MED",   "push": 0.010},
-    {"t": 9.45,  "p": "WIDE",  "push": 0.030},
-    {"t": 13.57, "p": "BROLL"},
-    {"t": 14.75, "p": "CLOSE", "push": 0.020},
-    {"t": 15.57, "p": "WIDE",  "push": 0.030},
-    {"t": 18.53, "p": "MED",   "push": 0.060},
-    {"t": 20.07, "p": "WIDE",  "push": 0.020},
-    {"t": 21.47, "p": "MED",   "push": 0.020},
-    {"t": 22.99, "p": "WIDE",  "push": 0.030},
-    {"t": 26.17, "p": "WIDE",  "push": 0.025},
-    {"t": 28.97, "p": "MED",   "push": 0.015},
-    {"t": 30.03, "p": "WIDE",  "push": 0.025},
-    {"t": 32.87, "p": "MED",   "push": 0.020},
-    {"t": 34.73, "p": "WIDE",  "push": 0.025},
-    {"t": 37.37, "p": "CLOSE", "push": 0.025},
-    {"t": 38.69, "p": "WIDE",  "push": 0.030},
-    {"t": 41.05, "p": "CLOSE", "push": 0.070}
-  ],
-  "good_news": 20.07,
-  "end": 43.63,
-  "total": 47.50
+  "MED": {
+   "s": 1.15,
+   "fx": 1920,
+   "fy": 745
+  },
+  "CLOSE": {
+   "s": 1.42,
+   "fx": 1920,
+   "fy": 860
+  }
+ },
+ "face": [
+  2100,
+  700
+ ],
+ "shots": [
+  {
+   "t": 0.0,
+   "p": "WIDE",
+   "push": 0.03
+  },
+  {
+   "t": 1.81,
+   "p": "CLOSE",
+   "push": 0.035
+  },
+  {
+   "t": 3.57,
+   "p": "WIDE",
+   "push": 0.03
+  },
+  {
+   "t": 8.75,
+   "p": "MED",
+   "push": 0.01
+  },
+  {
+   "t": 9.45,
+   "p": "WIDE",
+   "push": 0.03
+  },
+  {
+   "t": 13.57,
+   "p": "BROLL"
+  },
+  {
+   "t": 14.75,
+   "p": "CLOSE",
+   "push": 0.02
+  },
+  {
+   "t": 15.57,
+   "p": "WIDE",
+   "push": 0.03
+  },
+  {
+   "t": 18.53,
+   "p": "MED",
+   "push": 0.06
+  },
+  {
+   "t": 20.07,
+   "p": "WIDE",
+   "push": 0.02
+  },
+  {
+   "t": 21.47,
+   "p": "MED",
+   "push": 0.02
+  },
+  {
+   "t": 22.99,
+   "p": "WIDE",
+   "push": 0.03
+  },
+  {
+   "t": 26.17,
+   "p": "WIDE",
+   "push": 0.025
+  },
+  {
+   "t": 28.97,
+   "p": "MED",
+   "push": 0.015
+  },
+  {
+   "t": 30.03,
+   "p": "WIDE",
+   "push": 0.025
+  },
+  {
+   "t": 32.87,
+   "p": "MED",
+   "push": 0.02
+  },
+  {
+   "t": 34.73,
+   "p": "WIDE",
+   "push": 0.025
+  },
+  {
+   "t": 37.37,
+   "p": "CLOSE",
+   "push": 0.025
+  },
+  {
+   "t": 38.69,
+   "p": "WIDE",
+   "push": 0.03
+  },
+  {
+   "t": 41.05,
+   "p": "CLOSE",
+   "push": 0.07
+  }
+ ],
+ "good_news": 20.07,
+ "end": 43.63,
+ "total": 47.5
 }

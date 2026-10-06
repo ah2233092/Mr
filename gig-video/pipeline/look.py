@@ -5,7 +5,10 @@ import numpy as np
 
 W, H = 3840, 2160
 STRIP_X = 3410          # right edge of the green cloth (grey wall beyond it)
+WALL_X = 3755           # dark wall starts here; the mic arm is synthesised beyond it
 LEFT_X = 70
+PAD = 640               # extra canvas on the right so the arm can run off any framing
+ARM_SLOPE = -0.118      # the boom arm rises ~7 degrees to the right
 
 
 def smooth(e0, e1, x):
@@ -20,6 +23,18 @@ def key(rgb, rvm):
     a = 1 - smooth(0.045, 0.19, green)
     a[:, STRIP_X:] = 0
     a[:, :LEFT_X] = 0
+    # the boom arm over the grey wall: keep only the dark bars inside a sloped band
+    xs = np.arange(STRIP_X, WALL_X)
+    lum = rgb[:, STRIP_X:WALL_X].mean(2)
+    arm = 1 - smooth(0.14, 0.24, lum)
+    yy = np.arange(H)[:, None]
+    yc = 1460 + ARM_SLOPE * (xs[None, :] - 3550)               # band centre follows the arm
+    band = (np.abs(yy - yc) < 190).astype(np.float32)
+    a[:, STRIP_X:WALL_X] = arm * band
+    a[1240:1345, 3330:3480] = 0                                # orange tape on the wall
+    # the desk corner at the bottom right is not part of the talent
+    q_lo = cv2.resize(rvm, (W, H), interpolation=cv2.INTER_LINEAR).astype(np.float32) / 255
+    a[1950:, 3000:] = np.minimum(a[1950:, 3000:], np.clip(q_lo[1950:, 3000:] * 1.5, 0, 1))
     q = cv2.resize(rvm, (W // 4, H // 4), interpolation=cv2.INTER_AREA)
     core = cv2.erode((q > 200).astype(np.uint8), np.ones((9, 9), np.uint8))
     core = cv2.resize(core * 255, (W, H), interpolation=cv2.INTER_LINEAR).astype(np.float32) / 255
@@ -32,6 +47,25 @@ def key(rgb, rvm):
     a = cv2.GaussianBlur(a, (0, 0), 1.1)                      # soften the edge by ~1px
     a = np.clip((a - 0.04) / 0.96, 0, 1)                       # choke the outermost fringe
     return a
+
+
+def extend_arm(rgb, a, ref=3735):
+    """pad the canvas to the right and continue the boom arm along its slope,
+    copying the last clean column so it always runs off frame"""
+    h, w = a.shape
+    big = np.zeros((h, w + PAD, 3), np.float32); big[:, :w] = rgb
+    ab = np.zeros((h, w + PAD), np.float32); ab[:, :w] = a
+    cols = np.arange(ref, w + PAD)
+    src_x = np.full_like(cols, ref)
+    for j, x in enumerate(cols):
+        dy = int(round(-ARM_SLOPE * (x - ref)))               # shift the reference column up
+        colr, cola = rgb[:, ref], a[:, ref]
+        if dy > 0:
+            big[:-dy, x] = colr[dy:]; ab[:-dy, x] = cola[dy:]; ab[-dy:, x] = 0
+        else:
+            big[:, x] = colr; ab[:, x] = cola
+    ab[:, ref:] *= (np.abs(np.arange(h)[:, None] - (1460 + ARM_SLOPE * (cols[None, :] - 3550))) < 190)
+    return big, ab
 
 
 def despill(rgb, a):
