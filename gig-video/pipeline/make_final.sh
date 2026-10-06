@@ -7,7 +7,7 @@ mkdir -p build/gfx build/comp output
 # graphics layers, 4 browsers in parallel
 Q=$(( (N + 3) / 4 ))
 for i in 0 1 2 3; do a=$((i*Q)); b=$(( (i+1)*Q < N ? (i+1)*Q : N )); node pipeline/render_gfx.js build/gfx $a $b 2 > build/gfx_$i.log 2>&1 & done; wait
-python3 pipeline/audio.py build/gfx/cues.json
+python3 pipeline/audio.py build/gfx/cues.json --remix
 for i in 0 1 2 3; do a=$((i*Q)); b=$(( (i+1)*Q < N ? (i+1)*Q : N )); python3 pipeline/compose.py $a $b > build/comp_$i.log 2>&1 & done; wait
 ffmpeg -y -v error -framerate 30 -i build/comp/c_%05d.png -i build/mix.wav -map 0:v -map 1:a \
   -c:v libx264 -preset slow -crf 16 -pix_fmt yuv420p -profile:v high -level 5.1 -tune film \

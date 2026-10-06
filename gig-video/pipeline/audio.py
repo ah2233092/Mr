@@ -118,6 +118,7 @@ def tick_clock():
     return hp(rng.standard_normal(len(t)), 4000) * np.exp(-t * 260) + np.sin(2 * np.pi * 2400 * t) * np.exp(-t * 300) * 0.4
 
 
+REMIX = '--remix' in sys.argv
 # ------------------------------------------------------------------ score
 music = np.zeros((N, 2))
 GN = SH["good_news"]
@@ -128,7 +129,7 @@ add(music, pad([45, 52, 57], 2.4, 700, 0.15), 0.0, 1.3)
 prog1 = [[45, 52, 57, 60], [41, 48, 53, 57], [38, 45, 50, 53], [40, 47, 52, 56]]     # Am F Dm E
 roots1 = [33, 29, 26, 28]
 bar, t = 0, T1
-while t < GN - 0.05:
+while not REMIX and t < GN - 0.05:
     ch = prog1[bar % 4]
     add(music, pad(ch, 4 * B1 + 1.2, 1100 + 120 * min(bar, 5), 0.6), t, 1.0)
     for q in range(8):                                   # pulsing 8th-note sub ostinato
@@ -152,7 +153,7 @@ add(music, pad([48, 55, 60, 64, 67], 3.0, 2400, 0.25), T2 - 0.15, 1.3)          
 add(music, piano(midi(72), 4, 0.8), T2, 1.0); add(music, piano(midi(76), 4, 0.6), T2 + 0.02, 1.0)
 bar, t = 0, T2
 END = SH["end"]
-while t < END + 0.2:
+while not REMIX and t < END + 0.2:
     ch = prog2[bar % 4]
     add(music, pad(ch, 4 * B2 + 1.2, 2200, 0.5), t, 1.0)
     arp = [ch[1] + 12, ch[2] + 12, ch[3] + 12, ch[2] + 12]
@@ -175,8 +176,11 @@ while t < END + 0.2:
 add(music, pad([36, 48, 55, 60, 64, 67, 72], 4.2, 2600, 0.05), END + 0.05, 1.6)
 for k, m in enumerate([60, 64, 67, 72, 76]):
     add(music, piano(midi(m), 4.0, 0.55), END + 0.9 + k * 0.16, 1.0, pan=-0.3 + k * 0.15)
-music = reverb(music, 0.32)
-music = hp(music, 35)
+if REMIX:
+    music = np.load('build/music.npy')
+else:
+    music = hp(reverb(music, 0.32), 35)
+    np.save('build/music.npy', music)
 
 # ------------------------------------------------------------------ sound design
 def whoosh(d=0.6, up=True):
@@ -246,17 +250,18 @@ for c in sorted(json.load(open(sys.argv[1])), key=lambda c: c["t"]):
     s, g = SFX[c["type"]]
     add(sfx, s, c["t"], g, pan=rng.uniform(-0.2, 0.2))
 sfx = reverb(sfx, 0.18)
+np.save('build/sfx.npy', sfx)
 
 # ------------------------------------------------------------------ mix
 env = np.convolve(np.abs(voice), np.ones(int(0.2 * SR)) / int(0.2 * SR), mode="same")
 act = np.convolve((env > 0.012).astype(float), np.ones(int(0.25 * SR)) / int(0.25 * SR), mode="same").clip(0, 1)
-duck = 1 - 0.42 * act
+duck = 1 - 0.6 * act
 fade = np.clip((TOTAL - np.arange(N) / SR) / 1.2, 0, 1)
-mix = np.stack([voice, voice], 1) * 1.0 + music * (duck * fade)[:, None] * 0.62 + sfx * fade[:, None]
+mix = np.stack([voice, voice], 1) * 1.0 + music * (duck * fade)[:, None] * 0.30 + sfx * fade[:, None]
 mix /= np.abs(mix).max() / 0.9
 sf.write("build/mix_pre.wav", mix.astype(np.float32), SR, subtype="FLOAT")
 subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", "build/mix_pre.wav", "-af",
                 "loudnorm=I=-14:TP=-1.2:LRA=9:print_format=summary", "-ar", str(SR), "build/mix.wav"], check=True)
-for name, x in (("voice", voice), ("music", music.mean(1) * 0.62 * duck), ("sfx", sfx.mean(1))):
+for name, x in (("voice", voice), ("music", music.mean(1) * 0.30 * duck), ("sfx", sfx.mean(1))):
     print(name, "rms dB", round(20 * np.log10(np.sqrt(np.mean(x ** 2)) + 1e-9), 1))
 print("mix ok", TOTAL)
