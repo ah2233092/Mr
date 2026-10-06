@@ -1,0 +1,20 @@
+{
+  "name": "etsy-thumbnail",
+  "version": "1.0.0",
+  "description": "Etsy main listing image for printable Mahjong tiles",
+  "scripts": {
+    "build": "node render.js out.png"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fontsource/anton": "^5.3.0",
+    "@fontsource/dm-serif-display": "^5.3.0",
+    "@fontsource/noto-serif-tc": "^5.3.0",
+    "@fontsource/poppins": "^5.3.0",
+    "@fontsource/yellowtail": "^5.3.0",
+    "lucide-static": "^1.52.0"
+  },
+  "private": true
+}
