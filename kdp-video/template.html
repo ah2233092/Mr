@@ -1,0 +1,861 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+@font-face{font-family:Poppins;font-weight:500;src:url(node_modules/@fontsource/poppins/files/poppins-latin-500-normal.woff2)}
+@font-face{font-family:Poppins;font-weight:600;src:url(node_modules/@fontsource/poppins/files/poppins-latin-600-normal.woff2)}
+@font-face{font-family:Poppins;font-weight:700;src:url(node_modules/@fontsource/poppins/files/poppins-latin-700-normal.woff2)}
+@font-face{font-family:Poppins;font-weight:800;src:url(node_modules/@fontsource/poppins/files/poppins-latin-800-normal.woff2)}
+@font-face{font-family:Poppins;font-weight:900;src:url(node_modules/@fontsource/poppins/files/poppins-latin-900-normal.woff2)}
+@font-face{font-family:InterV;font-weight:400;src:url(node_modules/@fontsource/inter/files/inter-latin-400-normal.woff2)}
+@font-face{font-family:InterV;font-weight:500;src:url(node_modules/@fontsource/inter/files/inter-latin-500-normal.woff2)}
+@font-face{font-family:InterV;font-weight:600;src:url(node_modules/@fontsource/inter/files/inter-latin-600-normal.woff2)}
+@font-face{font-family:InterV;font-weight:700;src:url(node_modules/@fontsource/inter/files/inter-latin-700-normal.woff2)}
+
+:root{
+  --bg:#060A17; --panel:rgba(20,28,56,.72); --line:rgba(255,255,255,.10);
+  --text:#F4F6FB; --muted:#A3ADC8; --amber:#FFA41B; --amber2:#FF6B1A;
+  --gold:#FFD54A; --teal:#22D3B6; --blue:#4C8DFF; --violet:#8B5CF6; --red:#FF4D5E; --green:#2BD97C;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:InterV,Inter,sans-serif;-webkit-font-smoothing:antialiased}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden}
+.ic{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:middle}
+
+/* ---------- background ---------- */
+.bg{position:absolute;inset:0;overflow:hidden}
+.blob{position:absolute;width:1100px;height:1100px;border-radius:50%;opacity:.55}
+.b1{left:-300px;top:-400px;background:radial-gradient(circle,rgba(255,140,30,.55),transparent 62%)}
+.b2{right:-350px;top:-150px;background:radial-gradient(circle,rgba(76,141,255,.55),transparent 62%)}
+.b3{left:450px;bottom:-650px;background:radial-gradient(circle,rgba(139,92,246,.5),transparent 62%)}
+.floor{position:absolute;left:-50%;width:200%;height:900px;bottom:-330px;
+  background-image:linear-gradient(rgba(120,150,255,.22) 2px,transparent 2px),linear-gradient(90deg,rgba(120,150,255,.22) 2px,transparent 2px);
+  background-size:90px 90px;transform:perspective(700px) rotateX(64deg);
+  -webkit-mask-image:linear-gradient(to top,#000 10%,transparent 85%);opacity:.5}
+.particle{position:absolute;width:6px;height:6px;border-radius:50%;background:#fff;opacity:.0}
+.vignette{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.65) 100%);pointer-events:none}
+.grain{position:absolute;inset:-50px;opacity:.07;pointer-events:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+
+/* ---------- HUD ---------- */
+.brand{position:absolute;left:70px;top:52px;display:flex;align-items:center;gap:14px;font:700 24px Poppins;letter-spacing:.14em;z-index:20}
+.brand .logo{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:26px;
+  background:linear-gradient(135deg,var(--amber),var(--amber2));color:#1a0f00;box-shadow:0 8px 30px rgba(255,140,30,.45)}
+.brand small{display:block;font:600 13px InterV;letter-spacing:.3em;color:var(--muted)}
+.chapter{position:absolute;right:70px;top:58px;z-index:20;font:600 22px Poppins;letter-spacing:.08em;
+  padding:10px 22px;border-radius:40px;border:1px solid var(--line);background:rgba(255,255,255,.05);display:flex;gap:12px;align-items:center}
+.chapter b{color:var(--amber)}
+.progress{position:absolute;left:0;bottom:0;height:6px;background:linear-gradient(90deg,var(--amber),var(--gold));z-index:30;box-shadow:0 0 18px var(--amber)}
+.captions{position:absolute;left:50%;bottom:52px;transform:translateX(-50%);width:1560px;display:flex;justify-content:center;z-index:25}
+.cap{max-width:1560px;text-align:center;font:600 39px/1.38 InterV;padding:16px 34px;border-radius:20px;
+  background:rgba(6,10,23,.62);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px);
+  box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.cap .cw{transition:none;opacity:.42}
+.cap .cw.on{opacity:1}
+.cap .hl{color:var(--gold)}
+.fadeblack{position:absolute;inset:0;background:#000;opacity:0;z-index:40}
+.flash{position:absolute;inset:0;z-index:35;pointer-events:none;opacity:0;
+  background:linear-gradient(105deg,transparent 30%,rgba(255,190,90,.20) 45%,rgba(255,255,255,.35) 50%,rgba(255,190,90,.20) 55%,transparent 70%)}
+
+/* ---------- scenes ---------- */
+.scene{position:absolute;inset:0;z-index:10}
+.cam{position:absolute;inset:0}
+.abs{position:absolute}
+.center{position:absolute;left:0;right:0;display:flex;flex-direction:column;align-items:center;text-align:center}
+.row{display:flex;align-items:center}
+.kicker{font:700 24px Poppins;letter-spacing:.32em;color:var(--amber);text-transform:uppercase}
+.h-xl{font:800 92px/1.08 Poppins;letter-spacing:-.02em}
+.h-l{font:800 72px/1.1 Poppins;letter-spacing:-.015em}
+.h-m{font:700 52px/1.15 Poppins}
+.p{font:500 30px/1.45 InterV;color:var(--muted)}
+.amber{color:var(--amber);font-style:normal}
+.gold{font-style:normal;background:linear-gradient(180deg,#FFF1A6,#FFC23A 55%,#FF8A00);-webkit-background-clip:text;background-clip:text;color:transparent}
+.teal{color:var(--teal);font-style:normal}
+.w{display:inline-block;overflow:hidden;vertical-align:top;padding:0 .02em .12em;margin-bottom:-.12em}
+.wi{display:inline-block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:28px;box-shadow:0 30px 80px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.08);backdrop-filter:blur(8px)}
+.chip{display:inline-flex;align-items:center;gap:12px;padding:14px 26px;border-radius:60px;font:600 28px Poppins;background:rgba(255,255,255,.07);border:1px solid var(--line)}
+.chip .n{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--amber);color:#1a0f00;font:800 20px Poppins}
+.coin{position:absolute;width:96px;height:96px;border-radius:50%;display:grid;place-items:center;font:900 50px Poppins;color:#7a4a00;
+  background:radial-gradient(circle at 35% 30%,#FFF6C2,#FFD54A 40%,#E59A00 80%);box-shadow:0 0 0 6px rgba(255,200,60,.35),0 18px 40px rgba(255,160,0,.35)}
+.coin .ci{display:grid;place-items:center;width:100%;height:100%}
+
+/* 3D book */
+.persp{perspective:1600px}
+.book3d{position:relative;width:340px;height:500px;transform-style:preserve-3d}
+.book3d>div{position:absolute}
+.book3d .front{inset:0;transform:translateZ(30px);border-radius:6px 16px 16px 6px;overflow:hidden;
+  background:linear-gradient(150deg,#16255C 0%,#0E1838 55%,#2A1650 100%);box-shadow:inset 0 0 0 2px rgba(255,255,255,.08)}
+.book3d .back{inset:0;transform:rotateY(180deg) translateZ(30px);background:#0d1430;border-radius:16px 6px 6px 16px}
+.book3d .pages{width:56px;height:96%;top:2%;left:142px;transform:rotateY(90deg) translateZ(166px);
+  background:repeating-linear-gradient(90deg,#f5f0e1 0 2px,#d9d2bd 2px 3px)}
+.book3d .spine{width:60px;height:100%;left:140px;transform:rotateY(-90deg) translateZ(170px);background:linear-gradient(90deg,#0b1430,#1d2d6a)}
+.cover-art{position:absolute;inset:0;padding:46px 36px;display:flex;flex-direction:column}
+.cover-art .ring{position:absolute;border-radius:50%;border:2px solid rgba(255,164,27,.5)}
+.cover-art .t{font:900 110px/1 Poppins;letter-spacing:-.03em;margin-top:auto}
+.cover-art .s{font:600 20px InterV;letter-spacing:.24em;color:var(--amber);margin-top:10px}
+.cover-art .a{font:600 17px InterV;letter-spacing:.3em;color:var(--muted);margin-top:auto}
+.shadow-floor{width:380px;height:60px;border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.6),transparent 70%);margin-top:34px}
+
+/* hook */
+.yes{font:900 220px Poppins;letter-spacing:-.04em;color:var(--green);text-shadow:0 0 60px rgba(43,217,124,.55)}
+.title-xxl{font:900 150px/.92 Poppins;letter-spacing:-.045em}
+
+/* what */
+.kdp-row{display:flex;align-items:baseline;font:800 112px/1.05 Poppins;letter-spacing:-.03em}
+.kdp-row .L{color:var(--amber);text-shadow:0 0 40px rgba(255,164,27,.45)}
+.kdp-row .rest{color:#fff}
+.free-card{padding:30px 38px;display:flex;align-items:center;gap:30px}
+.badge0{font:900 84px Poppins;color:var(--green);line-height:1}
+.nono{display:flex;align-items:center;gap:22px;padding:18px 30px;margin-top:20px}
+.nono .icb{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;font-size:34px;background:rgba(255,77,94,.14);color:var(--red)}
+.nono .lbl{position:relative;font:600 34px Poppins}
+.nono .strike{position:absolute;left:-6px;right:-6px;top:52%;height:5px;border-radius:4px;background:var(--red);transform-origin:left}
+.nono .tag{margin-left:auto;font:800 22px Poppins;letter-spacing:.12em;padding:8px 16px;border-radius:12px;background:var(--red);color:#fff}
+.format{display:flex;flex-direction:column;align-items:center;gap:26px;width:380px}
+.format .lbl{font:700 38px Poppins}
+.tablet{width:230px;height:310px;border-radius:26px;background:#0b0f1f;border:10px solid #2a3150;padding:26px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 30px 60px rgba(0,0,0,.5)}
+.tablet i{display:block;height:9px;border-radius:5px;background:rgba(255,255,255,.25)}
+.flatbook{width:220px;height:310px;border-radius:4px 12px 12px 4px;position:relative;box-shadow:12px 30px 60px rgba(0,0,0,.5);
+  display:flex;align-items:flex-end;padding:22px;font:900 40px Poppins}
+.flatbook::before{content:"";position:absolute;left:10px;top:0;bottom:0;width:4px;background:rgba(0,0,0,.25)}
+.pill{padding:10px 20px;border-radius:30px;font:600 24px InterV;background:rgba(255,255,255,.07);border:1px solid var(--line)}
+
+/* flow */
+.node{display:flex;flex-direction:column;align-items:center;gap:20px;width:230px}
+.node .disc{width:150px;height:150px;border-radius:40px;display:grid;place-items:center;font-size:70px;color:#fff;
+  background:linear-gradient(145deg,rgba(76,141,255,.35),rgba(139,92,246,.25));border:1px solid rgba(255,255,255,.15);box-shadow:0 20px 50px rgba(0,0,0,.4)}
+.node .lbl{font:700 30px Poppins}
+.conn{position:relative;width:120px;height:6px;border-radius:3px;background:rgba(255,255,255,.1);margin-bottom:60px}
+.conn .fill{position:absolute;inset:0;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--amber));transform-origin:left}
+.conn .dot{position:absolute;top:-7px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 0 20px #fff,0 0 40px var(--amber);opacity:0}
+.royal-pill{display:flex;align-items:center;gap:22px;padding:24px 44px;border-radius:80px;font:800 46px Poppins;color:#1a0f00;
+  background:linear-gradient(135deg,#FFE27A,#FFA41B);box-shadow:0 0 0 8px rgba(255,190,60,.18),0 25px 70px rgba(255,150,20,.45)}
+.floatnum{position:absolute;font:800 44px Poppins;color:var(--gold);text-shadow:0 0 24px rgba(255,190,60,.6)}
+
+/* steps */
+.tracker{position:absolute;top:150px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:0}
+.tk{display:flex;align-items:center;gap:12px;font:600 21px InterV;color:var(--muted)}
+.tk .d{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font:800 17px Poppins;border:2px solid rgba(255,255,255,.2);color:var(--muted)}
+.tk.done .d{background:var(--green);border-color:var(--green);color:#03240f}
+.tk.cur .d{background:var(--amber);border-color:var(--amber);color:#1a0f00;box-shadow:0 0 0 8px rgba(255,164,27,.2)}
+.tk.cur{color:#fff}
+.tk-line{width:56px;height:2px;background:rgba(255,255,255,.18);margin:0 14px}
+.tk-line.done{background:var(--green)}
+.step-left{position:absolute;left:130px;top:250px;width:650px}
+.bignum{font:900 300px/0.85 Poppins;letter-spacing:-.06em;color:transparent;-webkit-text-stroke:3px rgba(255,164,27,.9);
+  background:linear-gradient(180deg,rgba(255,164,27,.35),rgba(255,164,27,0) 80%);-webkit-background-clip:text;background-clip:text}
+.step-title{font:800 62px/1.08 Poppins;margin-top:18px}
+.step-desc{font:500 29px/1.45 InterV;color:var(--muted);margin-top:18px}
+.mock{position:absolute;left:830px;top:265px;width:960px;height:560px;overflow:hidden}
+.winbar{height:64px;display:flex;align-items:center;gap:12px;padding:0 26px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.03)}
+.winbar i{width:16px;height:16px;border-radius:50%;display:block}
+.url{margin-left:24px;flex:1;height:40px;border-radius:20px;background:rgba(255,255,255,.07);display:flex;align-items:center;padding:0 20px;gap:10px;font:500 22px InterV;color:#dfe5f5}
+.caret{display:inline-block;width:2px;height:26px;background:var(--amber);margin-left:2px}
+.field{display:flex;align-items:center;gap:20px;padding:22px 28px;margin:22px 34px 0;border-radius:18px;background:rgba(255,255,255,.05);border:1px solid var(--line);font:600 30px Poppins}
+.field .ok{margin-left:auto;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--green);color:#03240f;font-size:28px}
+.meter{margin:0 40px 30px}
+.meter .top{display:flex;justify-content:space-between;font:700 30px Poppins;margin-bottom:14px}
+.meter .bar{height:30px;border-radius:16px;background:rgba(255,255,255,.08);overflow:hidden}
+.meter .bar i{display:block;height:100%;border-radius:16px;transform-origin:left}
+.search{display:flex;align-items:center;gap:18px;margin:40px;padding:22px 28px;border-radius:20px;background:rgba(255,255,255,.07);font:500 30px InterV;border:1px solid var(--line)}
+.docline{height:16px;border-radius:8px;background:rgba(255,255,255,.18);transform-origin:left;margin:18px 0}
+.type-chip{display:flex;align-items:center;gap:16px;padding:18px 24px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid var(--line);font:600 26px Poppins}
+.type-chip .icx{font-size:34px;color:var(--amber)}
+.kw{display:inline-flex;padding:12px 22px;border-radius:30px;background:rgba(34,211,182,.13);border:1px solid rgba(34,211,182,.4);color:#bff7ec;font:600 24px InterV;margin:8px}
+.pub-btn{display:inline-flex;align-items:center;gap:16px;padding:26px 60px;border-radius:22px;font:800 40px Poppins;color:#1a0f00;
+  background:linear-gradient(135deg,#FFD25A,#FF8A1A);box-shadow:0 20px 50px rgba(255,140,30,.45)}
+.live{display:inline-flex;align-items:center;gap:16px;padding:16px 30px;border-radius:40px;background:rgba(43,217,124,.15);border:1px solid rgba(43,217,124,.5);color:#9ff5c6;font:700 30px Poppins}
+.ripple{position:absolute;width:120px;height:120px;border-radius:50%;border:4px solid rgba(255,210,90,.9);opacity:0}
+
+/* royalty */
+.rcard{width:520px;height:520px;padding:40px;display:flex;flex-direction:column}
+.rcard .head{display:flex;align-items:center;gap:18px;font:700 36px Poppins}
+.rcard .head .icb{width:72px;height:72px;border-radius:20px;display:grid;place-items:center;font-size:38px}
+.rcard .big{font:900 150px/1 Poppins;letter-spacing:-.04em;margin-top:30px}
+.rcard .sub{font:600 28px InterV;margin-top:10px}
+.rcard .note{font:500 23px/1.4 InterV;color:var(--muted);margin-top:auto;padding-top:18px;border-top:1px solid var(--line)}
+
+/* example */
+.receipt{width:820px;padding:36px 44px}
+.rrow{display:flex;justify-content:space-between;align-items:center;font:600 34px InterV;padding:18px 0;border-bottom:1px dashed rgba(255,255,255,.15)}
+.rrow b{font:800 40px Poppins}
+.rrow.res{border:0;margin-top:10px;padding:22px 26px;border-radius:18px;background:rgba(43,217,124,.12);border:1px solid rgba(43,217,124,.4)}
+.rrow.res b{color:var(--green);font-size:52px}
+.pricetag{position:absolute;padding:14px 28px;border-radius:14px;font:900 46px Poppins;color:#1a0f00;background:var(--gold);box-shadow:0 14px 40px rgba(255,190,40,.45)}
+.result{display:flex;align-items:center;gap:40px;padding:28px 56px}
+.result .eq{font:600 36px InterV;color:var(--muted)}
+.result .money{font:900 96px Poppins;letter-spacing:-.03em}
+.disc{font:500 22px InterV;color:var(--muted)}
+
+/* reality */
+.stamp{font:900 88px Poppins;letter-spacing:.02em;color:var(--red);border:10px solid var(--red);border-radius:24px;padding:4px 40px;text-shadow:0 0 40px rgba(255,77,94,.4);box-shadow:0 0 50px rgba(255,77,94,.25)}
+.hbar{display:flex;align-items:center;gap:28px;margin:18px 0}
+.hbar .lab{width:430px;text-align:right;font:700 30px Poppins}
+.hbar .lab small{display:block;font:500 21px InterV;color:var(--muted)}
+.hbar .track{width:900px;height:62px;border-radius:16px;background:rgba(255,255,255,.06);overflow:hidden;position:relative}
+.hbar .fillb{height:100%;border-radius:16px;transform-origin:left;display:flex;align-items:center;justify-content:flex-end;padding-right:22px;font:800 28px Poppins;color:#08101f}
+.quote{padding:28px 50px;display:flex;align-items:center;gap:30px;font:700 38px Poppins}
+
+/* tips */
+.tcard{width:520px;min-height:500px;padding:44px 40px;display:flex;flex-direction:column;align-items:flex-start;text-align:left}
+.tcard .icb{flex-shrink:0;width:110px;height:110px;border-radius:30px;display:grid;place-items:center;font-size:58px}
+.tcard .tt{font:800 44px/1.12 Poppins;margin-top:34px}
+.tcard .td{font:500 27px/1.45 InterV;color:var(--muted);margin-top:16px}
+.tcard .mark{margin-top:auto;font:800 24px Poppins;letter-spacing:.14em;padding:10px 18px;border-radius:12px}
+
+/* outro */
+.cta{display:inline-flex;align-items:center;gap:18px;padding:26px 46px;border-radius:24px;font:800 40px Poppins;border:2px solid transparent}
+.cta.like{background:rgba(255,255,255,.08);border-color:var(--line)}
+.cta.sub{background:#FF2D3D;color:#fff;box-shadow:0 18px 50px rgba(255,45,61,.45)}
+.cta.cmt{background:rgba(76,141,255,.16);border-color:rgba(76,141,255,.5)}
+.cursor{position:absolute;width:64px;height:64px;filter:drop-shadow(0 8px 14px rgba(0,0,0,.6));z-index:5}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="bg">
+    <div class="blob b1" data-loop="drift1"></div>
+    <div class="blob b2" data-loop="drift2"></div>
+    <div class="blob b3" data-loop="drift3"></div>
+    <div class="floor" data-loop="floor"></div>
+    <div id="particles"></div>
+  </div>
+
+  <!-- ===================== HOOK ===================== -->
+  <section class="scene" data-scene="hook">
+    <div class="cam">
+      <div class="center" style="top:250px" data-out="fadeOut L1-0.1">
+        <div class="kicker" data-in="fadeUp L0">Ghar baithe online kamai</div>
+        <div style="height:34px"></div>
+        <div class="h-xl" data-split data-in="rise L0+0.2">Kya aap <em class="amber">Amazon</em> par kitaab</div>
+        <div class="h-xl" data-split data-in="rise L0@0.35">bech kar <em class="gold" style="font-size:118px">DOLLARS</em></div>
+        <div class="h-xl" data-split data-in="rise L0@0.6">kama sakte hain?</div>
+      </div>
+      <div data-out="fadeOut L1-0.1">
+        <div class="coin" style="left:170px;top:210px" data-in="pop L0@0.45" data-sfx="pop"><div class="ci" data-loop="bob">$</div></div>
+        <div class="coin" style="left:300px;top:640px;width:67px;height:67px;font-size:35px" data-in="pop L0@0.52"><div class="ci" data-loop="bob2">$</div></div>
+        <div class="coin" style="right:190px;top:250px" data-in="pop L0@0.58" data-sfx="pop"><div class="ci" data-loop="bob2">$</div></div>
+        <div class="coin" style="right:300px;top:660px;width:77px;height:77px;font-size:40px" data-in="pop L0@0.65"><div class="ci" data-loop="bob">$</div></div>
+      </div>
+      <div class="center" style="top:300px" data-out="fadeOut L1@0.42">
+        <div class="yes" data-in="slam L1+0.25" data-sfx="hit">HAAN!</div>
+      </div>
+      <div class="abs row" style="left:170px;top:150px;gap:110px">
+        <div class="persp" data-in="zoomIn L1@0.45" data-sfx="whoosh">
+          <div class="book3d" data-loop="bookspin">
+            <div class="back"></div><div class="spine"></div><div class="pages"></div>
+            <div class="front"><div class="cover-art">
+              <div class="ring" style="width:420px;height:420px;right:-210px;top:-150px"></div>
+              <div class="ring" style="width:260px;height:260px;right:-120px;top:-60px;border-color:rgba(34,211,182,.5)"></div>
+              <div class="a">YOUR NAME</div>
+              <div class="t">KDP</div>
+              <div class="s">YOUR FIRST BOOK</div>
+            </div></div>
+          </div>
+          <div class="shadow-floor"></div>
+        </div>
+        <div style="width:1050px">
+          <div class="kicker" data-in="fadeLeft L1@0.5">Kindle Direct Publishing</div>
+          <div class="title-xxl" style="margin-top:20px" data-split data-in="rise L1@0.55">AMAZON</div>
+          <div class="title-xxl gold" data-in="zoomIn L1@0.7" data-sfx="hit">KDP</div>
+          <div class="p" style="margin-top:22px;font-size:34px;color:#dfe5f5" data-in="fadeUp L1@0.85">Book Publishing se <b class="amber">ghar baithe</b> kamai</div>
+          <div style="margin-top:40px;display:flex;flex-direction:column;gap:18px;align-items:flex-start">
+            <div class="chip" data-in="fadeLeft L2@0.12" data-sfx="pop"><span class="n">1</span>KDP kya hai?</div>
+            <div class="chip" data-in="fadeLeft L2@0.35" data-sfx="pop"><span class="n">2</span>Kitaab publish kaise hoti hai?</div>
+            <div class="chip" data-in="fadeLeft L2@0.62" data-sfx="pop"><span class="n">3</span>Authors kitna kama rahe hain?</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== WHAT ===================== -->
+  <section class="scene" data-scene="what" data-chapter="01|KDP kya hai?">
+    <div class="cam">
+      <div data-out="fadeOut L3-0.15">
+        <div class="abs" style="left:150px;top:230px">
+          <div class="kdp-row"><span class="L" data-in="pop L0+0.1" data-sfx="pop">K</span><span class="rest" data-in="wipe L0@0.25">indle</span></div>
+          <div class="kdp-row"><span class="L" data-in="pop L0@0.18" data-sfx="pop">D</span><span class="rest" data-in="wipe L0@0.4">irect</span></div>
+          <div class="kdp-row"><span class="L" data-in="pop L0@0.3" data-sfx="pop">P</span><span class="rest" data-in="wipe L0@0.55">ublishing</span></div>
+          <div class="p" style="margin-top:26px;width:640px" data-in="fadeUp L0@0.8">Amazon ka apna <b class="amber">self-publishing</b> platform</div>
+        </div>
+        <div class="abs" style="left:900px;top:215px;width:880px">
+          <div class="card free-card" data-in="fadeRight L1" data-sfx="whoosh">
+            <div class="badge0">$0</div>
+            <div><div style="font:800 40px Poppins">100% FREE platform</div>
+              <div class="p" style="font-size:27px">Koi bhi apni kitaab <b style="color:#fff">khud publish</b> kar sakta hai</div></div>
+          </div>
+          <div class="card nono" data-in="fadeRight L2+0.05" data-sfx="pop">
+            <div class="icb">{{i:users}}</div><div class="lbl">Publisher ki zaroorat<div class="strike" data-in="growX L2@0.12"></div></div><div class="tag" data-in="pop L2@0.15">NAHI</div></div>
+          <div class="card nono" data-in="fadeRight L2@0.32" data-sfx="pop">
+            <div class="icb">{{i:printer}}</div><div class="lbl">Printing ka kharcha<div class="strike" data-in="growX L2@0.42"></div></div><div class="tag" data-in="pop L2@0.45">NAHI</div></div>
+          <div class="card nono" data-in="fadeRight L2@0.62" data-sfx="pop">
+            <div class="icb">{{i:package}}</div><div class="lbl">Stock ki tension<div class="strike" data-in="growX L2@0.72"></div></div><div class="tag" data-in="pop L2@0.75">NAHI</div></div>
+        </div>
+      </div>
+      <div class="center" style="top:205px">
+        <div class="row" style="gap:70px;align-items:flex-end">
+          <div class="format" data-in="fadeUp L3@0.12" data-sfx="pop">
+            <div class="tablet" data-loop="bob"><i style="width:70%;background:var(--amber)"></i><i></i><i></i><i style="width:85%"></i><i></i><i style="width:60%"></i><i></i><i style="width:75%"></i></div>
+            <div class="lbl">eBook</div></div>
+          <div class="format" data-in="fadeUp L3@0.24" data-sfx="pop">
+            <div class="flatbook" style="background:linear-gradient(150deg,#FF8A1A,#C2410C)" data-loop="bob2">Paper<br>back</div>
+            <div class="lbl">Paperback</div></div>
+          <div class="format" data-in="fadeUp L3@0.36" data-sfx="pop">
+            <div class="flatbook" style="background:linear-gradient(150deg,#1F3A8A,#0B1A4A);box-shadow:inset -10px 0 0 #c9a227,12px 30px 60px rgba(0,0,0,.5);width:240px;height:330px" data-loop="bob">Hard<br>cover</div>
+            <div class="lbl">Hardcover</div></div>
+        </div>
+        <div class="row" style="gap:14px;margin-top:46px;flex-wrap:wrap;justify-content:center;width:1500px">
+          <div class="pill" data-in="fadeIn L3@0.5" style="color:var(--teal);font-weight:700"><span style="font-size:28px">{{i:globe}}</span> Duniya bhar mein</div>
+          <div class="pill" data-in="pop L3@0.55">.com</div><div class="pill" data-in="pop L3@0.58">.co.uk</div><div class="pill" data-in="pop L3@0.61">.de</div>
+          <div class="pill" data-in="pop L3@0.64">.fr</div><div class="pill" data-in="pop L3@0.67">.es</div><div class="pill" data-in="pop L3@0.70">.it</div>
+          <div class="pill" data-in="pop L3@0.73">.ca</div><div class="pill" data-in="pop L3@0.76">.com.au</div><div class="pill" data-in="pop L3@0.79">.co.jp</div>
+          <div class="pill" data-in="pop L3@0.82">.in</div><div class="pill" data-in="pop L3@0.85">.com.br</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PRINT ON DEMAND ===================== -->
+  <section class="scene" data-scene="pod" data-chapter="02|Print on Demand">
+    <div class="cam">
+      <div class="center" style="top:185px">
+        <div class="h-l" data-split data-in="rise L0+0.1"><em class="gold">PRINT</em> ON <em class="gold">DEMAND</em></div>
+        <div class="p" style="margin-top:12px" data-in="fadeUp L0@0.6">Pehle order aata hai — <b style="color:#fff">phir kitaab print hoti hai</b></div>
+      </div>
+      <div class="center" style="top:420px">
+        <div class="row" style="gap:0">
+          <div class="node" data-in="pop L1+0.05" data-sfx="pop"><div class="disc">{{i:shopping-cart}}</div><div class="lbl">Order</div></div>
+          <div class="conn"><div class="fill" data-in="growX L1@0.12 0.6"></div><div class="dot" data-in="travel L1@0.12 0.7"></div></div>
+          <div class="node" data-in="pop L1@0.28" data-sfx="pop"><div class="disc">{{i:printer}}</div><div class="lbl">Print</div></div>
+          <div class="conn"><div class="fill" data-in="growX L1@0.4 0.6"></div><div class="dot" data-in="travel L1@0.4 0.7"></div></div>
+          <div class="node" data-in="pop L1@0.5" data-sfx="pop"><div class="disc">{{i:package}}</div><div class="lbl">Pack</div></div>
+          <div class="conn"><div class="fill" data-in="growX L1@0.62 0.6"></div><div class="dot" data-in="travel L1@0.62 0.7"></div></div>
+          <div class="node" data-in="pop L1@0.72" data-sfx="pop"><div class="disc">{{i:truck}}</div><div class="lbl">Deliver</div></div>
+        </div>
+      </div>
+      <div class="center" style="top:735px">
+        <div class="royal-pill" data-in="pop L2+0.05" data-sfx="ding"><span style="font-size:52px">{{i:badge-dollar-sign}}</span>Har sale par aapki ROYALTY</div>
+      </div>
+      <div class="floatnum" style="left:110px;top:720px" data-in="floatUp L2@0.3">+$4.99</div>
+      <div class="floatnum" style="right:110px;top:720px" data-in="floatUp L2@0.45">+$3.49</div>
+      <div class="floatnum" style="left:190px;top:600px;font-size:34px" data-in="floatUp L2@0.6">+$2.10</div>
+      <div class="floatnum" style="right:190px;top:600px;font-size:34px" data-in="floatUp L2@0.7">+$5.20</div>
+    </div>
+  </section>
+
+  <!-- ===================== STEPS ===================== -->
+  <section class="scene" data-scene="step1" data-chapter="03|Publish kaise karein">
+    <div class="cam">
+      <div class="tracker" data-step="1" data-in="fadeDown S+0.1"></div>
+      <div class="step-left">
+        <div class="kicker" data-in="fadeLeft L0">Step</div>
+        <div class="bignum" data-in="zoomIn L0+0.05" data-sfx="hit">01</div>
+        <div class="step-title" data-split data-in="rise L0@0.05">Free Account Banayein</div>
+        <div class="step-desc" data-in="fadeUp L0@0.25">kdp.amazon.com par sign up karein, phir <b style="color:#fff">Tax</b> aur <b style="color:#fff">Bank</b> details bharein.</div>
+      </div>
+      <div class="card mock" data-in="fadeRight L0+0.2">
+        <div class="winbar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i>
+          <div class="url"><span style="font-size:22px;color:var(--green)">{{i:lock}}</span><span data-type="L0@0.1" data-cps="12">kdp.amazon.com</span><span class="caret" data-loop="blink"></span></div></div>
+        <div class="field" data-in="fadeUp L0@0.3"><span style="font-size:36px;color:var(--amber)">{{i:user-plus}}</span>Account banaya<div class="ok" data-in="pop L0@0.38" data-sfx="ding">{{i:check}}</div></div>
+        <div class="field" data-in="fadeUp L0@0.55"><span style="font-size:36px;color:var(--amber)">{{i:file-text}}</span>Tax information<div class="ok" data-in="pop L0@0.65" data-sfx="ding">{{i:check}}</div></div>
+        <div class="field" data-in="fadeUp L0@0.72"><span style="font-size:36px;color:var(--amber)">{{i:landmark}}</span>Bank / payment details<div class="ok" data-in="pop L0@0.82" data-sfx="ding">{{i:check}}</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene" data-scene="step2" data-chapter="03|Publish kaise karein">
+    <div class="cam">
+      <div class="tracker" data-step="2"></div>
+      <div class="step-left">
+        <div class="kicker" data-in="fadeLeft L0">Step</div>
+        <div class="bignum" data-in="zoomIn L0+0.05" data-sfx="hit">02</div>
+        <div class="step-title" data-split data-in="rise L0@0.05">Niche Research</div>
+        <div class="step-desc" data-in="fadeUp L0@0.25">Woh topic chunein jiski <b class="teal">demand zyada</b> ho aur <b class="amber">competition kam</b>.</div>
+      </div>
+      <div class="card mock" data-in="fadeRight L0+0.2">
+        <div class="search"><span style="font-size:36px;color:var(--muted)">{{i:search}}</span><span data-type="L0@0.15" data-cps="16">gratitude journal for kids</span><span class="caret" data-loop="blink"></span></div>
+        <div class="meter" data-in="fadeUp L0@0.45"><div class="top"><span><span class="teal">{{i:trending-up}}</span> Demand</span><span class="teal" data-in="fadeIn L0@0.6">HIGH</span></div>
+          <div class="bar"><i style="width:86%;background:linear-gradient(90deg,#14b8a6,#22D3B6)" data-in="growX L0@0.48 1.0"></i></div></div>
+        <div class="meter" data-in="fadeUp L0@0.62"><div class="top"><span><span class="amber">{{i:swords}}</span> Competition</span><span class="amber" data-in="fadeIn L0@0.78">LOW</span></div>
+          <div class="bar"><i style="width:24%;background:linear-gradient(90deg,#FF8A1A,#FFA41B)" data-in="growX L0@0.66 1.0"></i></div></div>
+        <div class="center" style="position:relative;margin-top:6px"><div class="live" data-in="pop L0@0.85" data-sfx="ding">{{i:target}} Perfect niche!</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene" data-scene="step3" data-chapter="03|Publish kaise karein">
+    <div class="cam">
+      <div class="tracker" data-step="3"></div>
+      <div class="step-left">
+        <div class="kicker" data-in="fadeLeft L0">Step</div>
+        <div class="bignum" data-in="zoomIn L0+0.05" data-sfx="hit">03</div>
+        <div class="step-title" data-split data-in="rise L0@0.05">Manuscript Tayyar Karein</div>
+        <div class="step-desc" data-in="fadeUp L0@0.25">Kitaab ka content likhein ya design karein — kai qism ki books chalti hain.</div>
+      </div>
+      <div class="card mock" style="padding:40px 44px" data-in="fadeRight L0+0.2">
+        <div class="row" style="gap:40px;align-items:flex-start">
+          <div style="width:330px;height:470px;border-radius:14px;background:#f4f1e8;padding:34px 30px;box-shadow:0 20px 50px rgba(0,0,0,.4)" data-in="fadeUp L0@0.12">
+            <div style="font:800 26px Poppins;color:#1b2340">Chapter 1</div>
+            <div class="docline" style="width:100%;background:#c9cfdd" data-in="growX L0@0.18 0.5"></div>
+            <div class="docline" style="width:92%;background:#c9cfdd" data-in="growX L0@0.22 0.5"></div>
+            <div class="docline" style="width:97%;background:#c9cfdd" data-in="growX L0@0.26 0.5"></div>
+            <div class="docline" style="width:70%;background:#c9cfdd" data-in="growX L0@0.30 0.5"></div>
+            <div class="docline" style="width:100%;background:#c9cfdd;margin-top:34px" data-in="growX L0@0.36 0.5"></div>
+            <div class="docline" style="width:88%;background:#c9cfdd" data-in="growX L0@0.40 0.5"></div>
+            <div class="docline" style="width:94%;background:#c9cfdd" data-in="growX L0@0.44 0.5"></div>
+            <div class="docline" style="width:60%;background:#c9cfdd" data-in="growX L0@0.48 0.5"></div>
+            <div class="docline" style="width:96%;background:#c9cfdd;margin-top:34px" data-in="growX L0@0.52 0.5"></div>
+            <div class="docline" style="width:80%;background:#c9cfdd" data-in="growX L0@0.56 0.5"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:22px;flex:1;margin-top:20px">
+            <div class="type-chip" data-in="fadeRight L0@0.42" data-sfx="pop"><span class="icx">{{i:book-open}}</span>Kahani / Novel</div>
+            <div class="type-chip" data-in="fadeRight L0@0.55" data-sfx="pop"><span class="icx">{{i:graduation-cap}}</span>Guide / How-to</div>
+            <div class="type-chip" data-in="fadeRight L0@0.72" data-sfx="pop"><span class="icx">{{i:notebook-pen}}</span>Journal &amp; Planner</div>
+            <div class="type-chip" data-in="fadeRight L0@0.8" data-sfx="pop"><span class="icx">{{i:palette}}</span>Coloring Book</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene" data-scene="step4" data-chapter="03|Publish kaise karein">
+    <div class="cam">
+      <div class="tracker" data-step="4"></div>
+      <div class="step-left">
+        <div class="kicker" data-in="fadeLeft L0">Step</div>
+        <div class="bignum" data-in="zoomIn L0+0.05" data-sfx="hit">04</div>
+        <div class="step-title" data-split data-in="rise L0@0.05">Professional Cover</div>
+        <div class="step-desc" data-in="fadeUp L0@0.3">Log sach mein kitaab ko uske <b class="amber">cover</b> se judge karte hain.</div>
+      </div>
+      <div class="card mock" data-in="fadeRight L0+0.2">
+        <div class="row" style="height:100%;justify-content:center;gap:70px">
+          <div style="text-align:center" data-in="fadeUp L0@0.2">
+            <div style="width:250px;height:360px;background:#d8d8d8;border-radius:6px;display:flex;align-items:center;justify-content:center;font:400 24px 'Times New Roman';color:#444;padding:20px">my book<br>by me</div>
+            <div class="live" style="margin-top:22px;background:rgba(255,77,94,.15);border-color:rgba(255,77,94,.5);color:#ffb3bb">{{i:x}} Boring</div>
+          </div>
+          <div style="font-size:60px;color:var(--amber)" data-in="fadeIn L0@0.35">{{i:arrow-right}}</div>
+          <div style="text-align:center">
+            <div style="position:relative;width:270px;height:390px;border-radius:6px 14px 14px 6px;overflow:hidden;box-shadow:0 30px 70px rgba(0,0,0,.6)" data-in="pop L0@0.42" data-sfx="whoosh">
+              <div style="position:absolute;inset:0;background:linear-gradient(160deg,#0F766E,#0B1A4A 60%,#3B0764)"></div>
+              <div style="position:absolute;width:300px;height:300px;border-radius:50%;left:-40px;top:40px;background:radial-gradient(circle,#FFB347,#FF6B1A 50%,transparent 70%);opacity:.85" data-in="zoomIn L0@0.5"></div>
+              <div style="position:absolute;left:24px;right:24px;top:30px;font:600 15px InterV;letter-spacing:.3em;color:#ffe6c4" data-in="fadeDown L0@0.58">BESTSELLING GUIDE</div>
+              <div style="position:absolute;left:24px;right:24px;bottom:70px;font:900 50px/1 Poppins;color:#fff" data-in="fadeUp L0@0.62">THE<br>SUNRISE<br>HABIT</div>
+              <div style="position:absolute;left:24px;bottom:28px;font:600 16px InterV;letter-spacing:.25em;color:#ffd38a" data-in="fadeUp L0@0.68">AUTHOR NAME</div>
+              <div class="flashbar" style="position:absolute;top:-20%;bottom:-20%;width:90px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:rotate(18deg)" data-in="sweep L0@0.72 0.9"></div>
+            </div>
+            <div class="live" style="margin-top:22px" data-in="pop L0@0.75" data-sfx="ding">{{i:sparkles}} Eye-catching</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene" data-scene="step5" data-chapter="03|Publish kaise karein">
+    <div class="cam">
+      <div class="tracker" data-step="5"></div>
+      <div class="step-left">
+        <div class="kicker" data-in="fadeLeft L0">Step</div>
+        <div class="bignum" data-in="zoomIn L0+0.05" data-sfx="hit">05</div>
+        <div class="step-title" data-split data-in="rise L0@0.05">Title, Description &amp; Keywords</div>
+        <div class="step-desc" data-in="fadeUp L0@0.3">Taake customers aapki kitaab <b class="teal">search</b> mein aasani se dhoond sakein.</div>
+      </div>
+      <div class="card mock" style="padding:34px 40px" data-in="fadeRight L0+0.2">
+        <div class="p" style="font-size:22px;letter-spacing:.2em;font-weight:700">BOOK TITLE</div>
+        <div class="field" style="margin:10px 0 0"><span data-type="L0@0.12" data-cps="20">The Sunrise Habit: 30-Day Gratitude Journal</span><span class="caret" data-loop="blink"></span></div>
+        <div class="p" style="font-size:22px;letter-spacing:.2em;font-weight:700;margin-top:26px" data-in="fadeIn L0@0.3">DESCRIPTION</div>
+        <div style="margin-top:10px" data-in="fadeIn L0@0.3">
+          <div class="docline" style="width:100%" data-in="growX L0@0.32 0.5"></div>
+          <div class="docline" style="width:84%" data-in="growX L0@0.36 0.5"></div>
+        </div>
+        <div class="p" style="font-size:22px;letter-spacing:.2em;font-weight:700;margin-top:22px" data-in="fadeIn L0@0.45">7 KEYWORDS</div>
+        <div style="margin-top:6px;margin-left:-8px">
+          <span class="kw" data-in="pop L0@0.5" data-sfx="pop">gratitude journal</span><span class="kw" data-in="pop L0@0.55">morning routine</span><span class="kw" data-in="pop L0@0.6" data-sfx="pop">self care gift</span>
+          <span class="kw" data-in="pop L0@0.65">mindfulness</span><span class="kw" data-in="pop L0@0.7" data-sfx="pop">daily planner</span><span class="kw" data-in="pop L0@0.75">positivity</span><span class="kw" data-in="pop L0@0.8" data-sfx="pop">women gift</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scene" data-scene="step6" data-chapter="03|Publish kaise karein">
+    <div class="cam">
+      <div class="tracker" data-step="6"></div>
+      <div class="step-left">
+        <div class="kicker" data-in="fadeLeft L0">Step</div>
+        <div class="bignum" data-in="zoomIn L0+0.05" data-sfx="hit">06</div>
+        <div class="step-title" data-split data-in="rise L0@0.05">Price &amp; Publish!</div>
+        <div class="step-desc" data-in="fadeUp L0@0.25">Aam taur par <b class="teal">72 ghanton</b> ke andar kitaab Amazon par live.</div>
+      </div>
+      <div class="card mock" data-in="fadeRight L0+0.2">
+        <div class="center" style="top:60px">
+          <div class="p" style="font-size:24px;letter-spacing:.2em;font-weight:700">LIST PRICE (USD)</div>
+          <div class="field" style="margin:14px 0 0;width:520px;justify-content:center;font-size:56px;font-weight:900"><span class="gold">$</span><span data-type="L0@0.12" data-cps="8" class="gold">12.99</span></div>
+          <div style="height:58px"></div>
+          <div style="position:relative;display:grid;place-items:center">
+            <div class="ripple" data-in="ripple L0@0.5 1.0"></div>
+            <div class="pub-btn" data-in="press L0@0.42" data-sfx="click">{{i:rocket}} Publish</div>
+          </div>
+          <div style="height:44px"></div>
+          <div class="live" data-in="pop L0@0.6" data-sfx="ding">{{i:clock}} LIVE ~72 ghanton mein</div>
+        </div>
+        <div class="cursor" data-in="cursor1 L0@0.28 0.7">{{cursor}}</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ROYALTY ===================== -->
+  <section class="scene" data-scene="royalty" data-chapter="04|Royalty">
+    <div class="cam">
+      <div class="center" style="top:320px" data-out="fadeOut L1-0.15">
+        <div style="font-size:120px;color:var(--gold)" data-in="pop L0" data-sfx="ding">{{i:circle-dollar-sign}}</div>
+        <div class="h-xl" data-split data-in="rise L0@0.35">Paisa <em class="gold">kitna</em> milta hai?</div>
+      </div>
+      <div class="center" style="top:200px">
+        <div class="row" style="gap:44px;align-items:stretch">
+          <div class="card rcard" data-in="fadeUp L1" data-sfx="whoosh">
+            <div class="head"><div class="icb" style="background:rgba(76,141,255,.18);color:var(--blue)">{{i:tablet-smartphone}}</div>eBook</div>
+            <div class="big gold"><span data-count="70" data-at="L1@0.55" data-dur="1.1">0</span>%</div>
+            <div class="sub">Price <b class="amber">$2.99 – $12.99</b> par</div>
+            <div class="note">Is range se bahar price par: 35% royalty. Thori si delivery fee bhi katti hai.</div>
+          </div>
+          <div class="card rcard" data-in="fadeUp L2" data-sfx="whoosh">
+            <div class="head"><div class="icb" style="background:rgba(255,164,27,.18);color:var(--amber)">{{i:book}}</div>Paperback</div>
+            <div class="big gold"><span data-count="60" data-at="L2@0.35" data-dur="1.1">0</span>%</div>
+            <div class="sub">Price <b class="amber">$9.99+</b> par &nbsp;<span style="color:var(--red)">− printing</span></div>
+            <div class="note">$9.99 se kam price par: 50% royalty. Printing cost pages par depend karti hai.</div>
+          </div>
+          <div class="card rcard" data-in="fadeUp L3" data-sfx="whoosh">
+            <div class="head"><div class="icb" style="background:rgba(34,211,182,.18);color:var(--teal)">{{i:library}}</div>Kindle Unlimited</div>
+            <div class="big gold" style="font-size:104px;margin-top:52px">$<span data-count="0.0048" data-at="L3@0.4" data-dur="1.1" data-dec="4">0</span></div>
+            <div class="sub" style="margin-top:24px">har <b class="teal">page read</b> par (takreeban)</div>
+            <div class="note">Rate har mahine badalta hai — 2026 mein takreeban $0.0048 per page.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== EXAMPLE ===================== -->
+  <section class="scene" data-scene="example" data-chapter="05|Kamai ka hisaab">
+    <div class="cam">
+      <div class="center" style="top:140px">
+        <div class="h-m" data-split data-in="rise L0"><span style="color:var(--amber)">{{i:calculator}}</span> Ek <em class="gold">Misaal</em></div>
+      </div>
+      <div data-out="fadeOut L3-0.1"><div class="abs" style="left:230px;top:260px" data-in="fadeLeft L1">
+        <div class="persp"><div class="flatbook" style="width:270px;height:380px;background:linear-gradient(160deg,#0F766E,#0B1A4A 60%,#3B0764);font-size:46px;line-height:1" data-loop="bob">THE<br>SUNRISE<br>HABIT</div></div>
+        <div class="pill" style="margin-top:26px;display:inline-block" data-in="fadeUp L1@0.3">{{i:file-text}} 150 pages · Paperback</div>
+        <div class="pricetag" style="left:200px;top:-26px" data-in="slam L1@0.65" data-sfx="hit">$12.99</div>
+      </div>
+      <div class="card receipt abs" style="left:880px;top:255px" data-in="fadeRight L2">
+        <div class="rrow" data-in="fadeUp L2+0.1"><span>List price</span><b>$12.99</b></div>
+        <div class="rrow" data-in="fadeUp L2@0.1"><span>Royalty <span class="amber">60%</span></span><b>$<span data-count="7.79" data-at="L2@0.12" data-dur="0.9" data-dec="2">0</span></b></div>
+        <div class="rrow" data-in="fadeUp L2@0.38"><span>Printing <span style="color:var(--muted);font-size:26px">($1 + 150 × $0.012)</span></span><b style="color:var(--red)">− $2.80</b></div>
+        <div class="rrow res" data-in="pop L2@0.68" data-sfx="ding"><span>Har kitaab par</span><b>≈ $<span data-count="4.99" data-at="L2@0.7" data-dur="0.9" data-dec="2">0</span></b></div>
+      </div></div>
+      <div class="center" style="top:360px">
+        <div class="card result" style="flex-direction:column;gap:14px;padding:44px 90px" data-in="zoomIn L3" data-sfx="whoosh">
+          <div class="eq"><b style="color:#fff">10 books/day</b> × 30 days × <b class="teal">$4.99</b></div>
+          <div class="money gold" style="font-size:150px;line-height:1.05">≈ $<span data-count="1500" data-at="L3@0.4" data-dur="1.4" data-fmt="comma">0</span><span style="font-size:44px">/month</span></div>
+        </div>
+        <div class="disc" style="margin-top:22px;font-size:24px" data-in="fadeIn L3@0.5">*Sirf misaal — asal kamai mukhtalif ho sakti hai</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== REALITY ===================== -->
+  <section class="scene" data-scene="reality" data-chapter="06|Reality check">
+    <div class="cam">
+      <div class="center" style="top:118px">
+        <div class="stamp" data-in="slam L0+0.05" data-sfx="hit">REALITY CHECK</div>
+      </div>
+      <div class="center" style="top:375px">
+        <div class="hbar" data-in="fadeUp L1+0.1"><div class="lab">Naye authors<small>pehle kuch mahine</small></div>
+          <div class="track"><div class="fillb" style="width:18%;background:linear-gradient(90deg,#64748b,#94a3b8)" data-in="growX L1@0.55 1.0">$0–200</div></div></div>
+        <div class="hbar" data-in="fadeUp L2+0.05"><div class="lab">Consistent publishers<small>kai achi kitaabein</small></div>
+          <div class="track"><div class="fillb" style="width:50%;background:linear-gradient(90deg,#0ea5e9,#22D3B6)" data-in="growX L2@0.2 1.0">$200–1,000+</div></div></div>
+        <div class="hbar" data-in="fadeUp L2@0.45"><div class="lab">Pros<small>sahi niche + ads + catalog</small></div>
+          <div class="track"><div class="fillb" style="width:100%;background:linear-gradient(90deg,#FFA41B,#FFD54A)" data-in="growX L2@0.55 1.2">$1,000s / month</div></div></div>
+        <div class="disc" data-in="fadeIn L2@0.7">*Andaazan range har mahine — koi guarantee nahi</div>
+      </div>
+      <div class="center" style="top:728px">
+        <div class="card quote" data-in="fadeUp L3"><span style="font-size:48px;color:var(--amber)">{{i:briefcase}}</span>Raaton raat ameer nahi — ek <em class="gold">asli BUSINESS</em>
+          <span class="pill" data-in="pop L3@0.65" data-sfx="pop">Mehnat</span><span class="pill" style="margin-left:-14px" data-in="pop L3@0.75" data-sfx="pop">Sabr</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TIPS ===================== -->
+  <section class="scene" data-scene="tips" data-chapter="07|Zaroori baatein">
+    <div class="cam">
+      <div class="center" style="top:145px">
+        <div class="h-m" data-split data-in="rise L0"><span style="color:var(--amber)">{{i:triangle-alert}}</span> Yaad Rakhein</div>
+      </div>
+      <div class="center" style="top:260px">
+        <div class="row" style="gap:44px;align-items:stretch">
+          <div class="card tcard" data-in="fadeUp L1" data-sfx="whoosh">
+            <div class="icb" style="background:rgba(255,77,94,.16);color:var(--red)">{{i:copy-x}}</div>
+            <div class="tt">Copy mat karein</div>
+            <div class="td">Kisi aur ka content copy kiya to account band ho sakta hai.</div>
+            <div class="mark" style="background:rgba(255,77,94,.16);color:#ff9aa5">✕ NEVER</div>
+          </div>
+          <div class="card tcard" data-in="fadeUp L2" data-sfx="whoosh">
+            <div class="icb" style="background:rgba(255,164,27,.16);color:var(--amber)">{{i:bot}}</div>
+            <div class="tt">AI content disclose karein</div>
+            <div class="td">AI se banaya text ya images? Publish karte waqt Amazon ko batayein.</div>
+            <div class="mark" style="background:rgba(255,164,27,.16);color:#ffd08a">! ZAROORI</div>
+          </div>
+          <div class="card tcard" data-in="fadeUp L3" data-sfx="whoosh">
+            <div class="icb" style="background:rgba(43,217,124,.16);color:var(--green)">{{i:layers}}</div>
+            <div class="tt">Quality + kai kitaabein</div>
+            <div class="td">Achi quality aur poora catalog — yahi lambi kamai ka raaz hai.</div>
+            <div class="mark" style="background:rgba(43,217,124,.16);color:#9ff5c6">✓ SUCCESS</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== OUTRO ===================== -->
+  <section class="scene" data-scene="outro">
+    <div class="cam">
+      <div class="center" style="top:170px">
+        <div style="font-size:120px;color:var(--amber)" data-in="flyUp L0" data-sfx="whoosh">{{i:rocket}}</div>
+        <div class="kicker" style="margin-top:18px" data-in="fadeUp L0@0.25">Aaj hi shuru karein</div>
+        <div class="h-xl" style="margin-top:14px" data-split data-in="rise L0@0.3">Apni <em class="gold">KDP Journey</em></div>
+      </div>
+      <div class="center" style="top:640px">
+        <div class="row" style="gap:36px;position:relative">
+          <div class="cta like" data-in="pop L1+0.05" data-sfx="pop"><span class="likeic" data-in="likeOn L1@0.18">{{i:thumbs-up}}</span>Like</div>
+          <div class="cta sub" data-in="pop L1@0.12" data-sfx="pop"><span data-loop="ring">{{i:bell}}</span><span data-swap="L1@0.33">Subscribe|Subscribed ✓</span></div>
+          <div class="cta cmt" data-in="pop L1@0.5" data-sfx="pop">{{i:message-circle}} Comment karein</div>
+          <div class="cursor" data-in="cursor2 L1@0.1 2.6">{{cursor}}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== HUD ===================== -->
+  <div class="brand" id="brand"><div class="logo">{{i:book-open}}</div><div>KDP MASTERCLASS<small>BOOK PUBLISHING</small></div></div>
+  <div class="chapter" id="chapter"><b id="chnum">01</b><span id="chtext"></span></div>
+  <div class="flash" id="flash"></div>
+  <div class="captions"><div class="cap" id="cap"></div></div>
+  <div class="vignette"></div>
+  <div class="grain" data-loop="grain"></div>
+  <div class="progress" id="progress"></div>
+  <div class="fadeblack" id="fadeblack"></div>
+</div>
+
+<script>
+const TL = __TIMELINE__;
+const EASE = 'cubic-bezier(.16,1,.3,1)';
+const BACK = 'cubic-bezier(.34,1.56,.64,1)';
+const PRESETS = {
+  fadeUp:   {k:[{opacity:0,transform:'translateY(60px)',filter:'blur(10px)'},{opacity:1,transform:'none',filter:'none'}], d:.9},
+  fadeDown: {k:[{opacity:0,transform:'translateY(-50px)',filter:'blur(10px)'},{opacity:1,transform:'none',filter:'none'}], d:.9},
+  fadeLeft: {k:[{opacity:0,transform:'translateX(-80px)',filter:'blur(10px)'},{opacity:1,transform:'none',filter:'none'}], d:.9},
+  fadeRight:{k:[{opacity:0,transform:'translateX(100px)',filter:'blur(10px)'},{opacity:1,transform:'none',filter:'none'}], d:.9},
+  fadeIn:   {k:[{opacity:0},{opacity:1}], d:.6},
+  pop:      {k:[{opacity:0,transform:'scale(.3)'},{opacity:1,transform:'scale(1)'}], d:.6, e:BACK},
+  zoomIn:   {k:[{opacity:0,transform:'scale(1.5)',filter:'blur(16px)'},{opacity:1,transform:'scale(1)',filter:'none'}], d:.9},
+  slam:     {k:[{opacity:0,transform:'scale(2.6) rotate(-10deg)'},{opacity:1,transform:'scale(.94) rotate(-4deg)',offset:.7},{opacity:1,transform:'scale(1) rotate(-4deg)'}], d:.45, e:'ease-out'},
+  wipe:     {k:[{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0% 0 0)'}], d:.8},
+  growX:    {k:[{transform:'scaleX(0)'},{transform:'scaleX(1)'}], d:.8},
+  rise:     {k:[{opacity:0,transform:'translateY(105%) rotate(4deg)'},{opacity:1,transform:'none'}], d:.8},
+  travel:   {k:[{left:'-10px',opacity:0},{opacity:1,offset:.15},{opacity:1,offset:.85},{left:'110px',opacity:0}], d:.7, e:'ease-in-out'},
+  floatUp:  {k:[{opacity:0,transform:'translateY(40px) scale(.6)'},{opacity:1,transform:'translateY(-10px) scale(1)',offset:.25},{opacity:1,transform:'translateY(-80px)',offset:.75},{opacity:0,transform:'translateY(-120px)'}], d:2.4, e:'ease-out'},
+  flyUp:    {k:[{opacity:0,transform:'translateY(260px) rotate(-20deg) scale(.6)'},{opacity:1,transform:'none'}], d:1.0},
+  sweep:    {k:[{left:'-120px'},{left:'330px'}], d:.9, e:'ease-in-out'},
+  ripple:   {k:[{opacity:.9,transform:'scale(1)'},{opacity:0,transform:'scale(4)'}], d:1.0, e:'ease-out'},
+  press:    {k:[{opacity:0,transform:'scale(.6)'},{opacity:1,transform:'scale(1)',offset:.3},{transform:'scale(1)',offset:.62},{transform:'scale(.9)',offset:.72},{transform:'scale(1.06)',offset:.85},{opacity:1,transform:'scale(1)'}], d:1.1, e:'linear'},
+  likeOn:   {k:[{color:'#fff',transform:'scale(1)'},{color:'#4C8DFF',transform:'scale(1.5) rotate(-15deg)',offset:.5},{color:'#4C8DFF',transform:'scale(1)'}], d:.5, e:'ease-out'},
+  cursor1:  {k:[{opacity:0,left:'900px',top:'560px'},{opacity:1,offset:.2},{left:'540px',top:'300px',offset:.75},{left:'540px',top:'300px',opacity:1}], d:.7, e:EASE},
+  cursor2:  {k:[{opacity:0,left:'640px',top:'260px'},{opacity:1,left:'150px',top:'60px',offset:.18},{left:'150px',top:'60px',offset:.25},{left:'470px',top:'60px',offset:.45},{left:'470px',top:'60px',offset:.6},{left:'900px',top:'70px',offset:.85},{opacity:1,left:'900px',top:'70px'}], d:2.6, e:'ease-in-out'},
+  fadeOut:  {k:[{opacity:1,filter:'none'},{opacity:0,filter:'blur(12px)'}], d:.4},
+};
+const LOOPS = {
+  drift1:{k:[{transform:'translate(0,0)'},{transform:'translate(260px,140px)'}], d:17},
+  drift2:{k:[{transform:'translate(0,0)'},{transform:'translate(-220px,200px)'}], d:23},
+  drift3:{k:[{transform:'translate(0,0)'},{transform:'translate(300px,-160px)'}], d:19},
+  floor:{k:[{backgroundPosition:'0 0'},{backgroundPosition:'0 90px'}], d:2.2, linear:true, noalt:true},
+  bob:{k:[{transform:'translateY(-10px)'},{transform:'translateY(10px)'}], d:2.2},
+  bob2:{k:[{transform:'translateY(8px) rotate(-3deg)'},{transform:'translateY(-12px) rotate(3deg)'}], d:2.8},
+  bookspin:{k:[{transform:'rotateY(-34deg) rotateX(6deg) translateY(-8px)'},{transform:'rotateY(-14deg) rotateX(2deg) translateY(10px)'}], d:4},
+  blink:{k:[{opacity:1},{opacity:1,offset:.5},{opacity:0,offset:.51},{opacity:0}], d:1, linear:true, noalt:true},
+  ring:{k:[{transform:'rotate(0)'},{transform:'rotate(14deg)',offset:.1},{transform:'rotate(-12deg)',offset:.2},{transform:'rotate(8deg)',offset:.3},{transform:'rotate(0)',offset:.4},{transform:'rotate(0)'}], d:1.6, linear:true, noalt:true},
+  grain:{k:[{transform:'translate(0,0)'},{transform:'translate(-40px,30px)'},{transform:'translate(20px,-30px)'},{transform:'translate(-20px,10px)'}], d:.4, steps:true, noalt:true},
+};
+const scenes = {};
+TL.scenes.forEach(s => scenes[s.id] = s);
+const CUES = [];
+
+function T(scene, tok) {
+  const m = tok.match(/^(?:L(\d+)(?:@([\d.]+))?|(S)|(E))([+-][\d.]+)?$/);
+  if (!m) throw new Error('bad time token ' + tok);
+  let base;
+  if (m[3]) base = scene.start; else if (m[4]) base = scene.end;
+  else { const L = scene.lines[+m[1]]; base = L.start + (m[2] ? (+m[2]) * (L.end - L.start) : 0); }
+  return base + (m[5] ? +m[5] : 0);
+}
+
+// split headings into masked words
+function splitWords(el) {
+  const out = [];
+  [...el.childNodes].forEach(n => {
+    if (n.nodeType === 3) {
+      n.textContent.split(/(\s+)/).forEach(p => {
+        if (!p) return;
+        if (/^\s+$/.test(p)) { out.push(document.createTextNode(' ')); return; }
+        const w = document.createElement('span'); w.className = 'w';
+        const wi = document.createElement('span'); wi.className = 'wi'; wi.textContent = p;
+        w.appendChild(wi); out.push(w);
+      });
+    } else {
+      const w = document.createElement('span'); w.className = 'w';
+      const wi = document.createElement('span'); wi.className = 'wi';
+      wi.appendChild(n.cloneNode(true)); w.appendChild(wi); out.push(w);
+    }
+  });
+  el.innerHTML = ''; out.forEach(n => el.appendChild(n));
+  return [...el.querySelectorAll('.wi')];
+}
+
+function anim(el, name, t0, dur, out) {
+  const p = PRESETS[name];
+  if (!p) throw new Error('no preset ' + name);
+  return el.animate(p.k, {duration: (dur || p.d) * 1000, delay: t0 * 1000, fill: out ? 'forwards' : 'both', easing: p.e || EASE});
+}
+
+function setup() {
+  // particles
+  const pc = document.getElementById('particles');
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 46; i++) {
+    const d = document.createElement('div'); d.className = 'particle';
+    const s = 2 + rnd() * 5; d.style.width = d.style.height = s + 'px';
+    d.style.left = (rnd() * 1920) + 'px'; d.style.top = '1100px';
+    const dur = 9 + rnd() * 12, op = .15 + rnd() * .45;
+    d.animate([{transform:'translate(0,0)',opacity:0},{opacity:op,offset:.2},{opacity:op,offset:.8},{transform:`translate(${(rnd()-.5)*200}px,-1200px)`,opacity:0}],
+      {duration: dur * 1000, delay: -rnd() * dur * 1000, iterations: Infinity, easing: 'linear'});
+    pc.appendChild(d);
+  }
+  // step trackers
+  const names = ['Account','Niche','Manuscript','Cover','Listing','Publish'];
+  document.querySelectorAll('.tracker').forEach(tr => {
+    const cur = +tr.dataset.step; let h = '';
+    names.forEach((n, i) => {
+      const st = i + 1 < cur ? 'done' : (i + 1 === cur ? 'cur' : '');
+      if (i) h += `<div class="tk-line ${i + 1 <= cur ? 'done' : ''}"></div>`;
+      h += `<div class="tk ${st}"><div class="d">${i + 1 < cur ? '✓' : i + 1}</div>${n}</div>`;
+    });
+    tr.innerHTML = h;
+  });
+  // loops
+  document.querySelectorAll('[data-loop]').forEach(el => {
+    const L = LOOPS[el.dataset.loop];
+    el.animate(L.k, {duration: L.d * 1000, iterations: Infinity, direction: L.noalt ? 'normal' : 'alternate',
+      easing: L.steps ? 'steps(1,end)' : (L.linear ? 'linear' : 'ease-in-out')});
+  });
+  // scenes
+  document.querySelectorAll('.scene').forEach(sc => {
+    const s = scenes[sc.dataset.scene];
+    s.el = sc;
+    const first = s === TL.scenes[0];
+    sc.animate([{opacity:0,transform:'scale(1.06)',filter:'blur(14px)'},{opacity:1,transform:'none',filter:'none'}],
+      {duration: first ? 1 : 700, delay: s.start * 1000, fill: 'both', easing: EASE});
+    if (s !== TL.scenes[TL.scenes.length - 1])
+      sc.animate([{opacity:1,transform:'none',filter:'none'},{opacity:0,transform:'scale(.96)',filter:'blur(14px)'}],
+        {duration: 450, delay: (s.end - .45) * 1000, fill: 'forwards', easing: 'ease-in'});
+    sc.querySelector('.cam').animate([{transform:'scale(1)'},{transform:'scale(1.045)'}],
+      {duration: (s.end - s.start) * 1000, delay: s.start * 1000, fill: 'both', easing: 'linear'});
+    if (!first) CUES.push({t: s.start - .25, type: 'whoosh'});
+
+    sc.querySelectorAll('[data-in],[data-out],[data-count],[data-type],[data-swap]').forEach(el => {
+      if (el.dataset.in) {
+        const [name, tok, dur] = el.dataset.in.split(' ');
+        const t0 = T(s, tok);
+        if (el.hasAttribute('data-split')) {
+          splitWords(el).forEach((w, i) => anim(w, 'rise', t0 + i * .07, dur && +dur));
+        } else anim(el, name, t0, dur && +dur);
+        if (el.dataset.sfx) CUES.push({t: t0, type: el.dataset.sfx});
+      }
+      if (el.dataset.out) {
+        const [name, tok] = el.dataset.out.split(' ');
+        anim(el, name, T(s, tok), null, true);
+      }
+      if (el.dataset.count) { el._c = {to: +el.dataset.count, t0: T(s, el.dataset.at), d: +(el.dataset.dur || 1), dec: +(el.dataset.dec || 0), comma: el.dataset.fmt === 'comma'}; COUNTERS.push(el); }
+      if (el.dataset.type) { el._t = {txt: el.textContent, t0: T(s, el.dataset.type), cps: +(el.dataset.cps || 14)}; TYPERS.push(el); el.textContent = ''; }
+      if (el.dataset.swap) { const [a, b] = el.textContent.split('|'); el._s = {a, b, t0: T(s, el.dataset.swap)}; SWAPS.push(el); }
+    });
+  });
+  // chapters
+  TL.scenes.forEach(s => { s.chapter = s.el.dataset.chapter || ''; });
+  CHAPTERS = TL.scenes.map((s, i) => {
+    let st = s.start; for (let j = i - 1; j >= 0 && TL.scenes[j].chapter === s.chapter; j--) st = TL.scenes[j].start;
+    return {s, st};
+  });
+  // flash sweep on title + scene changes
+  const flash = document.getElementById('flash');
+  [T(scenes.hook, 'L1@0.7'), T(scenes.royalty, 'L1'), T(scenes.example, 'L3@0.6'), T(scenes.outro, 'L0@0.3')].forEach(t0 =>
+    flash.animate([{opacity:0,transform:'translateX(-1400px)'},{opacity:1,offset:.3},{opacity:1,offset:.7},{opacity:0,transform:'translateX(1400px)'}],
+      {duration: 900, delay: t0 * 1000, fill: 'both', easing: 'ease-in-out'}));
+  CUES.push({t: T(scenes.hook, 'L0') - .6, type: 'riser'});
+  document.getAnimations().forEach(a => a.pause());
+}
+const COUNTERS = [], TYPERS = [], SWAPS = [];
+let CHAPTERS = [];
+const easeOut = x => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3);
+
+function capHTML(text, frac) {
+  const words = text.split(' ');
+  const total = text.length; let acc = 0;
+  return words.map(w => {
+    acc += w.length + 1;
+    const on = acc / total <= frac + .04 ? ' on' : '';
+    const hl = /(\$|%|KDP|^\d|Step)/.test(w) ? ' hl' : '';
+    return `<span class="cw${on}${hl}">${w}</span>`;
+  }).join(' ');
+}
+
+window.renderAt = function (t) {
+  const ms = t * 1000;
+  document.getAnimations().forEach(a => { a.currentTime = ms; });
+  TL.scenes.forEach(s => { s.el.style.visibility = (t >= s.start - .05 && t <= s.end + .05) ? 'visible' : 'hidden'; });
+  COUNTERS.forEach(el => {
+    const c = el._c; const v = c.to * easeOut((t - c.t0) / c.d);
+    let s = v.toFixed(c.dec); if (c.comma) s = Math.round(v).toLocaleString('en-US');
+    el.textContent = s;
+  });
+  TYPERS.forEach(el => { const n = Math.floor(Math.max(0, t - el._t.t0) * el._t.cps); el.textContent = el._t.txt.slice(0, n); });
+  SWAPS.forEach(el => { el.textContent = t >= el._s.t0 ? el._s.b : el._s.a; el.parentElement.style.background = t >= el._s.t0 ? '#3a4154' : ''; el.parentElement.style.boxShadow = t >= el._s.t0 ? 'none' : ''; });
+  // captions
+  let line = null;
+  for (const s of TL.scenes) for (const L of s.lines) if (t >= L.start - .1 && t <= L.end + .3) line = L;
+  const cap = document.getElementById('cap');
+  if (line) {
+    const frac = (t - line.start) / (line.end - line.start);
+    cap.innerHTML = capHTML(line.text, frac);
+    const k = Math.min(easeOut((t - line.start + .1) / .25), 1 - easeOut((t - line.end - .1) / .2));
+    cap.style.opacity = k; cap.style.transform = `translateY(${(1 - k) * 20}px)`;
+  } else cap.style.opacity = 0;
+  // HUD
+  const ch = CHAPTERS.filter(c => t >= c.s.start).pop();
+  const chap = document.getElementById('chapter');
+  if (ch && ch.s.chapter) {
+    const [n, txt] = ch.s.chapter.split('|');
+    document.getElementById('chnum').textContent = n; document.getElementById('chtext').textContent = txt;
+    const k = Math.min(easeOut((t - ch.st - .2) / .6), 1 - easeOut((t - ch.s.end + .5) / .4) * (CHAPTERS[CHAPTERS.indexOf(ch) + 1] && CHAPTERS[CHAPTERS.indexOf(ch) + 1].s.chapter === ch.s.chapter ? 0 : 1));
+    chap.style.opacity = k; chap.style.transform = `translateY(${(1 - k) * -20}px)`;
+  } else chap.style.opacity = 0;
+  const brandK = easeOut((t - scenes.what.start) / .8);
+  const brand = document.getElementById('brand'); brand.style.opacity = brandK; brand.style.transform = `translateY(${(1 - brandK) * -20}px)`;
+  document.getElementById('progress').style.width = (t / TL.duration * 1920) + 'px';
+  document.getElementById('fadeblack').style.opacity = Math.max(easeOut((t - (TL.duration - 1.2)) / 1.2), 1 - easeOut(t / .6));
+};
+window.CUES = CUES;
+window.ready = document.fonts.ready.then(() => { setup(); renderAt(0); return true; });
+</script>
+</body>
+</html>
