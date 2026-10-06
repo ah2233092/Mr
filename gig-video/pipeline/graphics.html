@@ -1,0 +1,465 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:InstrSerif;src:url(../node_modules/@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff2)}
+@font-face{font-family:InstrSerif;font-style:italic;src:url(../node_modules/@fontsource/instrument-serif/files/instrument-serif-latin-400-italic.woff2)}
+@font-face{font-family:Sans;font-weight:400;src:url(../node_modules/@fontsource/inter/files/inter-latin-400-normal.woff2)}
+@font-face{font-family:Sans;font-weight:500;src:url(../node_modules/@fontsource/inter/files/inter-latin-500-normal.woff2)}
+@font-face{font-family:Sans;font-weight:600;src:url(../node_modules/@fontsource/inter/files/inter-latin-600-normal.woff2)}
+@font-face{font-family:Sans;font-weight:700;src:url(../node_modules/@fontsource/inter/files/inter-latin-700-normal.woff2)}
+@font-face{font-family:Mono;src:url(../node_modules/@fontsource/jetbrains-mono/files/jetbrains-mono-latin-500-normal.woff2)}
+:root{--ivory:#F4EEE3;--muted:rgba(244,238,227,.62);--gold:#E3B66C;--gold2:#F6D9A0;--red:#E0574C;--panel:rgba(11,13,16,.80);--hair:rgba(227,182,108,.30)}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1920px;height:1080px;overflow:hidden;background:transparent;color:var(--ivory);font-family:Sans,sans-serif;-webkit-font-smoothing:antialiased}
+.layer{position:absolute;inset:0}
+.abs{position:absolute}
+.serif{font-family:InstrSerif;font-weight:400;letter-spacing:-.01em}
+.it{font-style:italic}
+.gold{color:var(--gold)}
+.goldg{background:linear-gradient(180deg,#FBE7BE 0%,#E9BE74 48%,#B9843A 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.kick{display:flex;align-items:center;gap:14px;font:600 15px/1 Sans;letter-spacing:.32em;text-transform:uppercase;color:var(--gold)}
+.kick i{display:block;width:44px;height:1.5px;background:var(--gold);transform-origin:left}
+.w{display:inline-block;overflow:hidden;vertical-align:bottom;padding:.06em .02em .12em;margin:-.06em 0 -.12em}
+.wi{display:inline-block}
+.shadow{text-shadow:0 4px 30px rgba(0,0,0,.45)}
+.title{font:118px/.98 InstrSerif;letter-spacing:-.015em}
+.panel{position:absolute;background:var(--panel);border:1px solid rgba(255,255,255,.07);border-radius:22px;
+  box-shadow:0 40px 90px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06)}
+.panel::after{content:"";position:absolute;inset:0;border-radius:22px;pointer-events:none;
+  background:linear-gradient(140deg,rgba(255,255,255,.06),transparent 40%)}
+.chip{display:inline-flex;align-items:center;gap:10px;padding:9px 16px;border-radius:40px;font:600 17px Sans;letter-spacing:.01em}
+.chip.bad{background:rgba(224,87,76,.14);color:#FFB3AC;border:1px solid rgba(224,87,76,.35)}
+.chip.good{background:rgba(227,182,108,.14);color:var(--gold2);border:1px solid rgba(227,182,108,.38)}
+.chip.plain{background:rgba(255,255,255,.06);color:var(--ivory);border:1px solid rgba(255,255,255,.12)}
+.mark{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;font:700 16px Sans}
+.mark.x{background:var(--red);color:#fff}
+.mark.ok{background:var(--gold);color:#1a1206}
+.lbl{font:600 13px Sans;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+/* e-reader + paperback */
+.reader{position:absolute;width:236px;height:330px;border-radius:22px;background:#15181c;border:1px solid rgba(255,255,255,.1);padding:16px 14px 34px}
+.reader .scr{position:relative;width:100%;height:100%;border-radius:6px;background:#EEE8DC;overflow:hidden;padding:16px 14px}
+.ln{height:5px;border-radius:3px;background:#3a352d;margin:7px 0;opacity:.85}
+.spread{position:absolute;width:330px;height:226px;display:flex;filter:drop-shadow(0 18px 30px rgba(0,0,0,.45))}
+.pg{position:relative;flex:1;background:#F3EDE1;padding:20px 18px;overflow:hidden}
+.pg.l{border-radius:6px 0 0 6px;background:linear-gradient(90deg,#F3EDE1 80%,#d9d1c1)}
+.pg.r{border-radius:0 6px 6px 0;background:linear-gradient(90deg,#d6cebd,#F3EDE1 20%)}
+.guide{position:absolute;top:0;bottom:0;border-left:1.5px dashed var(--red);opacity:.9}
+.guide.ok{border-color:var(--gold)}
+/* search ui */
+.search{display:flex;align-items:center;gap:14px;height:62px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);padding:0 20px;font:500 22px Sans}
+.row{display:flex;align-items:center;gap:16px;padding:16px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.row .k{width:150px;font:600 14px Sans;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.row .v{flex:1;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font:500 19px Sans}
+/* chart */
+.chart{position:relative;height:210px;border-left:1px solid rgba(255,255,255,.12);border-bottom:1px solid rgba(255,255,255,.12)}
+.metric{flex:1;padding:16px 18px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.metric b{display:block;font:400 44px InstrSerif;margin-top:6px}
+.stamp{display:inline-block;padding:10px 20px;border:2px solid var(--red);color:var(--red);border-radius:10px;font:700 18px Sans;letter-spacing:.24em;transform:rotate(-4deg)}
+/* covers grid (cutaway) */
+.cover{position:relative;width:218px;height:326px;border-radius:4px 10px 10px 4px;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.5)}
+.cover .ct{position:absolute;left:16px;right:16px;bottom:22px;font:400 30px/1 InstrSerif;color:#fff}
+.cover .ca{position:absolute;left:16px;top:18px;font:600 10px Sans;letter-spacing:.24em;color:rgba(255,255,255,.75)}
+/* list */
+.li{display:flex;align-items:center;gap:20px;padding:18px 24px;border-radius:16px;background:var(--panel);border:1px solid rgba(255,255,255,.07);margin-bottom:14px;width:600px}
+.li .n{font:400 34px InstrSerif;color:var(--gold);width:44px}
+.li .t{position:relative;font:500 26px Sans}
+.li .st{position:absolute;left:-4px;right:-4px;top:52%;height:2px;background:var(--red);transform-origin:left}
+.li .m{margin-left:auto;position:relative;width:34px;height:34px}
+.li .m span{position:absolute;inset:0;display:grid;place-items:center;border-radius:50%;font:700 17px Sans}
+/* 3d book */
+.persp{perspective:1400px}
+.b3{position:relative;width:250px;height:370px;transform-style:preserve-3d}
+.b3>div{position:absolute}
+.b3 .f{inset:0;transform:translateZ(22px);border-radius:3px 10px 10px 3px;overflow:hidden}
+.b3 .bk{inset:0;transform:rotateY(180deg) translateZ(22px);background:#10141c;border-radius:10px 3px 3px 10px}
+.b3 .pgs{width:40px;height:96%;top:2%;left:105px;transform:rotateY(90deg) translateZ(123px);background:repeating-linear-gradient(90deg,#f3eee2 0 2px,#d8d0bd 2px 3px)}
+.b3 .sp{width:44px;height:100%;left:103px;transform:rotateY(-90deg) translateZ(125px);background:linear-gradient(90deg,#0c1a24,#1d3a4c)}
+.cta{display:inline-flex;align-items:center;gap:16px;padding:22px 38px;border-radius:60px;font:600 28px Sans;color:#1a1206;background:linear-gradient(180deg,#F6D9A0,#E3B66C);box-shadow:0 18px 50px rgba(227,182,108,.35)}
+#cap{position:absolute;left:0;right:0;bottom:62px;text-align:center;font:600 38px/1.3 Sans;letter-spacing:-.005em;color:#fff;
+  text-shadow:0 2px 3px rgba(0,0,0,.55),0 6px 24px rgba(0,0,0,.6)}
+#cap span{opacity:.55}
+#cap span.on{opacity:1}
+#cap span.hot{color:var(--gold2);opacity:1}
+.sweep{position:absolute;top:-20%;bottom:-20%;width:520px;left:-700px;transform:rotate(14deg);
+  background:linear-gradient(90deg,transparent,rgba(255,214,150,.0) 20%,rgba(255,214,150,.30) 50%,rgba(255,214,150,0) 80%,transparent);mix-blend-mode:screen}
+</style></head>
+<body>
+<!-- ============================ BACK LAYER (behind the talent) ============================ -->
+<div class="layer" id="back">
+  <!-- 3 reasons -->
+  <div data-in="cut t1.81" data-out="cutOut t3.57">
+    <div class="abs serif goldg" style="left:150px;top:30px;font-size:820px;line-height:1" data-in="bigIn w9-0.15 1.0">3</div>
+    <div class="abs serif" style="left:1290px;top:300px;font-size:150px;line-height:.95" data-in="slideR w10-0.05"><span class="it">reasons</span></div>
+    <div class="abs serif" style="left:1290px;top:450px;font-size:150px;line-height:.95" data-in="slideR w11-0.1">why.</div>
+  </div>
+  <!-- 03 -->
+  <div data-in="cut t14.75" data-out="cutOut t15.57">
+    <div class="abs serif goldg" style="left:90px;top:80px;font-size:720px;line-height:1" data-in="bigIn w42-0.25 .9">03</div>
+  </div>
+  <!-- Mr. Ahmad -->
+  <div data-in="fadeIn t21.47 .3" data-out="fadeOut t24.45 .45">
+    <div class="abs serif it gold" style="left:118px;top:150px;font-size:96px" data-in="slideL w63-0.05">Mr.</div>
+    <div class="abs serif" style="left:100px;top:200px;font-size:330px;line-height:1;letter-spacing:-.03em" data-in="track w64-0.15 1.0">Ahmad</div>
+  </div>
+  <!-- You bring the words -->
+  <div data-in="cut t37.37" data-out="cutOut t38.69">
+    <div class="abs serif" style="left:110px;top:330px;font-size:150px;line-height:1" data-in="slideL w99">You bring</div>
+    <div class="abs serif it goldg" style="left:1300px;top:330px;font-size:150px;line-height:1" data-in="slideR w102-0.05">the words.</div>
+  </div>
+  <!-- Message me today -->
+  <div data-in="cut t41.05" data-out="fadeOut t42.0 .35">
+    <div class="abs serif" style="left:90px;top:300px;font-size:160px;line-height:1" data-in="slideL w111-0.05">Message</div>
+    <div class="abs serif" style="left:90px;top:455px;font-size:160px;line-height:1" data-in="slideL w112-0.05">me</div>
+    <div class="abs serif it goldg" style="left:1330px;top:380px;font-size:170px;line-height:1" data-in="slideR w113-0.05">today.</div>
+  </div>
+  <!-- BESTSELLER -->
+
+</div>
+
+<!-- ============================ FRONT LAYER ============================ -->
+<div class="layer" id="front">
+
+  <!-- HOOK 0 - 1.81 : statement already on frame 0 (works as the gig thumbnail) -->
+  <div class="abs" style="left:110px;top:250px;width:760px" data-out="cutOut t1.81">
+    <div class="kick"><i></i>The hard truth</div>
+    <div class="serif shadow" style="font-size:66px;line-height:1.05;margin-top:30px" id="hk1">Most authors' books</div>
+    <div class="serif shadow" style="font-size:200px;line-height:.92;margin-top:6px" id="hk2"><span>don't</span> <span class="it goldg">sell.</span></div>
+    <svg class="abs" style="left:4px;top:330px" width="640" height="40" viewBox="0 0 640 40"><path d="M4 26 C 160 10, 380 34, 630 14" stroke="#E0574C" stroke-width="6" fill="none" stroke-linecap="round" pathLength="1" stroke-dasharray="1" data-in="draw w5-0.05 .6"/></svg>
+  </div>
+
+  <!-- REASON 01 -->
+  <div class="abs" style="left:110px;top:120px;width:700px" data-in="cut t3.57" data-out="fadeOut t8.46 .28">
+    <div class="kick" data-in="fadeIn w12-0.1"><i data-in="growX w12-0.1"></i>Reason 01</div>
+    <div class="title shadow" style="margin-top:22px" data-split data-in="rise w14-0.08 .8 .12">Weak <span class="it goldg">formatting.</span></div>
+  </div>
+  <div class="panel" style="left:110px;top:430px;width:660px;height:470px" data-in="fadeUp w16-0.15" data-out="fadeOut t8.46 .28">
+    <div class="reader" style="left:34px;top:40px" id="r1reader">
+      <div class="scr">
+        <div class="guide" style="left:58px"></div><div class="guide" style="left:186px"></div>
+        <div id="r1lines"></div>
+      </div>
+    </div>
+    <div class="spread" style="left:300px;top:92px" id="r1spread">
+      <div class="pg l"><div class="guide" style="left:46px"></div><div id="r1pl"></div></div>
+      <div class="pg r"><div class="guide" style="left:12px"></div><div id="r1pr"></div></div>
+    </div>
+    <div class="abs lbl" style="left:34px;top:400px" data-in="fadeIn w22-0.1">Kindle</div>
+    <div class="abs lbl" style="left:300px;top:340px" data-in="fadeIn w24-0.1">Paperback</div>
+    <div class="abs chip bad" style="left:300px;top:34px" data-in="scaleIn w17-0.05" data-sfx="tick">✕ Messy margins</div>
+    <div class="abs chip bad" style="left:470px;top:380px" data-in="scaleIn w20-0.05" data-sfx="tick">✕ Broken layout</div>
+  </div>
+
+  <!-- REASON 02 -->
+  <div class="abs" style="left:110px;top:120px;width:700px" data-in="cut t8.75" data-out="fadeOut t13.29 .28">
+    <div class="kick" data-in="fadeIn w25-0.1"><i data-in="growX w25-0.1"></i>Reason 02</div>
+    <div class="title shadow" style="margin-top:22px" data-split data-in="rise w27-0.08 .8 .14">Poor <span class="it goldg">SEO.</span></div>
+  </div>
+  <div class="panel" style="left:110px;top:430px;width:660px;height:440px;padding:34px 34px" data-in="fadeUp w29-0.2" data-out="fadeOut t13.29 .28">
+    <div class="search"><span style="color:var(--muted)">⌕</span><span id="q1"></span><span style="display:inline-block;width:2px;height:26px;background:var(--gold)" id="c1"></span></div>
+    <div style="margin-top:14px">
+      <div class="row" data-in="fadeUp w31-0.12 .6"><div class="k">Keywords</div><div class="v"><span class="chip plain">book</span><span class="chip plain">novel</span><span class="chip plain">good read</span><span class="mark x" style="margin-left:auto" data-in="scaleIn w31+0.15" data-sfx="tick">✕</span></div></div>
+      <div class="row" data-in="fadeUp w32-0.12 .6"><div class="k">Category</div><div class="v">Books › General<span class="mark x" style="margin-left:auto" data-in="scaleIn w32+0.15" data-sfx="tick">✕</span></div></div>
+      <div class="row" style="border:0" data-in="fadeUp w34-0.12 .6"><div class="k">Description</div><div class="v" style="color:var(--muted)">“A great book. Buy now.”<span class="mark x" style="margin-left:auto" data-in="scaleIn w34+0.15" data-sfx="tick">✕</span></div></div>
+    </div>
+  </div>
+
+  <!-- CUTAWAY: no one finds the book -->
+  <div class="abs" style="inset:0;background:#0B0D10;overflow:hidden" data-in="cut t13.57" data-out="cutOut t14.75">
+    <div class="abs" style="left:0;right:0;top:0;bottom:0" id="grid"></div>
+    <div class="abs" style="inset:0;background:radial-gradient(60% 70% at 50% 50%,rgba(11,13,16,.62),rgba(11,13,16,.80))"></div>
+    <div class="abs" style="left:0;right:0;top:330px;text-align:center">
+      <div class="kick" style="justify-content:center" data-in="fadeIn t13.6"><i></i>Search results · page 9 of 40</div>
+      <div class="serif shadow" style="font-size:170px;line-height:1;margin-top:26px" data-split data-in="rise w36-0.1 .7 .09">No one finds <span class="it goldg">the book.</span></div>
+    </div>
+  </div>
+
+  <!-- REASON 03 -->
+  <div class="abs" style="left:110px;top:120px;width:700px" data-in="cut t15.57" data-out="fadeOut t18.25 .28">
+    <div class="kick"><i></i>Reason 03</div>
+    <div class="title shadow" style="margin-top:22px" data-split data-in="rise t15.6 .8 .12">No <span class="it goldg">visibility.</span></div>
+  </div>
+  <div class="panel" style="left:110px;top:430px;width:660px;height:450px;padding:30px 34px" data-in="fadeUp w45-0.2" data-out="fadeOut t18.25 .28">
+    <div style="display:flex;justify-content:space-between;align-items:center"><div class="lbl">Your book · last 30 days</div><div class="stamp" data-in="scaleIn w47-0.05 .35" data-sfx="hit">Never pushed</div></div>
+    <div class="chart" style="margin-top:22px">
+      <svg width="590" height="210" viewBox="0 0 590 210" style="position:absolute;left:0;top:0">
+        <path d="M0 196 L60 194 L120 197 L180 195 L240 198 L300 196 L360 197 L420 195 L480 197 L540 196 L590 197" stroke="#E0574C" stroke-width="3" fill="none" pathLength="1" stroke-dasharray="1" data-in="draw w45 1.4"/>
+        <path d="M0 196 L60 194 L120 197 L180 195 L240 198 L300 196 L360 197 L420 195 L480 197 L540 196 L590 197 L590 210 L0 210 Z" fill="rgba(224,87,76,.12)" data-in="fadeIn w45+0.8"/>
+      </svg>
+      <div class="abs lbl" style="left:16px;top:16px;color:rgba(244,238,227,.35)">Sales</div>
+    </div>
+    <div style="display:flex;gap:14px;margin-top:22px">
+      <div class="metric" data-in="fadeUp w46-0.1 .6"><div class="lbl">Impressions</div><b id="imp">0</b></div>
+      <div class="metric" data-in="fadeUp w46+0.05 .6"><div class="lbl">Algorithm boost</div><b style="color:var(--red)">Off</b></div>
+    </div>
+  </div>
+
+  <!-- INVISIBLE -->
+  <div class="abs" style="left:110px;top:300px;width:800px" data-in="cut t18.53" data-out="cutOut t20.07">
+    <div class="serif shadow" style="font-size:72px;line-height:1" data-in="fadeUp w50-0.1 .6">So it stays</div>
+    <div class="serif it shadow" style="font-size:190px;line-height:1;margin-top:10px" id="inv" data-in="fadeUp w52-0.1 .7">invisible.</div>
+  </div>
+
+  <!-- GOOD NEWS -->
+  <div class="abs" style="left:110px;top:330px;width:900px" data-in="cut t20.07" data-out="fadeOut t21.42 .25">
+    <div class="kick" data-in="fadeIn w54-0.05"><i data-in="growX w54-0.05"></i>But here's the</div>
+    <div class="serif it goldg" style="font-size:210px;line-height:1;margin-top:18px;padding-bottom:20px" data-split data-in="rise w58-0.1 .9 .12">good news.</div>
+  </div>
+  <div class="sweep" id="sw1"></div>
+
+  <!-- INTRO -->
+  <div class="abs" style="left:110px;top:120px" data-in="fadeIn w60-0.1 .5" data-out="fadeOut t22.95 .3"><div class="kick"><i></i>Hey, I'm</div></div>
+  <div class="abs" style="left:110px;top:720px;width:820px" data-in="cut t22.99" data-out="fadeOut t24.95 .3">
+    <div style="height:1.5px;width:520px;background:var(--gold);transform-origin:left" data-in="growX w65-0.1 .9"></div>
+    <div style="display:flex;align-items:baseline;gap:18px;margin-top:20px">
+      <div class="serif shadow" style="font-size:92px;line-height:1" data-in="fadeUp w66-0.1 .7">Amazon KDP</div>
+      <div class="serif it goldg" style="font-size:92px;line-height:1;padding-right:10px" data-in="fadeUp w68-0.1 .7">expert.</div>
+    </div>
+  </div>
+
+  <!-- I FIX ALL THREE -->
+  <div class="abs" style="left:110px;top:150px;width:720px" data-in="fadeIn t25.0 .3" data-out="fadeOut t26.0 .17">
+    <div class="title shadow" data-split data-in="rise w69-0.05 .7 .1">I fix <span class="it goldg">all three.</span></div>
+    <div style="margin-top:46px">
+      <div class="li" data-in="slideL t25.05 .6"><div class="n">01</div><div class="t">Weak formatting<div class="st" id="st1"></div></div><div class="m"><span class="mark x" id="x1">✕</span><span class="mark ok" id="ok1" style="opacity:0">✓</span></div></div>
+      <div class="li" data-in="slideL t25.11 .6"><div class="n">02</div><div class="t">Poor SEO<div class="st" id="st2"></div></div><div class="m"><span class="mark x" id="x2">✕</span><span class="mark ok" id="ok2" style="opacity:0">✓</span></div></div>
+      <div class="li" data-in="slideL t25.17 .6"><div class="n">03</div><div class="t">No visibility<div class="st" id="st3"></div></div><div class="m"><span class="mark x" id="x3">✕</span><span class="mark ok" id="ok3" style="opacity:0">✓</span></div></div>
+    </div>
+  </div>
+
+  <!-- WHAT YOU GET header (26.17 - 37.37) -->
+  <div class="abs" style="left:110px;top:110px" data-in="fadeIn t26.17 .4" data-out="fadeOut t37.09 .28">
+    <div class="kick"><i></i>What you get <span style="color:var(--muted);letter-spacing:.2em;margin-left:10px" id="svcn">01 / 04</span></div>
+  </div>
+
+  <!-- SVC 01 formatting -->
+  <div class="abs" style="left:110px;top:160px;width:720px" data-in="cut t26.17" data-out="fadeOut t28.69 .28">
+    <div class="title shadow" style="font-size:104px" data-split data-in="rise w73-0.05 .8 .12">Professional <span class="it goldg">formatting</span></div>
+    <div style="display:flex;gap:10px;margin-top:20px"><span class="chip good" data-in="scaleIn w76-0.05">Kindle</span><span class="chip good" data-in="scaleIn w78-0.05">Paperback</span></div>
+  </div>
+  <div class="panel" style="left:110px;top:470px;width:660px;height:420px" data-in="fadeUp w74-0.1" data-out="fadeOut t28.69 .28">
+    <div class="reader" style="left:34px;top:40px"><div class="scr" style="padding:18px 22px">
+      <div class="guide ok" style="left:22px"></div><div class="guide ok" style="left:184px"></div>
+      <div style="font:400 26px/1 InstrSerif;color:#2b2620;margin-bottom:6px">Chapter One</div>
+      <div id="f1lines"></div></div></div>
+    <div class="spread" style="left:300px;top:70px">
+      <div class="pg l"><div class="guide ok" style="left:18px"></div><div class="guide ok" style="right:18px;left:auto"></div><div id="f1pl"></div></div>
+      <div class="pg r"><div class="guide ok" style="left:18px"></div><div class="guide ok" style="right:18px;left:auto"></div><div id="f1pr"></div></div>
+    </div>
+    <div class="abs chip good" style="left:300px;top:330px" data-in="scaleIn w76+0.1" data-sfx="tick">✓ Clean margins</div>
+    <div class="abs chip good" style="left:478px;top:330px" data-in="scaleIn w78+0.1" data-sfx="tick">✓ Perfect layout</div>
+  </div>
+
+  <!-- SVC 02 SEO -->
+  <div class="abs" style="left:110px;top:160px;width:720px" data-in="cut t28.97" data-out="fadeOut t32.59 .28">
+    <div class="title shadow" style="font-size:118px" data-split data-in="rise w79-0.1 .8 .12">Full <span class="it goldg">SEO.</span></div>
+  </div>
+  <div class="panel" style="left:110px;top:400px;width:660px;height:480px;padding:30px 34px" data-in="fadeUp w81-0.15" data-out="fadeOut t32.59 .28">
+    <div class="row" data-in="fadeUp w83-0.15 .6"><div class="k">Keywords</div><div class="v">
+      <span class="chip good" data-in="scaleIn w83">✓ cozy mystery series</span><span class="chip good" data-in="scaleIn w83+0.08">✓ small town romance</span><span class="chip good" data-in="scaleIn w83+0.16">✓ book club picks</span></div></div>
+    <div class="row" data-in="fadeUp w84-0.12 .6"><div class="k">Category</div><div class="v">Kindle Store › Mystery › Cozy <span class="mark ok" style="margin-left:auto" data-in="scaleIn w84+0.2" data-sfx="tick">✓</span></div></div>
+    <div class="row" data-in="fadeUp w86-0.15 .6"><div class="k">Description</div><div class="v" style="color:var(--muted)">Hook · benefits · reviews<span class="mark ok" style="margin-left:auto" data-in="scaleIn w86+0.15" data-sfx="tick">✓</span></div></div>
+    <div style="display:flex;align-items:center;gap:16px;margin-top:22px;padding:16px;border-radius:14px;background:rgba(227,182,108,.10);border:1px solid rgba(227,182,108,.35)" data-in="fadeUp w86+0.35 .7" data-sfx="ding">
+      <div style="font:400 54px InstrSerif;color:var(--gold)">#1</div>
+      <div><div class="lbl" style="color:var(--gold2)">Search result</div><div style="font:500 20px Sans;margin-top:4px">Your book, right at the top</div></div>
+    </div>
+  </div>
+
+  <!-- SVC 03 cover -->
+  <div class="abs" style="left:110px;top:160px;width:720px" data-in="cut t32.87" data-out="fadeOut t34.45 .28">
+    <div class="title shadow" style="font-size:104px" data-split data-in="rise t32.92 .8 .1">Book cover <span class="it goldg">design</span></div>
+  </div>
+  <div class="abs persp" style="left:300px;top:450px" data-in="blurIn w90-0.1 1.0" data-out="fadeOut t34.45 .28">
+    <div class="b3" id="book1">
+      <div class="bk"></div><div class="sp"></div><div class="pgs"></div>
+      <div class="f" style="background:linear-gradient(165deg,#13314a 0%,#0b1824 55%,#05090f 100%)">
+        <div class="abs" style="left:-60px;top:70px;width:370px;height:370px;border-radius:50%;background:radial-gradient(circle,rgba(246,217,160,.85),rgba(227,182,108,.25) 35%,transparent 65%)"></div>
+        <div class="abs" style="left:22px;top:24px;font:600 10px Sans;letter-spacing:.32em;color:rgba(246,217,160,.85)">A NOVEL</div>
+        <div class="abs serif" style="left:22px;right:18px;bottom:64px;font-size:50px;line-height:.92;color:#fff">The Quiet <span class="it" style="color:#F6D9A0">Lighthouse</span></div>
+        <div class="abs" style="left:22px;bottom:28px;font:600 11px Sans;letter-spacing:.28em;color:rgba(255,255,255,.75)">AUTHOR NAME</div>
+        <div class="abs" id="glint" style="top:-20%;bottom:-20%;width:80px;left:-120px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);transform:rotate(16deg)"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SVC 04 publish -->
+  <div class="abs" style="left:110px;top:160px;width:720px" data-in="cut t34.73" data-out="fadeOut t37.09 .28">
+    <div class="title shadow" style="font-size:96px" data-split data-in="rise w93-0.1 .8 .1">Published on <span class="it goldg">Amazon KDP</span></div>
+  </div>
+  <div class="panel" style="left:110px;top:440px;width:660px;height:420px;padding:30px 34px" data-in="fadeUp w93" data-out="fadeOut t37.09 .28">
+    <div style="display:flex;gap:20px;align-items:center">
+      <div style="width:70px;height:104px;border-radius:2px 6px 6px 2px;background:linear-gradient(165deg,#13314a,#05090f);position:relative;overflow:hidden"><div class="abs serif" style="left:7px;bottom:12px;font-size:15px;line-height:.95;color:#fff">The Quiet <i style="color:#F6D9A0">Lighthouse</i></div></div>
+      <div><div style="font:400 34px Serif">The Quiet Lighthouse</div><div class="lbl" style="margin-top:6px">Kindle eBook · Paperback</div></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:26px;flex-wrap:wrap">
+      <span class="chip good">✓ Formatting</span><span class="chip good">✓ SEO</span><span class="chip good">✓ Cover</span>
+    </div>
+    <div style="margin-top:26px;height:10px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden"><div style="height:100%;width:100%;background:linear-gradient(90deg,#B9843A,#F6D9A0);transform-origin:left" data-in="growX w95 1.3"></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:22px">
+      <div class="lbl" id="pubtxt">Publishing…</div>
+      <div class="chip good" style="font-size:20px;padding:10px 20px" data-in="scaleIn w97+0.2" data-sfx="ding">● LIVE</div>
+    </div>
+  </div>
+
+  <!-- READY TO SELL -->
+  <div class="abs" style="left:110px;top:250px;width:820px" data-in="cut t38.69" data-out="fadeOut t40.77 .28">
+    <div class="serif shadow" style="font-size:76px;line-height:1" data-split data-in="rise w104-0.05 .7 .09">I make your story</div>
+    <div class="serif it goldg" style="font-size:172px;line-height:1;margin-top:12px;padding-bottom:22px;white-space:nowrap" data-split data-in="rise w108-0.1 .9 .1">ready to sell.</div>
+    <div style="display:flex;gap:10px;margin-top:6px"><span class="chip good" data-in="scaleIn w110+0.05">✓ Formatted</span><span class="chip good" data-in="scaleIn w110+0.12">✓ Optimized</span><span class="chip good" data-in="scaleIn w110+0.19">✓ Published</span></div>
+  </div>
+
+  <!-- CTA button during "Message me today" -->
+  <div class="abs" style="left:96px;top:690px" data-in="fadeUp w113-0.05 .6" data-out="fadeOut t42.0 .3">
+    <div class="cta" id="ctab">✉&nbsp; Contact me</div>
+  </div>
+
+  <div class="abs" style="left:0;right:0;top:745px;text-align:center" data-out="fadeOut t44.35 .45">
+    <div class="serif goldg" style="font-size:250px;line-height:1;padding-bottom:20px;filter:drop-shadow(0 10px 40px rgba(0,0,0,.7))" data-in="track w120-0.04 .85">Bestseller</div>
+  </div>
+  <div class="sweep" id="sw2"></div>
+
+  <!-- END CARD -->
+  <div class="abs" style="inset:0;background:radial-gradient(70% 70% at 50% 50%,rgba(8,9,11,.55),rgba(8,9,11,.85))" data-in="fadeIn t44.2 .9"></div>
+  <div class="abs" style="left:0;right:0;top:300px;text-align:center">
+    <div class="kick" style="justify-content:center" data-in="fadeIn t44.55 .8"><i></i>Amazon KDP Expert<i style="transform-origin:right"></i></div>
+    <div class="serif" style="font-size:190px;line-height:1;margin-top:26px" data-in="track t44.6 1.3">Mr. Ahmad</div>
+    <div style="font:500 22px Sans;letter-spacing:.24em;color:var(--muted);margin-top:30px" data-in="fadeIn t45.2 .8">FORMATTING · SEO · COVER DESIGN · PUBLISHING</div>
+    <div style="margin-top:54px" data-in="fadeUp t45.5 .8"><div class="cta" style="font-size:30px">Message me today &nbsp;→</div></div>
+  </div>
+
+  <div id="cap"></div>
+</div>
+
+<script src="engine.js"></script>
+<script>
+const EDL = __EDL__;
+const WORDS = EDL.words;
+E.init(WORDS);
+let seed = 5; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+// ---------- procedural content ----------
+function lines(el, n, opts) {
+  let h = '';
+  for (let i = 0; i < n; i++) {
+    const w = opts.w ? opts.w(i) : 100;
+    h += `<div class="ln" style="width:${w}%;${opts.style ? opts.style(i) : ''}"></div>`;
+  }
+  document.getElementById(el).innerHTML = h;
+}
+// broken: ragged, misaligned, overflowing
+lines('r1lines', 22, {w: i => 55 + rnd() * 75, style: i => `margin-left:${[44, 50, 30, 46, 70, 44][i % 6]}px;${i === 7 ? 'margin-top:26px;' : ''}${i % 5 === 3 ? 'background:#E0574C;' : ''}`});
+lines('r1pl', 13, {w: i => 40 + rnd() * 70, style: i => `margin-left:${28 + rnd() * 30}px`});
+lines('r1pr', 13, {w: i => 60 + rnd() * 60, style: i => `margin-left:${-8 + rnd() * 18}px;${i === 4 ? 'margin-top:30px;' : ''}`});
+// fixed: justified, even
+lines('f1lines', 20, {w: i => (i % 7 === 6 ? 62 : 100)});
+lines('f1pl', 12, {w: i => (i % 6 === 5 ? 58 : 100)});
+lines('f1pr', 12, {w: i => (i % 6 === 5 ? 70 : 100)});
+// jittering broken lines while reason 01 is on screen
+const brokenLines = [...document.querySelectorAll('#r1lines .ln, #r1pr .ln')];
+const base = brokenLines.map(l => parseFloat(l.style.marginLeft));
+E.ticks.push(t => {
+  if (t < 5 || t > 9) return;
+  const k = Math.floor(t * 6);
+  brokenLines.forEach((l, i) => { l.style.transform = `translateX(${((k * 7 + i * 13) % 9) - 4}px)`; });
+});
+// cutaway covers grid
+const palettes = [['#2b3a55', '#e8a87c'], ['#3d2b45', '#f2c0a2'], ['#1f3b34', '#d9c27a'], ['#4a2328', '#efd2b0'], ['#202a3a', '#9ec5d8'], ['#3a3026', '#e9d8b6'], ['#283328', '#c6d8a0'], ['#33223a', '#f1a7b8']];
+const titles = ['The Last Summer', 'Midnight Garden', 'Silent Waters', 'Echoes', 'The Long Road', 'Paper Moons', 'Wildflower', 'Northern Lights', 'The Glass House', 'After the Rain', 'Small Mercies', 'Golden Hour'];
+let gh = '<div id="gridIn" style="position:absolute;left:150px;top:0;display:grid;grid-template-columns:repeat(6,218px);gap:44px 46px">';
+for (let i = 0; i < 48; i++) {
+  const [c1, c2] = palettes[i % 8];
+  gh += `<div class="cover" style="background:linear-gradient(160deg,${c1},#0b0d10)"><div class="abs" style="left:-40px;bottom:-40px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,${c2}55,transparent 65%)"></div><div class="ca">BESTSELLING AUTHOR</div><div class="ct">${titles[i % 12]}</div></div>`;
+}
+document.getElementById('grid').innerHTML = gh + '</div>';
+const gridIn = document.getElementById('gridIn');
+E.ticks.push(t => { const p = (t - 13.57) / 1.2; gridIn.style.transform = `translateY(${-80 - E.inout(Math.max(0, Math.min(1, p))) * 900}px)`; });
+
+// ---------- hook karaoke emphasis ----------
+const hk = [document.getElementById('hk1'), ...document.querySelectorAll('#hk2 > span')];
+E.ticks.push(t => {
+  const on = [WORDS[0].T, WORDS[3].T, WORDS[5].T];
+  hk.forEach((el, i) => { el.style.opacity = t < 1.81 ? (0.6 + 0.4 * E.ease((t - on[i] + .05) / .3)) : 1; });
+});
+// search typing + caret
+const q1 = document.getElementById('q1'), c1 = document.getElementById('c1');
+E.ticks.push(t => {
+  const s = 'my book', t0 = WORDS[29].T;
+  q1.textContent = s.slice(0, Math.max(0, Math.floor((t - t0) * 14)));
+  c1.style.opacity = Math.floor(t * 2) % 2 ? 1 : 0;
+});
+// impressions counter stuck at 0 with a flicker
+const imp = document.getElementById('imp');
+E.ticks.push(t => { imp.textContent = (t > WORDS[46].T && t < WORDS[46].T + .8) ? String(Math.floor((t * 37) % 3)) : '0'; });
+// invisible: letters dissolve while spoken
+const inv = document.getElementById('inv');
+inv.innerHTML = 'invisible.'.split('').map(c => `<span style="display:inline-block">${c}</span>`).join('');
+const invL = [...inv.children];
+E.ticks.push(t => {
+  const t0 = WORDS[53].T;
+  invL.forEach((s, i) => { const k = E.ease((t - t0 - i * .06) / .5); s.style.opacity = 1 - .9 * k; s.style.filter = `blur(${k * 8}px)`; s.style.transform = `translateY(${-k * 10}px)`; });
+});
+// I fix all three: crosses -> checks on "fix", "all", "three"
+[[70, 1], [71, 2], [72, 3]].forEach(([wi, n]) => {
+  const t0 = WORDS[wi].T;
+  E.anim(document.getElementById('x' + n), 'fadeOut', t0, .25, true);
+  E.anim(document.getElementById('ok' + n), 'scaleIn', t0 + .05, .45);
+  E.CUES.push({t: t0, type: 'tick'});
+});
+['st1', 'st2', 'st3'].forEach((id, i) => {
+  const el = document.getElementById(id);
+  el.animate([{transform: 'scaleX(0)'}, {transform: 'scaleX(1)'}], {duration: 400, delay: (25.2 + i * .06) * 1000, fill: 'both', easing: 'cubic-bezier(.65,0,.35,1)'});
+  el.animate([{opacity: 1}, {opacity: 0}], {duration: 250, delay: WORDS[70 + i].T * 1000, fill: 'forwards'});
+});
+// service counter
+const svcn = document.getElementById('svcn');
+E.ticks.push(t => { svcn.textContent = t < 28.97 ? '01 / 04' : t < 32.87 ? '02 / 04' : t < 34.73 ? '03 / 04' : '04 / 04'; });
+// 3D book turn + glint
+const book1 = document.getElementById('book1'), glint = document.getElementById('glint');
+E.ticks.push(t => {
+  const p = (t - 32.9) / 1.8;
+  book1.style.transform = `rotateY(${-38 + 26 * E.inout(p)}deg) rotateX(4deg)`;
+  glint.style.left = (-120 + E.inout((t - 33.9) / .8) * 420) + 'px';
+});
+// publish label
+const pubtxt = document.getElementById('pubtxt');
+E.ticks.push(t => { pubtxt.textContent = t > WORDS[97].T + .2 ? 'Live on Amazon KDP' : 'Publishing…'; });
+// CTA press
+const ctab = document.getElementById('ctab');
+E.ticks.push(t => { const k = Math.max(0, 1 - Math.abs(t - (WORDS[112].T + .2)) / .12); ctab.style.transform = `scale(${1 - .05 * k})`; });
+// light sweeps
+[['sw1', 20.12], ['sw2', 43.2]].forEach(([id, t0]) => {
+  document.getElementById(id).animate([{left: '-700px'}, {left: '2200px'}], {duration: 1100, delay: t0 * 1000, fill: 'both', easing: 'cubic-bezier(.65,0,.35,1)'});
+  E.CUES.push({t: t0, type: 'shimmer'});
+});
+
+// ---------- captions: short phrases, active word highlighted ----------
+const chunks = []; let cur = [];
+WORDS.forEach((w, i) => {
+  cur.push(i);
+  const end = /[.,]$/.test(w.w) || cur.length >= 5;
+  if (end) { chunks.push(cur); cur = []; }
+});
+if (cur.length) chunks.push(cur);
+const HOT = /^(sell|three|weak|formatting|SEO|invisible|visibility|good|news|Ahmad|KDP|expert|all|Professional|Full|cover|publish|words|ready|today|bestseller)/i;
+const capEl = document.getElementById('cap');
+const NOCAP = [[13.57, 14.75], [43.1, 99]];
+E.ticks.push(t => {
+  let html = '';
+  if (!NOCAP.some(([a, b]) => t >= a && t < b)) {
+    const ch = chunks.find((c, k) => { const s = WORDS[c[0]].T - .08, e = (chunks[k + 1] ? WORDS[chunks[k + 1][0]].T - .08 : WORDS[c[c.length - 1]].T + .6); return t >= s && t < e; });
+    if (ch) html = ch.map(i => { const w = WORDS[i]; const on = t >= w.T - .03; const hot = on && HOT.test(w.w.replace(/[^A-Za-z]/g, ''));
+      return `<span class="${hot ? 'hot' : on ? 'on' : ''}">${w.w}</span>`; }).join(' ');
+  }
+  capEl.innerHTML = html;
+});
+
+E.bind(document.getElementById('back'));
+E.bind(document.getElementById('front'));
+window.CUES = E.CUES;
+window.renderLayer = function (t, layer) {
+  document.getElementById('back').style.visibility = layer === 'back' ? 'visible' : 'hidden';
+  document.getElementById('front').style.visibility = layer === 'front' ? 'visible' : 'hidden';
+  E.renderAt(t);
+};
+window.ready = document.fonts.ready.then(() => { document.getAnimations().forEach(a => a.pause()); E.renderAt(0); return true; });
+</script>
+</body></html>

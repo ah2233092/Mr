@@ -14,7 +14,7 @@ H = W * 9 // 16
 os.makedirs(out, exist_ok=True)
 so = ort.SessionOptions(); so.intra_op_num_threads = 4
 sess = ort.InferenceSession(model, so, providers=["CPUExecutionProvider"])
-cmd = ["ffmpeg", "-v", "error", "-ss", ss] + (["-t", dur] if dur else []) + ["-i", vid, "-vf", f"scale={W}:{H}", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"]
+cmd = ["ffmpeg", "-v", "error", "-ss", ss] + (["-t", dur] if dur else []) + ["-i", vid, "-vf", os.environ.get("VF", "") + f"scale={W}:{H}", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"]
 p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 rec = [np.zeros([1, 1, 1, 1], dtype=np.float32)] * 4
 dr = np.array([0.25 if W <= 1920 else 0.125], dtype=np.float32)
