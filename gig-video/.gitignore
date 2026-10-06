@@ -2,3 +2,4 @@ src/
 analysis/*.png
 analysis/*.jpg
 analysis/*.wav
+analysis/matte_test/
