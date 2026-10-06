@@ -171,13 +171,20 @@ def rim_light(a, color=(1.0, 0.74, 0.48), strength=0.32, dx=26):
     return rim[..., None] * np.array(color, np.float32) * strength
 
 
+def _soft(x, sigma, k):
+    """gaussian blur computed at 1/k resolution (identical look for wide blurs, far cheaper)"""
+    h, w = x.shape[:2]
+    small = cv2.resize(x, (w // k, h // k), interpolation=cv2.INTER_AREA)
+    return cv2.resize(cv2.GaussianBlur(small, (0, 0), sigma / k), (w, h), interpolation=cv2.INTER_LINEAR)
+
+
 def composite(fg, a, bg, wrap=0.22):
     inv = 1 - a
-    occl = cv2.GaussianBlur(a, (0, 0), 70)                        # soft ambient occlusion on the wall
+    occl = _soft(a, 70, 8)                                        # soft ambient occlusion on the wall
     bg = bg * (1 - occl[..., None] * 0.28)
     out = fg * a[..., None] + bg * inv[..., None]
-    bgb = cv2.GaussianBlur(bg, (0, 0), 24)
-    edge = cv2.GaussianBlur(inv, (0, 0), 14) * a
+    bgb = _soft(bg, 24, 4)
+    edge = _soft(inv, 14, 2) * a
     out = out + bgb * edge[..., None] * wrap                    # light wrap
     return out
 

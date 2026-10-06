@@ -4,6 +4,7 @@
 usage: python3 compose.py <a> <b> [--preview gfxdir outdir]   (preview: half-res jpgs)"""
 import glob, json, os, sys, time
 import cv2, numpy as np
+cv2.setNumThreads(2)
 sys.path.insert(0, os.path.dirname(__file__))
 import look
 
@@ -26,6 +27,32 @@ PH, PW = plate.shape[:2]
 yy, xx = np.mgrid[0:OH, 0:OW].astype(np.float32)
 VIG = np.clip(1 - 0.30 * (((xx - OW * .56) / (OW * .78)) ** 2 + ((yy - OH * .5) / (OH * .9)) ** 2), 0.55, 1)[..., None]
 del yy, xx
+VIG8 = np.repeat((VIG * 255).astype(np.uint8), 3, axis=2)
+# film curve as per-channel LUTs: teal shadows, warm highlights, soft S
+_x = np.arange(256, dtype=np.float32) / 255
+_lut = []
+for c, (sh, hi) in enumerate(((0.035, -0.03), (0.01, 0.01), (-0.03, 0.03))):     # B, G, R order
+    y = _x + np.clip(0.35 - _x, 0, 0.35) * sh + np.clip(_x - 0.55, 0, 0.45) * hi
+    y = np.clip(y, 0, 1); y = y * y * (3 - 2 * y) * 0.22 + y * 0.78
+    _lut.append(np.clip(y * 255 + .5, 0, 255).astype(np.uint8))
+LUT = np.stack(_lut, 1).reshape(1, 256, 3)
+_g = np.random.default_rng(1)
+GRAIN = []
+for _ in range(6):
+    g = cv2.resize(_g.standard_normal((OH // 2, OW // 2)).astype(np.float32), (OW, OH)) * 3.0
+    gi = np.repeat(np.clip(np.round(g), -12, 12).astype(np.int16)[..., None], 3, axis=2)
+    GRAIN.append((np.clip(gi, 0, None).astype(np.uint8), np.clip(-gi, 0, None).astype(np.uint8)))
+
+
+def blend_into(dst, rgb, a):
+    """alpha-blend only inside the bounding box of the non-transparent pixels"""
+    x, y, w, h = cv2.boundingRect((a > 0.002).astype(np.uint8))
+    if w == 0:
+        return dst
+    sl = (slice(y, y + h), slice(x, x + w))
+    aa = a[sl][..., None]
+    dst[sl] = dst[sl] * (1 - aa) + rgb[sl] * aa
+    return dst
 
 
 def smoothstep(x):
@@ -94,14 +121,13 @@ def render(n):
     M = np.float32([[bs, 0, W / 2 - bs * PW / 2 + px], [0, bs, H / 2 - bs * PH / 2 + py]]) * SCALE
     bg = cv2.warpAffine(plate, M, (OW, OH), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
     expo, sat, tint = mood(t)
-    lum = bg.mean(2, keepdims=True)
-    bg = (lum + (bg - lum) * sat) * tint * expo
-    # breathing practical lights (very subtle)
-    bg *= 1 + 0.015 * np.sin(t * 1.3)
+    k = expo * (1 + 0.015 * np.sin(t * 1.3))               # mood + breathing practicals, one matrix
+    Mc = (np.diag(tint) @ (sat * np.eye(3) + (1 - sat) / 3 * np.ones((3, 3)))) * k
+    bg = cv2.transform(bg, Mc.astype(np.float32))
     # ---- back graphics
     brgb, ba = load_rgba(f"{GFX}/back_{n:05d}.png")
     if brgb is not None:
-        bg = bg * (1 - ba[..., None]) + brgb * ba[..., None]
+        bg = blend_into(bg, brgb, ba)
     out = bg
     # ---- talent
     if cam:
@@ -120,33 +146,29 @@ def render(n):
     # ---- front graphics
     frgb, fa = load_rgba(f"{GFX}/front_{n:05d}.png")
     if frgb is not None:
-        out = out * (1 - fa[..., None]) + frgb * fa[..., None]
+        out = blend_into(out, frgb, fa)
     # ---- film finish: halation, gentle curve, teal shadows / warm highlights, vignette, grain
     q = cv2.resize(out, (OW // 4, OH // 4), interpolation=cv2.INTER_AREA)
     hl = np.clip(q - 0.72, 0, None)
     hal = cv2.resize(cv2.GaussianBlur(hl, (0, 0), 10), (OW, OH)) * np.array([1.0, 0.55, 0.3], np.float32)
-    out = out + hal * 0.35
-    l = out.mean(2, keepdims=True)
-    out = out + (np.clip(0.35 - l, 0, 0.35) * np.array([-0.03, 0.01, 0.035], np.float32)) \
-              + (np.clip(l - 0.55, 0, 0.45) * np.array([0.03, 0.01, -0.03], np.float32))
-    out = np.clip(out, 0, 1)
-    out = out * out * (3 - 2 * out) * 0.22 + out * 0.78     # soft S
-    out = out * VIG
-    rng = np.random.default_rng(n)
-    g = rng.standard_normal((OH // 2, OW // 2)).astype(np.float32)
-    g = cv2.resize(g, (OW, OH), interpolation=cv2.INTER_LINEAR)
-    out = out + g[..., None] * 0.012
-    return np.clip(out, 0, 1)
+    cv2.scaleAdd(hal, 0.35, out, dst=out)
+    o8 = cv2.convertScaleAbs(cv2.cvtColor(out, cv2.COLOR_RGB2BGR), alpha=255)
+    o8 = cv2.LUT(o8, LUT)
+    o8 = cv2.multiply(o8, VIG8, scale=1 / 255)
+    gp, gn = GRAIN[n % len(GRAIN)]
+    o8 = cv2.subtract(cv2.add(o8, gp), gn)
+    return o8
 
 
 t0 = time.time()
 for j, n in enumerate(frames):
-    img = render(n)
-    o8 = (img[:, :, ::-1] * 255 + 0.5).astype(np.uint8)
+    if not preview and os.path.exists(f"{OUT}/c_{n:05d}.jpg"):
+        continue
+    o8 = render(n)
     if preview:
         cv2.imwrite(f"{OUT}/c_{n:05d}.jpg", o8, [cv2.IMWRITE_JPEG_QUALITY, 90])
     else:
-        cv2.imwrite(f"{OUT}/c_{n:05d}.png", o8, [cv2.IMWRITE_PNG_COMPRESSION, 1])
+        cv2.imwrite(f"{OUT}/c_{n:05d}.jpg", o8, [cv2.IMWRITE_JPEG_QUALITY, 97])
     if j % 25 == 0:
         print(n, f"{(time.time() - t0) / (j + 1):.2f}s/frame", flush=True)
 print("done")
