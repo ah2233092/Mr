@@ -233,16 +233,16 @@ for t0 in (3.57, 8.75, 13.57, 15.57, 26.17, 28.97, 32.87, 34.73, 38.69):
     add(sfx, whoosh(0.55, up=True), t0 - 0.30, 0.20)
 add(sfx, impact(0.8), WORDS[9]["T"] - 0.15, 0.26)                       # big "3"
 add(sfx, impact(0.7), WORDS[42]["T"] - 0.25, 0.22)                      # "03"
-add(sfx, riser(1.5), GN - 1.5, 0.24)                                    # into the good news
-add(sfx, shimmer(1.6), GN + 0.05, 0.5)
+add(sfx, riser(1.5), GN - 1.5, 0.12)                                    # into the good news
+add(sfx, shimmer(1.6), GN + 0.05, 0.22)
 add(sfx, impact(0.6), WORDS[64]["T"] - 0.15, 0.16)                      # "Ahmad"
 for k in range(7):                                                      # typing "my book"
     add(sfx, key_click(), WORDS[29]["T"] + k / 14, 0.18, pan=-0.3)
-add(sfx, riser(1.1), WORDS[120]["T"] - 1.1, 0.22)
-add(sfx, impact(1.0), WORDS[120]["T"] - 0.04, 0.36)                     # Bestseller
-add(sfx, shimmer(2.0), WORDS[120]["T"], 0.6)
+add(sfx, riser(1.1), WORDS[120]["T"] - 1.1, 0.09)
+add(sfx, impact(1.0), WORDS[120]["T"] + 0.30, 0.24)                     # Bestseller
+add(sfx, shimmer(2.0), WORDS[120]["T"] + 0.3, 0.28)
 add(sfx, whoosh(0.9, up=False), END + 0.45, 0.12)
-SFX = {"tick": (tick(), 0.16), "ding": (ding(), 0.07), "hit": (impact(0.5), 0.2), "shimmer": (shimmer(), 0.35)}
+SFX = {"tick": (tick(), 0.12), "ding": (ding(), 0.06), "hit": (impact(0.5), 0.16), "shimmer": (shimmer(), 0.18)}
 last = {}
 for c in sorted(json.load(open(sys.argv[1])), key=lambda c: c["t"]):
     if c["type"] not in SFX or c["t"] - last.get(c["type"], -9) < 0.12: continue
