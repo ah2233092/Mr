@@ -1,0 +1,1004 @@
+{
+ "duration": 60.826,
+ "voice": "am_michael:0.7,am_fenrir:0.3",
+ "lines": [
+  {
+   "i": 0,
+   "scene": "hook",
+   "text": "Your book could be perfect…",
+   "start": 0.35,
+   "end": 1.805
+  },
+  {
+   "i": 1,
+   "scene": null,
+   "text": "and still never sell a single copy.",
+   "start": 2.355,
+   "end": 4.599
+  },
+  {
+   "i": 2,
+   "scene": "twist",
+   "text": "Not because of your writing.",
+   "start": 5.399,
+   "end": 6.784
+  },
+  {
+   "i": 3,
+   "scene": null,
+   "text": "Because of everything around it.",
+   "start": 7.104,
+   "end": 8.766
+  },
+  {
+   "i": 4,
+   "scene": "problems",
+   "text": "A wrong margin gets it sent back.",
+   "start": 9.466,
+   "end": 11.322
+  },
+  {
+   "i": 5,
+   "scene": null,
+   "text": "A weak cover gets it skipped.",
+   "start": 11.662,
+   "end": 13.214
+  },
+  {
+   "i": 6,
+   "scene": null,
+   "text": "The wrong keywords bury it on page fifty.",
+   "start": 13.614,
+   "end": 15.863
+  },
+  {
+   "i": 7,
+   "scene": "turn",
+   "text": "So I handle all of it, in one place.",
+   "start": 16.713,
+   "end": 18.805
+  },
+  {
+   "i": 8,
+   "scene": "publish",
+   "text": "I publish your book on Amazon KDP, Kindle, paperback and hardcover.",
+   "start": 19.605,
+   "end": 24.45
+  },
+  {
+   "i": 9,
+   "scene": "format",
+   "text": "I format it so Amazon KDP approves it, not sends it back.",
+   "start": 24.95,
+   "end": 29.224
+  },
+  {
+   "i": 10,
+   "scene": "cover",
+   "text": "I design a cover that makes readers stop scrolling.",
+   "start": 29.724,
+   "end": 32.356
+  },
+  {
+   "i": 11,
+   "scene": "keywords",
+   "text": "I find the keywords that help readers find you on Amazon.",
+   "start": 32.856,
+   "end": 36.126
+  },
+  {
+   "i": 12,
+   "scene": "aplus",
+   "text": "And I build A+ Content that turns visitors into buyers.",
+   "start": 36.626,
+   "end": 40.198
+  },
+  {
+   "i": 13,
+   "scene": "proof",
+   "text": "I've published over 1,000 books on Amazon KDP, and I know what works.",
+   "start": 40.998,
+   "end": 46.352
+  },
+  {
+   "i": 14,
+   "scene": "close",
+   "text": "You wrote the book.",
+   "start": 47.152,
+   "end": 48.165
+  },
+  {
+   "i": 15,
+   "scene": null,
+   "text": "Let me take care of everything else.",
+   "start": 48.585,
+   "end": 50.508
+  },
+  {
+   "i": 16,
+   "scene": "cta",
+   "text": "Before you hit upload on Amazon KDP, send me your book details.",
+   "start": 51.358,
+   "end": 56.009
+  },
+  {
+   "i": 17,
+   "scene": null,
+   "text": "Only here on Fiverr.",
+   "start": 56.389,
+   "end": 57.626
+  }
+ ],
+ "words": [
+  {
+   "w": "Your",
+   "line": 0,
+   "start": 0.35,
+   "end": 0.53
+  },
+  {
+   "w": "book",
+   "line": 0,
+   "start": 0.53,
+   "end": 0.85
+  },
+  {
+   "w": "could",
+   "line": 0,
+   "start": 0.85,
+   "end": 1.01
+  },
+  {
+   "w": "be",
+   "line": 0,
+   "start": 1.01,
+   "end": 1.17
+  },
+  {
+   "w": "perfect…",
+   "line": 0,
+   "start": 1.17,
+   "end": 1.731
+  },
+  {
+   "w": "and",
+   "line": 1,
+   "start": 2.375,
+   "end": 2.615
+  },
+  {
+   "w": "still",
+   "line": 1,
+   "start": 2.615,
+   "end": 3.015
+  },
+  {
+   "w": "never",
+   "line": 1,
+   "start": 3.015,
+   "end": 3.335
+  },
+  {
+   "w": "sell",
+   "line": 1,
+   "start": 3.335,
+   "end": 3.575
+  },
+  {
+   "w": "a",
+   "line": 1,
+   "start": 3.575,
+   "end": 3.735
+  },
+  {
+   "w": "single",
+   "line": 1,
+   "start": 3.735,
+   "end": 4.135
+  },
+  {
+   "w": "copy.",
+   "line": 1,
+   "start": 4.135,
+   "end": 4.515
+  },
+  {
+   "w": "Not",
+   "line": 2,
+   "start": 5.419,
+   "end": 5.659
+  },
+  {
+   "w": "because",
+   "line": 2,
+   "start": 5.659,
+   "end": 5.979
+  },
+  {
+   "w": "of",
+   "line": 2,
+   "start": 5.979,
+   "end": 6.139
+  },
+  {
+   "w": "your",
+   "line": 2,
+   "start": 6.139,
+   "end": 6.299
+  },
+  {
+   "w": "writing.",
+   "line": 2,
+   "start": 6.299,
+   "end": 6.687
+  },
+  {
+   "w": "Because",
+   "line": 3,
+   "start": 7.124,
+   "end": 7.444
+  },
+  {
+   "w": "of",
+   "line": 3,
+   "start": 7.444,
+   "end": 7.684
+  },
+  {
+   "w": "everything",
+   "line": 3,
+   "start": 7.684,
+   "end": 8.164
+  },
+  {
+   "w": "around",
+   "line": 3,
+   "start": 8.164,
+   "end": 8.564
+  },
+  {
+   "w": "it.",
+   "line": 3,
+   "start": 8.564,
+   "end": 8.691
+  },
+  {
+   "w": "A",
+   "line": 4,
+   "start": 9.466,
+   "end": 9.566
+  },
+  {
+   "w": "wrong",
+   "line": 4,
+   "start": 9.566,
+   "end": 9.886
+  },
+  {
+   "w": "margin",
+   "line": 4,
+   "start": 9.886,
+   "end": 10.366
+  },
+  {
+   "w": "gets",
+   "line": 4,
+   "start": 10.366,
+   "end": 10.606
+  },
+  {
+   "w": "it",
+   "line": 4,
+   "start": 10.606,
+   "end": 10.766
+  },
+  {
+   "w": "sent",
+   "line": 4,
+   "start": 10.766,
+   "end": 11.086
+  },
+  {
+   "w": "back.",
+   "line": 4,
+   "start": 11.086,
+   "end": 11.145
+  },
+  {
+   "w": "A",
+   "line": 5,
+   "start": 11.662,
+   "end": 11.682
+  },
+  {
+   "w": "weak",
+   "line": 5,
+   "start": 11.682,
+   "end": 12.082
+  },
+  {
+   "w": "cover",
+   "line": 5,
+   "start": 12.082,
+   "end": 12.402
+  },
+  {
+   "w": "gets",
+   "line": 5,
+   "start": 12.402,
+   "end": 12.562
+  },
+  {
+   "w": "it",
+   "line": 5,
+   "start": 12.562,
+   "end": 12.722
+  },
+  {
+   "w": "skipped.",
+   "line": 5,
+   "start": 12.722,
+   "end": 13.129
+  },
+  {
+   "w": "The",
+   "line": 6,
+   "start": 13.614,
+   "end": 13.714
+  },
+  {
+   "w": "wrong",
+   "line": 6,
+   "start": 13.714,
+   "end": 13.954
+  },
+  {
+   "w": "keywords",
+   "line": 6,
+   "start": 13.954,
+   "end": 14.514
+  },
+  {
+   "w": "bury",
+   "line": 6,
+   "start": 14.514,
+   "end": 14.834
+  },
+  {
+   "w": "it",
+   "line": 6,
+   "start": 14.834,
+   "end": 14.994
+  },
+  {
+   "w": "on",
+   "line": 6,
+   "start": 14.994,
+   "end": 15.154
+  },
+  {
+   "w": "page",
+   "line": 6,
+   "start": 15.154,
+   "end": 15.554
+  },
+  {
+   "w": "fifty.",
+   "line": 6,
+   "start": 15.554,
+   "end": 15.764
+  },
+  {
+   "w": "So",
+   "line": 7,
+   "start": 16.713,
+   "end": 16.893
+  },
+  {
+   "w": "I",
+   "line": 7,
+   "start": 16.893,
+   "end": 17.053
+  },
+  {
+   "w": "handle",
+   "line": 7,
+   "start": 17.053,
+   "end": 17.453
+  },
+  {
+   "w": "all",
+   "line": 7,
+   "start": 17.453,
+   "end": 17.613
+  },
+  {
+   "w": "of",
+   "line": 7,
+   "start": 17.613,
+   "end": 17.773
+  },
+  {
+   "w": "it,",
+   "line": 7,
+   "start": 17.773,
+   "end": 17.933
+  },
+  {
+   "w": "in",
+   "line": 7,
+   "start": 17.933,
+   "end": 18.173
+  },
+  {
+   "w": "one",
+   "line": 7,
+   "start": 18.173,
+   "end": 18.413
+  },
+  {
+   "w": "place.",
+   "line": 7,
+   "start": 18.413,
+   "end": 18.742
+  },
+  {
+   "w": "I",
+   "line": 8,
+   "start": 19.605,
+   "end": 19.705
+  },
+  {
+   "w": "publish",
+   "line": 8,
+   "start": 19.705,
+   "end": 20.105
+  },
+  {
+   "w": "your",
+   "line": 8,
+   "start": 20.105,
+   "end": 20.265
+  },
+  {
+   "w": "book",
+   "line": 8,
+   "start": 20.265,
+   "end": 20.505
+  },
+  {
+   "w": "on",
+   "line": 8,
+   "start": 20.505,
+   "end": 20.665
+  },
+  {
+   "w": "Amazon",
+   "line": 8,
+   "start": 20.665,
+   "end": 21.225
+  },
+  {
+   "w": "KDP,",
+   "line": 8,
+   "start": 21.225,
+   "end": 22.425
+  },
+  {
+   "w": "Kindle,",
+   "line": 8,
+   "start": 22.425,
+   "end": 23.065
+  },
+  {
+   "w": "paperback",
+   "line": 8,
+   "start": 23.065,
+   "end": 23.705
+  },
+  {
+   "w": "and",
+   "line": 8,
+   "start": 23.705,
+   "end": 23.865
+  },
+  {
+   "w": "hardcover.",
+   "line": 8,
+   "start": 23.865,
+   "end": 24.343
+  },
+  {
+   "w": "I",
+   "line": 9,
+   "start": 24.95,
+   "end": 25.05
+  },
+  {
+   "w": "format",
+   "line": 9,
+   "start": 25.05,
+   "end": 25.45
+  },
+  {
+   "w": "it",
+   "line": 9,
+   "start": 25.45,
+   "end": 25.61
+  },
+  {
+   "w": "so",
+   "line": 9,
+   "start": 25.61,
+   "end": 25.77
+  },
+  {
+   "w": "Amazon",
+   "line": 9,
+   "start": 25.77,
+   "end": 26.33
+  },
+  {
+   "w": "KDP",
+   "line": 9,
+   "start": 26.33,
+   "end": 27.53
+  },
+  {
+   "w": "approves",
+   "line": 9,
+   "start": 27.53,
+   "end": 28.01
+  },
+  {
+   "w": "it,",
+   "line": 9,
+   "start": 28.01,
+   "end": 28.25
+  },
+  {
+   "w": "not",
+   "line": 9,
+   "start": 28.25,
+   "end": 28.49
+  },
+  {
+   "w": "sends",
+   "line": 9,
+   "start": 28.49,
+   "end": 28.81
+  },
+  {
+   "w": "it",
+   "line": 9,
+   "start": 28.81,
+   "end": 28.97
+  },
+  {
+   "w": "back.",
+   "line": 9,
+   "start": 28.97,
+   "end": 29.044
+  },
+  {
+   "w": "I",
+   "line": 10,
+   "start": 29.724,
+   "end": 29.824
+  },
+  {
+   "w": "design",
+   "line": 10,
+   "start": 29.824,
+   "end": 30.224
+  },
+  {
+   "w": "a",
+   "line": 10,
+   "start": 30.224,
+   "end": 30.384
+  },
+  {
+   "w": "cover",
+   "line": 10,
+   "start": 30.384,
+   "end": 30.704
+  },
+  {
+   "w": "that",
+   "line": 10,
+   "start": 30.704,
+   "end": 30.864
+  },
+  {
+   "w": "makes",
+   "line": 10,
+   "start": 30.864,
+   "end": 31.104
+  },
+  {
+   "w": "readers",
+   "line": 10,
+   "start": 31.104,
+   "end": 31.504
+  },
+  {
+   "w": "stop",
+   "line": 10,
+   "start": 31.504,
+   "end": 31.824
+  },
+  {
+   "w": "scrolling.",
+   "line": 10,
+   "start": 31.824,
+   "end": 32.232
+  },
+  {
+   "w": "I",
+   "line": 11,
+   "start": 32.856,
+   "end": 32.956
+  },
+  {
+   "w": "find",
+   "line": 11,
+   "start": 32.956,
+   "end": 33.276
+  },
+  {
+   "w": "the",
+   "line": 11,
+   "start": 33.276,
+   "end": 33.356
+  },
+  {
+   "w": "keywords",
+   "line": 11,
+   "start": 33.356,
+   "end": 33.916
+  },
+  {
+   "w": "that",
+   "line": 11,
+   "start": 33.916,
+   "end": 34.076
+  },
+  {
+   "w": "help",
+   "line": 11,
+   "start": 34.076,
+   "end": 34.396
+  },
+  {
+   "w": "readers",
+   "line": 11,
+   "start": 34.396,
+   "end": 34.796
+  },
+  {
+   "w": "find",
+   "line": 11,
+   "start": 34.796,
+   "end": 35.036
+  },
+  {
+   "w": "you",
+   "line": 11,
+   "start": 35.036,
+   "end": 35.276
+  },
+  {
+   "w": "on",
+   "line": 11,
+   "start": 35.276,
+   "end": 35.436
+  },
+  {
+   "w": "Amazon.",
+   "line": 11,
+   "start": 35.436,
+   "end": 35.992
+  },
+  {
+   "w": "And",
+   "line": 12,
+   "start": 36.626,
+   "end": 36.726
+  },
+  {
+   "w": "I",
+   "line": 12,
+   "start": 36.726,
+   "end": 36.886
+  },
+  {
+   "w": "build",
+   "line": 12,
+   "start": 36.886,
+   "end": 37.206
+  },
+  {
+   "w": "A+",
+   "line": 12,
+   "start": 37.206,
+   "end": 37.846
+  },
+  {
+   "w": "Content",
+   "line": 12,
+   "start": 37.846,
+   "end": 38.326
+  },
+  {
+   "w": "that",
+   "line": 12,
+   "start": 38.326,
+   "end": 38.566
+  },
+  {
+   "w": "turns",
+   "line": 12,
+   "start": 38.566,
+   "end": 38.886
+  },
+  {
+   "w": "visitors",
+   "line": 12,
+   "start": 38.886,
+   "end": 39.366
+  },
+  {
+   "w": "into",
+   "line": 12,
+   "start": 39.366,
+   "end": 39.606
+  },
+  {
+   "w": "buyers.",
+   "line": 12,
+   "start": 39.606,
+   "end": 40.134
+  },
+  {
+   "w": "I've",
+   "line": 13,
+   "start": 40.998,
+   "end": 41.258
+  },
+  {
+   "w": "published",
+   "line": 13,
+   "start": 41.258,
+   "end": 41.658
+  },
+  {
+   "w": "over",
+   "line": 13,
+   "start": 41.658,
+   "end": 42.058
+  },
+  {
+   "w": "1,000",
+   "line": 13,
+   "start": 42.058,
+   "end": 42.538
+  },
+  {
+   "w": "books",
+   "line": 13,
+   "start": 42.538,
+   "end": 42.858
+  },
+  {
+   "w": "on",
+   "line": 13,
+   "start": 42.858,
+   "end": 43.018
+  },
+  {
+   "w": "Amazon",
+   "line": 13,
+   "start": 43.018,
+   "end": 43.738
+  },
+  {
+   "w": "KDP,",
+   "line": 13,
+   "start": 43.738,
+   "end": 45.098
+  },
+  {
+   "w": "and",
+   "line": 13,
+   "start": 45.098,
+   "end": 45.258
+  },
+  {
+   "w": "I",
+   "line": 13,
+   "start": 45.258,
+   "end": 45.418
+  },
+  {
+   "w": "know",
+   "line": 13,
+   "start": 45.418,
+   "end": 45.658
+  },
+  {
+   "w": "what",
+   "line": 13,
+   "start": 45.658,
+   "end": 45.898
+  },
+  {
+   "w": "works.",
+   "line": 13,
+   "start": 45.898,
+   "end": 46.285
+  },
+  {
+   "w": "You",
+   "line": 14,
+   "start": 47.152,
+   "end": 47.252
+  },
+  {
+   "w": "wrote",
+   "line": 14,
+   "start": 47.252,
+   "end": 47.652
+  },
+  {
+   "w": "the",
+   "line": 14,
+   "start": 47.652,
+   "end": 47.812
+  },
+  {
+   "w": "book.",
+   "line": 14,
+   "start": 47.812,
+   "end": 48.079
+  },
+  {
+   "w": "Let",
+   "line": 15,
+   "start": 48.585,
+   "end": 48.765
+  },
+  {
+   "w": "me",
+   "line": 15,
+   "start": 48.765,
+   "end": 48.925
+  },
+  {
+   "w": "take",
+   "line": 15,
+   "start": 48.925,
+   "end": 49.165
+  },
+  {
+   "w": "care",
+   "line": 15,
+   "start": 49.165,
+   "end": 49.405
+  },
+  {
+   "w": "of",
+   "line": 15,
+   "start": 49.405,
+   "end": 49.645
+  },
+  {
+   "w": "everything",
+   "line": 15,
+   "start": 49.645,
+   "end": 50.045
+  },
+  {
+   "w": "else.",
+   "line": 15,
+   "start": 50.045,
+   "end": 50.444
+  },
+  {
+   "w": "Before",
+   "line": 16,
+   "start": 51.358,
+   "end": 51.538
+  },
+  {
+   "w": "you",
+   "line": 16,
+   "start": 51.538,
+   "end": 51.698
+  },
+  {
+   "w": "hit",
+   "line": 16,
+   "start": 51.698,
+   "end": 52.018
+  },
+  {
+   "w": "upload",
+   "line": 16,
+   "start": 52.018,
+   "end": 52.418
+  },
+  {
+   "w": "on",
+   "line": 16,
+   "start": 52.418,
+   "end": 52.578
+  },
+  {
+   "w": "Amazon",
+   "line": 16,
+   "start": 52.578,
+   "end": 53.218
+  },
+  {
+   "w": "KDP,",
+   "line": 16,
+   "start": 53.218,
+   "end": 54.498
+  },
+  {
+   "w": "send",
+   "line": 16,
+   "start": 54.498,
+   "end": 54.818
+  },
+  {
+   "w": "me",
+   "line": 16,
+   "start": 54.818,
+   "end": 54.978
+  },
+  {
+   "w": "your",
+   "line": 16,
+   "start": 54.978,
+   "end": 55.138
+  },
+  {
+   "w": "book",
+   "line": 16,
+   "start": 55.138,
+   "end": 55.378
+  },
+  {
+   "w": "details.",
+   "line": 16,
+   "start": 55.378,
+   "end": 55.949
+  },
+  {
+   "w": "Only",
+   "line": 17,
+   "start": 56.389,
+   "end": 56.649
+  },
+  {
+   "w": "here",
+   "line": 17,
+   "start": 56.649,
+   "end": 56.889
+  },
+  {
+   "w": "on",
+   "line": 17,
+   "start": 56.889,
+   "end": 57.049
+  },
+  {
+   "w": "Fiverr.",
+   "line": 17,
+   "start": 57.049,
+   "end": 57.557
+  }
+ ]
+}
