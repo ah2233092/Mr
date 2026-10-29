@@ -172,7 +172,7 @@ export const S7Close: React.FC = () => {
           <div style={{position: 'absolute', left: 1640 + 140 - 280, top: 420}}>
             <Parcel open={open} glow={glow}>
               <div style={{position: 'absolute', left: -400, right: -400, top: -900, height: 900 + 120 + 300, overflow: 'hidden'}}>
-              <div style={{position: 'absolute', left: 400 + 280 - BW / 2, top: 900 + lerp(140, -150, clamp(rise, 0, 1.05)), perspective: 1600}}>
+              <div style={{position: 'absolute', left: 400 + 280 - BW / 2, top: 900 + lerp(140, -110, clamp(rise, 0, 1.05)), perspective: 1600}}>
                 <Book3D w={BW} h={BH} d={BD} rotY={lerp(-10, 24, clamp(rise)) + Math.sin(slow * 3) * 3} rotX={6} front={<PremiumCover w={BW} h={BH} />} spine={<PremiumSpine d={BD} h={BH} />} rim={0.8} sheen={map(t, [tEvery - 0.2, tEvery + 0.9], [0, 1.3])} lightDir={[0.2, -0.8, 1]} />
               </div>
               </div>

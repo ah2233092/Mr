@@ -9,8 +9,11 @@ THUMB_FRAME=${2:-132}
 OUT=output/KAI_gig_video.mp4
 mkdir -p output
 
+# look-ahead peak limiter first (speech/impact peaks), so the loudness gain can stay linear
+PRE="alimiter=limit=0.45:attack=2:release=60:level=disabled"
+
 # pass 1: measure
-ffmpeg -hide_banner -nostats -i "$RAW" -vn -af loudnorm=I=-14:TP=-1.5:LRA=11:print_format=json -f null - 2> build/loudnorm.txt
+ffmpeg -hide_banner -nostats -i "$RAW" -vn -af "$PRE,loudnorm=I=-14:TP=-1.5:LRA=11:print_format=json" -f null - 2> build/loudnorm.txt
 read -r I TP LRA THRESH OFFSET < <(python3 - <<'EOF'
 import json, re
 s = open("build/loudnorm.txt").read()
@@ -23,7 +26,7 @@ echo "measured: I=$I TP=$TP LRA=$LRA"
 # pass 2: apply (linear) + encode
 CRF=${CRF:-18}
 ffmpeg -y -hide_banner -loglevel warning -i "$RAW" \
-  -af "loudnorm=I=-14:TP=-1.5:LRA=11:measured_I=$I:measured_TP=$TP:measured_LRA=$LRA:measured_thresh=$THRESH:offset=$OFFSET:linear=true,aresample=48000" \
+  -af "$PRE,loudnorm=I=-14:TP=-1.5:LRA=11:measured_I=$I:measured_TP=$TP:measured_LRA=$LRA:measured_thresh=$THRESH:offset=$OFFSET:linear=true,aresample=48000" \
   -c:v libx264 -preset slow -crf "$CRF" -maxrate 9M -bufsize 18M -pix_fmt yuv420p -profile:v high -level 4.1 \
   -r 30 -g 60 -c:a aac -b:a 192k -ar 48000 -movflags +faststart "$OUT"
 

@@ -137,7 +137,7 @@ const Publish: React.FC<{t: number}> = ({t}) => {
   const [a] = RANGE('publish');
   const up = map(t, [a + 0.5, at(8, 'kdp') + 0.1], [0, 1], EASE.inOut);
   const cardsT = [at(8, 'kindle'), at(8, 'paperback'), at(8, 'hardcover')];
-  const tLive = at(8, 'hardcover') + 0.36;
+  const tLive = at(8, 'hardcover') + 0.2;
   const live = pop(t, tLive);
   const labels = ['Kindle eBook', 'Paperback', 'Hardcover'];
   return (
@@ -605,7 +605,7 @@ export const S5Services: React.FC = () => {
       <Sfx at={at(8, 'kindle') - 0.06} name="card_flip" volume={0.45} />
       <Sfx at={at(8, 'paperback') - 0.06} name="card_flip" volume={0.45} rate={1.06} />
       <Sfx at={at(8, 'hardcover') - 0.06} name="card_flip" volume={0.45} rate={0.94} />
-      <Sfx at={at(8, 'hardcover') + 0.36} name="chime_success" volume={0.5} />
+      <Sfx at={at(8, 'hardcover') + 0.2} name="chime_success" volume={0.5} />
       <Sfx at={S.format[0] - 0.12} name="whoosh_up" volume={0.45} />
       <Sfx at={at(9, 'format') + 0.05} name="snap_lines" volume={0.45} />
       <Sfx at={at(9, 'approves') - 0.03} name="stamp_soft" volume={0.6} />

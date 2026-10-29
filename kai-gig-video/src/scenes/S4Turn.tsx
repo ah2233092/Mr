@@ -50,13 +50,14 @@ export const S4Turn: React.FC = () => {
   const allK = 1 - tw(t, tIn - 0.12, 0.25, EASE.in);
   // hand-off: other medallions drop away, logo lifts out, Publish flies on (drawn by Scene 5)
   const leave = tw(t, tOut - 0.12, 0.4, EASE.in);
+  const logoLeave = tw(t, tOut - 0.45, 0.4, EASE.in);
 
   return (
     <AbsoluteFill style={{clipPath: sweep < 1 ? `polygon(0 0, ${edge}px 0, ${edge - 260}px 1080px, 0 1080px)` : undefined}}>
       <Set light={1} spotY={34} />
       <Dust t={t} opacity={0.8} seed={9} />
       <Rays k={raysK} t={t} />
-      <div style={{position: 'absolute', left: 960 - logoSize / 2, top: logoY - logoSize / 2, opacity: clamp(logoK * 2) * (1 - leave), transform: `scale(${logoK}) translateY(${leave * -60}px)`}}>
+      <div style={{position: 'absolute', left: 960 - logoSize / 2, top: logoY - logoSize / 2, opacity: clamp(logoK * 2) * (1 - logoLeave), transform: `scale(${logoK}) translateY(${logoLeave * -80}px)`}}>
         <KaiLogo size={logoSize} ring={ring} glint={glint} glow={0.9} />
       </div>
 

@@ -86,7 +86,7 @@ export const S8CTA: React.FC = () => {
 
       {/* ---- upload screen */}
       {partUpload && (
-        <AbsoluteFill style={{transform: `scale(${1 + zoomIn * 2.6})`, transformOrigin: '1610px 300px', opacity: 1 - tw(t, tKdp + 0.45, 0.25), filter: zoomIn > 0.05 ? `blur(${zoomIn * 14}px)` : undefined}}>
+        <AbsoluteFill style={{transform: `scale(${1 + zoomIn * 2.6})`, transformOrigin: '1520px 246px', opacity: 1 - tw(t, tKdp + 0.45, 0.25), filter: zoomIn > 0.05 ? `blur(${zoomIn * 14}px)` : undefined}}>
           <div style={{position: 'absolute', left: 960 - 520, top: 170, perspective: 2000}}>
             <div style={{transform: `rotateX(${4 + noise(t * 0.4, 1)}deg) rotateY(${-4 + noise(t * 0.3, 2) * 2}deg)`}}>
               <Window w={1040} h={640} title="Publish your book">
@@ -123,7 +123,7 @@ export const S8CTA: React.FC = () => {
             </div>
           </div>
           {/* "message me first" bubble */}
-          <div style={{position: 'absolute', left: 1450, top: 220, transform: `scale(${bubbleK})`, transformOrigin: '20% 100%', opacity: clamp(bubbleK * 2)}}>
+          <div style={{position: 'absolute', left: 1240, top: 196, transform: `scale(${bubbleK})`, transformOrigin: '20% 100%', opacity: clamp(bubbleK * 2)}}>
             <div style={{position: 'relative', padding: '22px 30px', borderRadius: 28, background: C.navy, boxShadow: `0 20px 50px rgba(3,6,12,0.55), 0 0 0 3px ${C.gold}`, display: 'flex', alignItems: 'center', gap: 16}}>
               <KaiLogo size={64} glow={0} />
               <div style={{fontFamily: F.inter, fontWeight: 800, fontSize: 30, color: C.cream, whiteSpace: 'nowrap'}}>Wait, message me first</div>
@@ -143,7 +143,7 @@ export const S8CTA: React.FC = () => {
             left: 960 - 470,
             top: 230,
             transform: `translateY(${-shrink * 120}px) scale(${(0.12 + 0.88 * chatIn) * (1 - shrink * 0.12)})`,
-            transformOrigin: chatIn < 1 ? '1150px 40px' : '470px 0px',
+            transformOrigin: chatIn < 1 ? '1030px 16px' : '470px 0px',
             opacity: clamp(chatIn * 3) * (1 - chatOut),
           }}
         >
@@ -213,14 +213,14 @@ export const S8CTA: React.FC = () => {
           <div style={{position: 'absolute', left: logoX - logoS / 2, top: logoY - logoS / 2}}>
             <KaiLogo size={logoS} glint={glint} glow={endK} ring={1} />
           </div>
-          <div style={{position: 'absolute', top: 650, left: 0, right: 0, textAlign: 'center', opacity: tag, transform: `translateY(${(1 - tag) * 24}px)`}}>
-            <div style={{fontFamily: F.inter, fontWeight: 700, fontSize: 36, color: C.cream, letterSpacing: '0.01em'}}>
+          <div style={{position: 'absolute', top: 644, left: 0, right: 0, textAlign: 'center', opacity: tag, transform: `translateY(${(1 - tag) * 24}px)`}}>
+            <div style={{fontFamily: F.inter, fontWeight: 700, fontSize: 40, color: C.cream, letterSpacing: '0.01em'}}>
               Amazon KDP Publishing <span style={{color: C.gold}}>·</span> Formatting <span style={{color: C.gold}}>·</span> Covers <span style={{color: C.gold}}>·</span> Keywords{' '}
               <span style={{color: C.gold}}>·</span> A+ Content
             </div>
           </div>
-          <div style={{position: 'absolute', top: 740, left: 0, right: 0, display: 'flex', justifyContent: 'center', opacity: line2, transform: `translateY(${(1 - line2) * 20}px)`}}>
-            <div style={{padding: '14px 34px', borderRadius: 999, border: `2px solid ${C.gold}`, fontFamily: F.inter, fontWeight: 700, fontSize: 30, color: C.gold}}>Message me before you upload.</div>
+          <div style={{position: 'absolute', top: 742, left: 0, right: 0, display: 'flex', justifyContent: 'center', opacity: line2, transform: `translateY(${(1 - line2) * 20}px)`}}>
+            <div style={{padding: '14px 34px', borderRadius: 999, border: `2px solid ${C.gold}`, fontFamily: F.inter, fontWeight: 700, fontSize: 33, color: C.gold}}>Message me before you upload.</div>
           </div>
         </>
       )}

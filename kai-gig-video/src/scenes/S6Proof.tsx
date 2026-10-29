@@ -74,6 +74,10 @@ const Odometer: React.FC<{v: number; t: number}> = ({v, t}) => {
   // columns: thousands, hundreds, tens, ones
   const cols = [3, 2, 1, 0].map((k) => (v / Math.pow(10, k)) % 10);
   const thousandsVis = clamp((v - 940) / 60);
+  const hundredsVis = clamp((v - 60) / 40);
+  const tensVis = clamp((v - 6) / 4);
+  // hidden leading columns collapse, so the visible digits stay centred
+  const hiddenW = (1 - thousandsVis) * 1.04 * DIGIT_H + (1 - hundredsVis) * 0.74 * DIGIT_H + (1 - tensVis) * 0.74 * DIGIT_H;
   const digit = (p: number, key: number, vis = 1) => (
     <div key={key} style={{position: 'relative', height: DIGIT_H, width: 0.74 * DIGIT_H, overflow: 'hidden', opacity: vis}}>
       <div style={{position: 'absolute', left: 0, right: 0, top: -p * DIGIT_H, filter: key === 3 && v < 995 ? 'blur(2px)' : undefined}}>
@@ -96,11 +100,11 @@ const Odometer: React.FC<{v: number; t: number}> = ({v, t}) => {
     color: 'transparent',
   };
   return (
-    <div style={{display: 'flex', alignItems: 'flex-end', filter: 'drop-shadow(0 18px 40px rgba(0,0,0,0.5)) drop-shadow(0 0 40px rgba(224,163,59,0.25))'}}>
+    <div style={{display: 'flex', alignItems: 'flex-end', marginLeft: -hiddenW, filter: 'drop-shadow(0 18px 40px rgba(0,0,0,0.5)) drop-shadow(0 0 40px rgba(224,163,59,0.25))'}}>
       {digit(Math.min(cols[0], 1), 0, thousandsVis)}
       <div style={{...foil, height: DIGIT_H, lineHeight: `${DIGIT_H}px`, width: 0.3 * DIGIT_H, textAlign: 'center', opacity: thousandsVis}}>,</div>
-      {digit(cols[1], 1)}
-      {digit(cols[2], 2)}
+      {digit(cols[1], 1, hundredsVis)}
+      {digit(cols[2], 2, tensVis)}
       {digit(cols[3], 3)}
     </div>
   );
@@ -119,6 +123,7 @@ export const S6Proof: React.FC = () => {
   const sh = shake(t, tLand + 0.02, 0.4, 12);
   const push = lerp(1, 1.07, tw(t, t0, 6, EASE.outSoft));
   const exit = tw(t, S.proof[1] - 0.2, 0.5, EASE.in);
+  const sweepX = map(t, [at(13, 'kdp') + 0.45, at(13, 'kdp') + 1.25], [-20, 130], EASE.inOut);
   return (
     <AbsoluteFill style={{clipPath: reveal < 1 ? `circle(${r}px at ${BUY_BTN.x}px ${BUY_BTN.y}px)` : undefined}}>
       <AbsoluteFill style={{transform: `translate(${sh.x}px, ${sh.y}px) scale(${push})`}}>
@@ -135,7 +140,19 @@ export const S6Proof: React.FC = () => {
         <VOLine t={t} line={13} from={0} to={3} mode="rise" />
       </div>
       <div style={{position: 'absolute', top: 236, left: 0, right: 0, display: 'flex', justifyContent: 'center', opacity: 1 - exit, transform: `scale(${(1 + (landK > 0 ? (1 - clamp(landK)) * 0.12 : 0)) * (1 + exit * 0.2)})`}}>
-        <Odometer v={v} t={t} />
+        <div style={{position: 'relative'}}>
+          <Odometer v={v} t={t} />
+          {/* light sweep across the number in the pause after "KDP" */}
+          <div
+            style={{
+              position: 'absolute',
+              inset: '-10% -5%',
+              mixBlendMode: 'screen',
+              pointerEvents: 'none',
+              background: `linear-gradient(105deg, rgba(255,255,255,0) ${sweepX - 12}%, rgba(255,240,205,0.65) ${sweepX}%, rgba(255,255,255,0) ${sweepX + 12}%)`,
+            }}
+          />
+        </div>
         <div
           style={{
             fontFamily: F.slab,
@@ -177,6 +194,7 @@ export const S6Proof: React.FC = () => {
       <Sfx at={w(13, 0) + 0.1} name="ticks_roll" volume={0.5} />
       <Sfx at={tLand - 0.01} name="impact_deep" volume={0.75} />
       <Sfx at={tLand + 0.02} name="shimmer" volume={0.35} />
+      <Sfx at={at(13, 'kdp') + 0.5} name="glint" volume={0.35} />
       <Sfx at={at(13, 'and') - 0.05} name="whoosh_soft" volume={0.25} />
     </AbsoluteFill>
   );
