@@ -40,8 +40,10 @@ export const S4Turn: React.FC = () => {
   const sweep = tw(t, t0 + 0.02, 0.5, EASE.inOut);
   const edge = lerp(-300, 2300, sweep);
 
-  const logoK = sp(t, tSo - 0.02, {damping: 11, stiffness: 150, mass: 0.9});
-  const ring = tw(t, tSo + 0.05, 0.7, EASE.out);
+  // logo starts while the sweep is still crossing, so no frame is empty
+  const tLogo = Math.min(tSo - 0.02, t0 + 0.22);
+  const logoK = sp(t, tLogo, {damping: 11, stiffness: 150, mass: 0.9});
+  const ring = tw(t, tLogo + 0.05, 0.7, EASE.out);
   const glint = (t - (tSo + 0.45)) / 0.7;
   const up = tw(t, tIn - 0.12, 0.55, EASE.inOut);
   const logoY = lerp(400, 214, up);
