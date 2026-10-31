@@ -13,14 +13,6 @@ on:
         description: "Optional: limit coins, e.g. SOL,ETH"
         type: string
         default: ""
-  push:                         # test runs for the setup branch (schedule only runs on the default branch)
-    branches: [claude/kind-archimedes-5bixe3]
-    paths:
-      - ".github/workflows/scanner.yml"
-      - "trading-agent/lib/**"
-      - "trading-agent/scanner/**"
-      - "trading-agent/scripts/check_exchange.py"
-      - "trading-agent/requirements.txt"
 
 permissions:
   contents: write

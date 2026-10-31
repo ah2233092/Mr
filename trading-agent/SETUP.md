@@ -50,8 +50,7 @@ Private repo mein GitHub Actions ke 2000 free minute/mahina hain; scanner taqree
 **B) Alag private repo `trading-agent`:**
 1. github.com/new → naam `trading-agent` → **Private** → README mat lagao → Create.
 2. `trading-agent` folder ki copy banao (Mr se bahar), us mein `.github/workflows/` folder banao aur
-   `Mr/.github/workflows/scanner.yml` us mein copy karo. File mein `AGENT_DIR: trading-agent` ko `AGENT_DIR: "."` kar do
-   aur `push:` wala hissa (test ke liye tha) hata do.
+   `Mr/.github/workflows/scanner.yml` us mein copy karo. File mein `AGENT_DIR: trading-agent` ko `AGENT_DIR: "."` kar do.
 3. Us copy mein:
    ```bash
    git init
@@ -71,6 +70,7 @@ Repo → **Settings** → **Secrets and variables** → **Actions** → **New re
 - Name `TELEGRAM_CHAT_ID` → value: aap ka chat id
 
 ## 5. Workflow ek dafa manually chalao
+Pehle check karo Actions on hain: repo → **Settings** → **Actions** → **General** → **Allow all actions** → Save.
 Repo → **Actions** tab → left side **Watchman scanner** → **Run workflow** → (Dry run ka box khali chhoro) → **Run workflow**.
 1–2 minute baad green ✅ aana chahiye. Run kholo → summary mein "Data source check" aur scan table nazar aayega.
 Agar koi alert bana to Telegram aayega aur repo mein commit dikhega: `watchman: alerts ... [skip ci]`.
