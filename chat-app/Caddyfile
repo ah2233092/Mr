@@ -1,0 +1,6 @@
+{$DOMAIN} {
+	reverse_proxy app:3000 {
+		# stream AI replies token-by-token, never buffer
+		flush_interval -1
+	}
+}

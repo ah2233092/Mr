@@ -1,0 +1,31 @@
+# One-command production deploy on any VPS:
+#   1. point your domain's DNS A-record to the server IP
+#   2. cp .env.example .env  (fill in keys + DOMAIN)
+#   3. docker compose up -d --build
+# Caddy gets a free HTTPS certificate automatically.
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - DATA_DIR=/data
+      - TRUST_PROXY=true
+    volumes:
+      - appdata:/data
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - app
+volumes:
+  appdata:
+  caddy_data:
