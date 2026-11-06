@@ -20,7 +20,7 @@ export class ProviderError extends Error {
 export const PROVIDERS = [
   // OmniRoute: self-hosted gateway in front of many providers (https://github.com/diegosouzapw/OmniRoute).
   // When set, it is the primary engine; direct keys below act as an emergency backup.
-  { id: 'omniroute', label: 'OmniRoute', base: (env.OMNIROUTE_BASE_URL || '').replace(/\/+$/, ''), keyEnv: 'OMNIROUTE_API_KEY',
+  { id: 'omniroute', label: 'OmniRoute', get base() { return (env.OMNIROUTE_BASE_URL || '').replace(/\/+$/, ''); }, keyEnv: 'OMNIROUTE_API_KEY',
     tier: 'free', speed: 3, fallbackModels: [], keyOptional: true, gateway: true, concurrency: 100 },
   { id: 'cerebras', label: 'Cerebras', base: 'https://api.cerebras.ai/v1', keyEnv: 'CEREBRAS_API_KEY', tier: 'free', speed: 3,
     fallbackModels: ['gpt-oss-120b', 'llama-3.3-70b', 'qwen-3-235b-a22b-instruct-2507', 'llama3.1-8b'] },
@@ -42,7 +42,7 @@ export const PROVIDERS = [
   { id: 'deepseek', label: 'DeepSeek', base: 'https://api.deepseek.com/v1', keyEnv: 'DEEPSEEK_API_KEY', tier: 'paid', speed: 1,
     fallbackModels: ['deepseek-chat', 'deepseek-reasoner'] },
   // Any other OpenAI-compatible server (Together, DeepInfra, Fireworks, Ollama, vLLM, LM Studio...)
-  { id: 'custom', label: env.CUSTOM_LABEL || 'Custom', base: (env.CUSTOM_BASE_URL || '').replace(/\/+$/, ''), keyEnv: 'CUSTOM_API_KEY',
+  { id: 'custom', label: env.CUSTOM_LABEL || 'Custom', get base() { return (env.CUSTOM_BASE_URL || '').replace(/\/+$/, ''); }, keyEnv: 'CUSTOM_API_KEY',
     tier: env.CUSTOM_TIER === 'paid' ? 'paid' : 'free', speed: 2, fallbackModels: [], keyOptional: true },
 ];
 
@@ -77,6 +77,11 @@ export async function discoverModels(p) {
   if (p.id === 'mock') return { ok: true, list: MOCK.fallbackModels.map((id) => ({ id })) };
   try {
     const r = await fetch(`${p.base}/models`, { headers: providerHeaders(p), signal: AbortSignal.timeout(8000) });
+    if (r.status === 401 || r.status === 403) {
+      // Wrong key: show no models for it, so the problem is visible right away.
+      console.warn(`[models] ${p.id}: API key rejected (HTTP ${r.status})`);
+      return { ok: true, list: [], keyRejected: true };
+    }
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const j = await r.json();
     const arr = Array.isArray(j) ? j : (j.data || j.models || []);

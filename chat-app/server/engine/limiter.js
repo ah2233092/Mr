@@ -67,6 +67,7 @@ export class Cooldowns {
     return c;
   }
   clear(key) { this.map.delete(key); }
+  clearAll() { this.map.clear(); }
   snapshot() {
     const out = {}; const t = Date.now();
     for (const [k, v] of this.map) if (v.until > t) out[k] = { secondsLeft: Math.ceil((v.until - t) / 1000), reason: v.reason };

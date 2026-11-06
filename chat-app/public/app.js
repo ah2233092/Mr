@@ -270,6 +270,22 @@ async function enterApp(me) {
   renderSuggestions();
   setupSpeech();
   route();
+  renderSetupNote();
+  // First run: the admin has no AI connected yet → open the AI keys page once.
+  if (S.me.isAdmin && !S.models.length && store.get('keysPrompted') !== '1') {
+    store.set('keysPrompted', '1');
+    openSettings('keys');
+  }
+}
+
+function renderSetupNote() {
+  const el = $('#setupNote');
+  if (S.models.length) { el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = S.me?.isAdmin
+    ? `${icon('i-info')}<span>No AI is connected yet. Paste a free key (Groq, Cerebras or Gemini) — it takes 2 minutes.</span><button class="btn" id="openKeys">Add AI keys</button>`
+    : `${icon('i-info')}<span>The AI isn’t set up yet. Please ask the admin to add AI keys.</span>`;
+  $('#openKeys')?.addEventListener('click', () => openSettings('keys'));
 }
 
 function renderProfile() {
@@ -840,7 +856,7 @@ $('#attachRow').addEventListener('click', (e) => {
 let recognition = null;
 function setupSpeech() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) return;
+  if (!SR || /Electron/i.test(navigator.userAgent)) return;
   const btn = $('#micBtn');
   btn.hidden = false;
   let base = '';
@@ -1155,6 +1171,7 @@ function confirmDialog({ title, text, ok = 'Delete', extraHtml = '' }) {
 // ---------------- settings ----------------
 const TABS = [
   { id: 'general', label: 'General', ic: 'i-gear' },
+  { id: 'keys', label: 'AI keys', ic: 'i-bolt', admin: true },
   { id: 'personal', label: 'Personalization', ic: 'i-sliders' },
   { id: 'data', label: 'Data controls', ic: 'i-db' },
   { id: 'account', label: 'Account', ic: 'i-user' },
@@ -1190,6 +1207,13 @@ async function showTab(tab) {
     $('#setTheme').value = pref;
     $('#setTheme').onchange = (e) => { store.set('theme', e.target.value); applyTheme(e.target.value); };
     $('#setEnter').onclick = (e) => { S.sendOnEnter = !S.sendOnEnter; store.set('sendOnEnter', S.sendOnEnter ? '1' : '0'); e.currentTarget.classList.toggle('on', S.sendOnEnter); };
+  }
+  if (tab === 'keys') {
+    pane.innerHTML = '<div class="sb-empty">Loading…</div>';
+    try {
+      const d = await api('/api/admin/keys');
+      renderKeys(pane, d.keys);
+    } catch (e) { pane.innerHTML = `<div class="sb-empty">${esc(e.message)}</div>`; }
   }
   if (tab === 'personal') {
     pane.innerHTML = `
@@ -1274,6 +1298,42 @@ async function showTab(tab) {
       };
     } catch (err) { pane.innerHTML = `<div class="sb-empty">${esc(err.message)}</div>`; }
   }
+}
+
+function renderKeys(pane, keys) {
+  let html = `<div style="font-size:13px;color:var(--text-2);margin:6px 0 4px">Open a link, sign in, create a key, paste it here and press <b>Save</b>. Models appear instantly.</div>`;
+  let group = null;
+  for (const k of keys) {
+    if (k.group !== group) { group = k.group; html += `<div class="key-group">${esc(group)}</div>`; }
+    html += `<div class="key-row" data-key="${esc(k.key)}">
+      <div class="top"><span class="dot${k.set ? ' on' : ''}" title="${k.set ? 'Connected' : 'Not set'}"></span><b style="font-weight:500">${esc(k.label)}</b>${k.url ? `<a class="link" href="${esc(k.url)}" target="_blank" rel="noopener">Get key ↗</a>` : ''}</div>
+      <small>${esc(k.note || '')}</small>
+      <div class="inrow"><input class="text-input" type="${k.plain ? 'text' : 'password'}" autocomplete="off" spellcheck="false" value="${esc(k.value)}" placeholder="${k.set ? '' : 'Paste here'}">
+      ${k.set ? '<button class="btn" data-clear>Remove</button>' : ''}</div></div>`;
+  }
+  html += `<div class="dlg-actions" style="margin-top:16px;position:sticky;bottom:0;background:var(--menu);padding:10px 0"><button class="btn primary" id="saveKeys">Save</button></div>`;
+  pane.innerHTML = html;
+  const dirty = new Set();
+  pane.querySelectorAll('.key-row input').forEach((inp) => inp.addEventListener('input', () => dirty.add(inp.closest('.key-row').dataset.key)));
+  pane.querySelectorAll('[data-clear]').forEach((b) => b.addEventListener('click', () => {
+    const row = b.closest('.key-row'); row.querySelector('input').value = ''; dirty.add(row.dataset.key); b.remove();
+  }));
+  $('#saveKeys').onclick = async () => {
+    const values = {};
+    for (const key of dirty) values[key] = pane.querySelector(`.key-row[data-key="${key}"] input`).value;
+    if (!Object.keys(values).length) { toast('Nothing changed'); return; }
+    const btn = $('#saveKeys'); btn.disabled = true; btn.textContent = 'Connecting…';
+    try {
+      const r = await api('/api/admin/keys', { method: 'POST', body: { values } });
+      const d = await api('/api/models');
+      S.models = d.models; S.imagesEnabled = d.images; S.openaiConfigured = d.openaiConfigured;
+      if (!S.model || (S.model !== 'auto' && !S.models.some((m) => m.key === S.model))) S.model = d.default || 'auto';
+      $('#plusImage').hidden = !S.imagesEnabled;
+      renderModelBtn(); renderSuggestions(); renderSetupNote();
+      toast(r.models ? `Saved — ${r.models} AI models ready` : 'Saved — but no models were found. Check the key.', !r.models);
+      renderKeys(pane, r.keys);
+    } catch (e) { toast(e.message, true); btn.disabled = false; btn.textContent = 'Save'; }
+  };
 }
 
 async function exportChats() {

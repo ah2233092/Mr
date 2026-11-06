@@ -130,3 +130,22 @@ test('If OmniRoute goes down, the backup engine still answers', async () => {
   assert.match(done.modelName, /Mock/);
   assert.match(done.note, /GPT-6.1 Sol wasn't available/);
 });
+
+test('Zero-config: first account is admin and can save AI keys from the app', async () => {
+  const keys = await get('/api/admin/keys');
+  assert.ok(keys.keys.some((k) => k.key === 'GROQ_API_KEY'));
+  const omni = keys.keys.find((k) => k.key === 'OMNIROUTE_API_KEY');
+  assert.equal(omni.set, true);
+  assert.equal(omni.value, '••••-key', 'secrets are masked');
+  const r = await fetch(`${base}/api/admin/keys`, { method: 'POST', headers: { 'Content-Type': 'application/json', Cookie: cookie },
+    body: JSON.stringify({ values: { OMNIROUTE_IMAGE_MODEL: 'cloudflare-ai/flux-1-schnell', OMNIROUTE_API_KEY: '••••-key' } }) });
+  const j = await r.json();
+  assert.equal(r.status, 200);
+  assert.deepEqual(j.changed, ['OMNIROUTE_IMAGE_MODEL'], 'masked values are ignored');
+  assert.equal(process.env.OMNIROUTE_IMAGE_MODEL, 'cloudflare-ai/flux-1-schnell');
+  // a second account is not an admin
+  const r2 = await fetch(`${base}/api/auth/signup`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'second@test.dev', password: 'password123' }) });
+  const c2 = r2.headers.getSetCookie().map((c) => c.split(';')[0]).find((c) => c.startsWith('sid='));
+  const denied = await fetch(`${base}/api/admin/keys`, { headers: { Cookie: c2 } });
+  assert.equal(denied.status, 403);
+});

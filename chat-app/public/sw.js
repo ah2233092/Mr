@@ -1,6 +1,6 @@
 // Service worker: makes the app installable and opens instantly.
 // API calls and private files are never cached.
-const VERSION = 'v3';
+const VERSION = 'v4';
 const SHELL = `shell-${VERSION}`;
 const ASSETS = ['/', '/styles.css', '/app.js', '/boot.js', '/logo.svg', '/favicon.svg', '/manifest.webmanifest',
   '/vendor/marked.umd.js', '/vendor/purify.min.js', '/vendor/highlight.min.js', '/icons/icon-192.png'];

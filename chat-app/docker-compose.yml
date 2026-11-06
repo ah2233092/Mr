@@ -1,7 +1,7 @@
 # One-command production deploy on any VPS:
 #   1. point your domain's DNS A-record to the server IP
-#   2. cp .env.example .env  (fill in DOMAIN, PUBLIC_URL, ADMIN_EMAILS, OMNIROUTE_API_KEY, backup keys)
-#   3. docker compose up -d --build
+#   Easiest:  sudo bash install.sh   (does everything below automatically)
+#   Manual:   cp .env.example .env, fill DOMAIN + the OMNIROUTE_* secrets, then docker compose up -d --build
 # Caddy gets a free HTTPS certificate automatically.
 #
 # Stack: Caddy (HTTPS) -> app (chat UI + engine) -> OmniRoute (AI gateway) -> AI providers
@@ -22,8 +22,8 @@ services:
       - omniroute
 
   omniroute:
-    # https://github.com/diegosouzapw/OmniRoute — pin a version (e.g. :X.Y.Z) once you are happy with one
-    image: diegosouzapw/omniroute:latest
+    # https://github.com/diegosouzapw/OmniRoute — version tested with this app
+    image: diegosouzapw/omniroute:3.8.52
     restart: unless-stopped
     stop_grace_period: 40s
     environment:

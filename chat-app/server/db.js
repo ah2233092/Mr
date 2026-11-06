@@ -88,6 +88,11 @@ CREATE TABLE IF NOT EXISTS files (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS files_user ON files(user_id);
+CREATE TABLE IF NOT EXISTS app_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at INTEGER NOT NULL
+);
 CREATE TABLE IF NOT EXISTS usage (
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   day TEXT NOT NULL,
@@ -117,6 +122,13 @@ export function tx(fn) {
 }
 
 // ---------- users ----------
+// Admins: the emails in ADMIN_EMAILS, or — when that is empty — the first account ever created
+// (so whoever sets the app up is the admin without editing any file).
+export function isAdminUser(u) {
+  if (config.adminEmails.length) return config.adminEmails.includes(u.email.toLowerCase());
+  const first = q('SELECT id FROM users ORDER BY created_at, rowid LIMIT 1').get();
+  return !!first && first.id === u.id;
+}
 export function publicUser(u) {
   if (!u) return null;
   let settings = {};
@@ -124,7 +136,7 @@ export function publicUser(u) {
   return {
     id: u.id, email: u.email, name: u.name, avatar: u.avatar || null,
     customInstructions: u.custom_instructions || '', settings,
-    isAdmin: config.adminEmails.includes(u.email.toLowerCase()),
+    isAdmin: isAdminUser(u),
     hasPassword: !!u.pass_hash, createdAt: u.created_at,
   };
 }

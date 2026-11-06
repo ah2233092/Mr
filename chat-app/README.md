@@ -6,6 +6,32 @@ aur desktop + mobile par **install hone wala app** (PWA). App ki taraf se **koi 
 
 ---
 
+## 🚀 Sab se aasaan tareeqa — koi password ya file edit nahi
+
+### 1) PC app (Windows / Mac / Linux) — sirf download karein
+1. GitHub par repo → **Releases** → **"ChatGPT desktop app"** → apne computer wali file download karein:
+   - Windows: `ChatGPT-Setup-1.0.0.exe` (agar "Windows protected your PC" aaye: *More info → Run anyway*)
+   - Mac: `ChatGPT-1.0.0-arm64.dmg` (M1/M2/M3…) ya `-x64.dmg` (Intel) → Applications mein daalein → right-click → Open
+   - Linux: `ChatGPT-1.0.0.AppImage`
+2. App kholein → **Sign up** (pehla account khud **admin** ban jata hai).
+3. **AI keys** page khud khulta hai → ek free key paste karein (Groq / Cerebras / Gemini — "Get key" link wahin hai) → **Save**.
+   Bas — chat shuru. Sab kuch aapke PC par chalta hai, koi server nahi chahiye.
+
+### 2) Phone + PC dono par, hamesha online — ek command
+Ek sasta VPS lein (Ubuntu, ~$5/mahina). Server par yeh 2 commands:
+```bash
+git clone https://github.com/ah2233092/Mr.git && cd Mr && git checkout claude/wizardly-shannon-hklz40
+```
+```bash
+cd chat-app && sudo bash install.sh
+```
+Installer khud: Docker install karta hai, saare passwords/secrets banata hai, **domain ke bina HTTPS link**
+deta hai (`https://1-2-3-4.sslip.io`), OmniRoute chalata hai aur us ki key bhi khud jodta hai.
+Aakhir mein link print hota hai → phone aur PC par kholein → Sign up → AI keys → Save.
+Phone par app: Android (Chrome) ⋮ → **Install app** · iPhone (Safari) Share → **Add to Home Screen**.
+
+---
+
 ## Kya kya hai
 
 **Chat (ChatGPT jaisa)**
@@ -71,28 +97,19 @@ aur desktop + mobile par **install hone wala app** (PWA). App ki taraf se **koi 
 OmniRoute aapke server par app ke saath hi chalta hai (`docker compose` dono ko start karta hai).
 Maine OmniRoute **3.8.52** asal mein chala kar check kiya hai.
 
-1. `.env` mein OmniRoute ke 3 secrets bharein (in ke bina compose start hi nahi hoga):
-   ```bash
-   openssl rand -base64 24   # OMNIROUTE_DASHBOARD_PASSWORD
-   ```
-   ```bash
-   openssl rand -base64 48   # OMNIROUTE_JWT_SECRET
-   ```
-   ```bash
-   openssl rand -hex 32      # OMNIROUTE_API_KEY_SECRET
-   ```
-2. `docker compose up -d --build`, phir apne PC se SSH tunnel kholein:
+1. `install.sh` sab kuch khud set karta hai (password, secrets, OmniRoute API key). Dashboard kholna ho to
+   apne PC se SSH tunnel:
    ```bash
    ssh -L 20128:localhost:20128 root@YOUR_SERVER_IP
    ```
-   Browser mein `http://localhost:20128` → OmniRoute dashboard (password = `OMNIROUTE_DASHBOARD_PASSWORD`).
-3. Dashboard mein providers connect karein — **apni official API keys se** (Cerebras, Groq, Gemini,
+   Browser mein `http://localhost:20128` → password installer ne aakhir mein print kiya tha (`chat-app/.env` mein
+   `OMNIROUTE_DASHBOARD_PASSWORD`).
+2. (Optional) OmniRoute ke bajaye seedha app ke **Settings → AI keys** mein bhi keys daal sakte hain — dono chalte hain.
+3. OmniRoute dashboard mein providers connect karein — **apni official API keys se** (Cerebras, Groq, Gemini,
    OpenRouter, Cloudflare AI, OpenAI…). Neeche table mein links hain.
-4. Dashboard → **Endpoints** se API key copy karein → `.env` mein `OMNIROUTE_API_KEY=` →
-   `docker compose up -d` dobara.
-5. Images: dashboard se kisi official image provider (Cloudflare AI / Together / Pollinations FLUX…) ke model
-   ka exact id → `.env` mein `OMNIROUTE_IMAGE_MODEL=`.
-6. **Backup:** `.env` mein `CEREBRAS_API_KEY` aur `GROQ_API_KEY` bhi direct daal dein. OmniRoute kabhi
+4. Images: dashboard se kisi official image provider (Cloudflare AI / Together / Pollinations FLUX…) ke model
+   ka exact id → app ke **Settings → AI keys → OmniRoute image model** mein.
+5. **Backup:** app ke **Settings → AI keys** mein Cerebras aur Groq ki keys bhi daal dein. OmniRoute kabhi
    restart/band ho to app khud in se jawab deta rahega.
 
 Kaise kaam karta hai:
@@ -208,6 +225,9 @@ Browser ──SSE stream──▶ /api/chat
 - `server/routes/chat.js` — chat endpoint (send / regenerate / edit, vision, files, titles)
 - `server/routes/api.js` — auth, account, chats, search, files, admin
 - `public/` — frontend (vanilla JS, koi build step nahi), PWA manifest + service worker
+- `desktop/` — Electron desktop app (server isi ke andar chalta hai); GitHub Actions installers banata hai
+- `install.sh` — VPS ka one-command installer
+- `server/settings.js` — app ke andar se AI keys (Settings → AI keys)
 
 **Load test** (`npm run loadtest`, mock AI): 100 users ek saath × 2 rounds → **100/100 OK** dono rounds
 (~2.2s mein sab ke poore jawab); 200 users ek saath → **200/200 OK** (0.9s, ~210 MB memory).

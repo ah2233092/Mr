@@ -9,6 +9,7 @@ import { getSessionUser } from './auth.js';
 import { registerApi } from './routes/api.js';
 import { registerChat } from './routes/chat.js';
 import { startModelRefresh } from './engine/registry.js';
+import { applySavedKeys } from './settings.js';
 
 const router = new Router();
 registerApi(router);
@@ -65,15 +66,22 @@ async function handle(req, res) {
 const server = http.createServer({ keepAliveTimeout: 65_000, requestTimeout: 0, headersTimeout: 30_000 }, handle);
 server.maxConnections = 5000;
 
-export async function start(port = config.port) {
+export async function start(port = config.port, host = config.host) {
+  applySavedKeys();
   await startModelRefresh().catch((e) => console.error('[models] initial load failed', e));
   setInterval(cleanup, 60 * 60 * 1000).unref();
   const backup = () => { try { backupDatabase(); } catch (e) { console.error('[backup] failed:', e.message); } };
   setTimeout(backup, 30_000).unref();
   setInterval(backup, 6 * 60 * 60 * 1000).unref();
-  await new Promise((resolve) => server.listen(port, config.host, resolve));
+  await new Promise((resolve, reject) => {
+    const onError = (e) => { server.off('listening', onListening); reject(e); };
+    const onListening = () => { server.off('error', onError); resolve(); };
+    server.once('error', onError);
+    server.once('listening', onListening);
+    server.listen(port, host);
+  });
   const addr = server.address();
-  console.log(`[server] ${config.appName} listening on http://${config.host === '0.0.0.0' ? 'localhost' : config.host}:${addr.port}`);
+  console.log(`[server] ${config.appName} listening on http://${host === '0.0.0.0' ? 'localhost' : host}:${addr.port}`);
   return server;
 }
 

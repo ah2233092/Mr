@@ -1,0 +1,86 @@
+# Builds the ChatGPT desktop app for Windows, macOS and Linux and puts the
+# installers on the repository's Releases page ("ChatGPT desktop app").
+name: ChatGPT app
+
+on:
+  push:
+    paths:
+      - 'chat-app/**'
+      - '.github/workflows/chat-app.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: chat-app-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Server tests
+        working-directory: chat-app
+        run: npm test
+
+  desktop:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            script: dist:win
+            files: chat-app/desktop/dist/*.exe
+          - os: macos-latest
+            script: dist:mac
+            files: chat-app/desktop/dist/*.dmg
+          - os: ubuntu-latest
+            script: dist:linux
+            files: chat-app/desktop/dist/*.AppImage
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        working-directory: chat-app/desktop
+        run: npm ci
+      - name: Build installer
+        working-directory: chat-app/desktop
+        run: npm run ${{ matrix.script }}
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ChatGPT-${{ runner.os }}
+          path: ${{ matrix.files }}
+          if-no-files-found: error
+
+  release:
+    needs: desktop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: chatgpt-desktop-latest
+          name: ChatGPT desktop app
+          target_commitish: ${{ github.sha }}
+          files: out/*
+          body: |
+            Download the file for your computer:
+            - **Windows:** `ChatGPT-Setup-1.0.0.exe` → open it (if Windows says "protected your PC": More info → Run anyway).
+            - **Mac (Apple chip M1/M2/M3…):** `ChatGPT-1.0.0-arm64.dmg` · **Mac (Intel):** `ChatGPT-1.0.0-x64.dmg` → drag to Applications, then right-click the app → Open.
+            - **Linux:** `ChatGPT-1.0.0.AppImage` → make it executable and run.
+
+            First launch: create your account (the first account is the admin), then paste a free AI key in the "AI keys" page that opens.
