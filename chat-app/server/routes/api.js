@@ -9,7 +9,6 @@ import {
   hashPassword, verifyPassword, normalizeEmail, validatePassword, cleanName, checkAttempts, recordAttempt, clearAttempts,
   createSession, destroySession, destroyAllSessions, requireUser, requireAdmin, createUser, invalidateUserCache,
   createResetToken, consumeResetToken, sendMail, googleEnabled, googleAuthUrl, googleExchange,
-  assertEmailAllowed, isEmailAllowed,
 } from '../auth.js';
 import { publicModels, defaultModelKey, engineSnapshot, refreshModels } from '../engine/registry.js';
 import { imageBackends } from '../engine/images.js';
@@ -31,7 +30,6 @@ export function registerApi(r) {
     if (!config.allowSignup) throw new HttpError(403, 'Sign-ups are closed.');
     const b = await readJson(req, 10_000);
     const email = normalizeEmail(b.email);
-    assertEmailAllowed(email);
     const password = validatePassword(b.password);
     const ip = clientIp(req);
     checkAttempts(`signup:${ip}`, config.signupsPerIpPerHour, 60 * 60 * 1000);
@@ -45,7 +43,6 @@ export function registerApi(r) {
   r.post('/api/auth/login', async (req, res) => {
     const b = await readJson(req, 10_000);
     const email = normalizeEmail(b.email);
-    assertEmailAllowed(email);
     const key = `login:${clientIp(req)}:${email}`;
     checkAttempts(key, 8);
     const user = q('SELECT * FROM users WHERE email=?').get(email);
@@ -108,7 +105,6 @@ export function registerApi(r) {
     try {
       const info = await googleExchange(code, `${originOf(req)}/api/auth/google/callback`);
       const email = info.email.toLowerCase();
-      if (!isEmailAllowed(email)) return redirect(res, '/?auth_error=private');
       let user = q('SELECT * FROM users WHERE google_sub=?').get(info.sub) || q('SELECT * FROM users WHERE email=?').get(email);
       if (user) {
         if (user.disabled) return redirect(res, '/?auth_error=disabled');

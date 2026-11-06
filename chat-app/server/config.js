@@ -27,8 +27,6 @@ export const config = {
   trustProxy: bool(env.TRUST_PROXY, true),
   adminEmails: list(env.ADMIN_EMAILS).map((e) => e.toLowerCase()),
   allowSignup: bool(env.ALLOW_SIGNUP, true),
-  // Private mode: only these emails can sign up / log in (empty = anyone)
-  allowedEmails: list(env.ALLOWED_EMAILS).map((e) => e.toLowerCase()),
   sessionDays: int(env.SESSION_DAYS, 30),
   signupsPerIpPerHour: int(env.SIGNUPS_PER_IP_PER_HOUR, 30),
 

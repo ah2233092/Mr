@@ -204,16 +204,3 @@ test('limits: none by default (25 quick messages all go through)', async () => {
     chatId = r.events[0].data.chatId;
   }
 });
-
-test('private mode: only ALLOWED_EMAILS can sign up or log in', async () => {
-  const { config } = await import('../server/config.js');
-  config.allowedEmails.push('owner-only@test.dev');
-  try {
-    const r = await client()('/api/auth/signup', { method: 'POST', body: { email: 'someone@test.dev', password: 'password123' } });
-    assert.equal(r.status, 403);
-    const ok = await client()('/api/auth/signup', { method: 'POST', body: { email: 'owner-only@test.dev', password: 'password123' } });
-    assert.equal(ok.status, 201);
-    const l = await client()('/api/auth/login', { method: 'POST', body: { email: 'sara@test.dev', password: 'password123' } });
-    assert.equal(l.status, 403);
-  } finally { config.allowedEmails.length = 0; }
-});

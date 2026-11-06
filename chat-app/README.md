@@ -4,9 +4,6 @@ Aapka apna, **personal** ChatGPT jaisa app: wohi look, apna backend engine, logi
 **sab se upar asli ChatGPT models** (GPT-6.x, GPT-5.x, o-series), free fast models, image generation,
 aur desktop + mobile par **install hone wala app** (PWA). App ki taraf se **koi limit nahi**.
 
-> Yeh sirf personal use ke liye set hai: `.env` mein `ALLOWED_EMAILS` mein apni email daalein,
-> phir koi aur sign up ya login nahi kar sakta.
-
 ---
 
 ## Kya kya hai
@@ -38,7 +35,7 @@ aur desktop + mobile par **install hone wala app** (PWA). App ki taraf se **koi 
 
 **Login**
 - Email + password (scrypt hashing, secure httpOnly cookies), "Continue with Google",
-  password reset email, brute-force protection, **private mode** (`ALLOWED_EMAILS`)
+  password reset email, brute-force protection
 
 **Engine**
 - Har provider ki apni queue taake rate-limit na lage; 100–200 log ek saath bhi chala sakte hain
@@ -58,9 +55,8 @@ aur desktop + mobile par **install hone wala app** (PWA). App ki taraf se **koi 
 2. **"Unlimited" sirf app ki taraf se hai.** Free providers (Cerebras, Groq, Gemini…) ki apni
    per-minute/per-day limits hoti hain. Engine unhein khud sambhalta hai (busy ho to doosra model).
 
-3. **Personal rakhein.** `ALLOWED_EMAILS` mein sirf apni email daalein. Is naam ke saath public sign-up
-   wali site mat chalayein. Logo maine original rakha hai (OpenAI ka logo copy nahi kiya); `public/` mein
-   apna logo/icon badalna ho to badal sakte hain.
+3. **Logo** maine original rakha hai (OpenAI ka logo copy nahi kiya); `public/` mein apna logo/icon
+   badalna ho to badal sakte hain.
 
 4. **Purani `index.html` ki 34 Gemini API keys khuli padi thin** — https://aistudio.google.com/apikey par
    ja kar delete/revoke kar dein. Naye app mein keys sirf server par rehti hain.
@@ -89,7 +85,7 @@ Node.js **22.13+** chahiye (koi `npm install` nahi — server ki zero dependenci
 
 ```bash
 cd chat-app
-cp .env.example .env      # keys + ALLOWED_EMAILS likhein
+cp .env.example .env      # keys likhein
 node server/index.js      # http://localhost:3000
 ```
 
@@ -110,7 +106,7 @@ npm run loadtest          # 100 users ek saath (mock AI)
 3. Server par:
    ```bash
    git clone <your-repo> && cd <repo>/chat-app
-   cp .env.example .env && nano .env      # keys + DOMAIN + PUBLIC_URL + ALLOWED_EMAILS + ADMIN_EMAILS
+   cp .env.example .env && nano .env      # keys + DOMAIN + PUBLIC_URL + ADMIN_EMAILS
    docker compose up -d --build
    ```
    Caddy khud HTTPS laga dega. Data `appdata` volume mein safe rehta hai.
@@ -164,7 +160,6 @@ Browser ──SSE stream──▶ /api/chat
 ## Aham settings (`.env`)
 
 - `APP_NAME` — app ka naam (default **ChatGPT**)
-- `ALLOWED_EMAILS` — sirf yeh emails login kar sakti hain (private mode)
 - `ADMIN_EMAILS` — Admin panel
 - `DEFAULT_MODEL` — default model, masalan `openai:gpt-6.1-sol`
 - `OPENAI_MODELS` — OpenAI models ki fixed list (warna khud discover hoti hai)

@@ -148,7 +148,7 @@ async function boot() {
   } catch {
     showAuth('login');
     if (authErr) {
-      $('#authError').textContent = { google: 'Google sign-in failed. Please try again.', closed: 'Sign-ups are closed.', disabled: 'This account is disabled.', private: 'This is a private app. That Google account is not allowed.' }[authErr] || 'Sign-in failed.';
+      $('#authError').textContent = { google: 'Google sign-in failed. Please try again.', closed: 'Sign-ups are closed.', disabled: 'This account is disabled.' }[authErr] || 'Sign-in failed.';
     }
   }
   hideSplash();
