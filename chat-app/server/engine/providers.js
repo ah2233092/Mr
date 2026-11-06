@@ -2,6 +2,7 @@
 // "chat/completions" protocol, so one streaming adapter covers all of them.
 // A provider is switched on simply by putting its API key in the environment.
 import { config } from '../config.js';
+import { omniBase } from './omniroute.js';
 
 const env = process.env;
 
@@ -20,7 +21,7 @@ export class ProviderError extends Error {
 export const PROVIDERS = [
   // OmniRoute: self-hosted gateway in front of many providers (https://github.com/diegosouzapw/OmniRoute).
   // When set, it is the primary engine; direct keys below act as an emergency backup.
-  { id: 'omniroute', label: 'OmniRoute', get base() { return (env.OMNIROUTE_BASE_URL || '').replace(/\/+$/, ''); }, keyEnv: 'OMNIROUTE_API_KEY',
+  { id: 'omniroute', label: 'OmniRoute', get base() { return omniBase(); }, keyEnv: 'OMNIROUTE_API_KEY',
     tier: 'free', speed: 3, fallbackModels: [], keyOptional: true, gateway: true, concurrency: 100 },
   { id: 'cerebras', label: 'Cerebras', base: 'https://api.cerebras.ai/v1', keyEnv: 'CEREBRAS_API_KEY', tier: 'free', speed: 3,
     fallbackModels: ['gpt-oss-120b', 'llama-3.3-70b', 'qwen-3-235b-a22b-instruct-2507', 'llama3.1-8b'] },

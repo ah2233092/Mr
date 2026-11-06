@@ -29,6 +29,9 @@ function freePort(port, attempts = 30) {
 }
 
 async function startServer() {
+  // Optional backend settings file (never shown in the app), e.g. OMNIROUTE_PASSWORD=...
+  const cfg = path.join(app.getPath('userData'), 'config.env');
+  try { if (require('node:fs').existsSync(cfg)) process.loadEnvFile(cfg); } catch (e) { console.warn('config.env:', e.message); }
   const port = await freePort(PREFERRED_PORT);
   Object.assign(process.env, {
     SKIP_DOTENV: '1',
@@ -89,6 +92,13 @@ async function boot() {
     return;
   }
   buildMenu();
+  // The server runs inside the app, so no offline cache is needed: clear it so an
+  // updated app always shows its new interface (login and settings are kept).
+  try {
+    const { session } = require('electron');
+    await session.defaultSession.clearStorageData({ storages: ['serviceworkers', 'cachestorage'] });
+    await session.defaultSession.clearCache();
+  } catch (e) { console.warn('cache clear:', e.message); }
   createWindow();
   app.on('activate', () => { if (!win) createWindow(); });
 }

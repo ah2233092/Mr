@@ -5,7 +5,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { config } from '../config.js';
 import { q, now, newId } from '../db.js';
-import { cooldowns } from './registry.js';
+import { cooldowns, gatewayImageModel } from './registry.js';
+import { omniBase } from './omniroute.js';
 import { quickComplete } from './engine.js';
 import { mockImage } from './providers.js';
 
@@ -32,10 +33,10 @@ export const IMAGE_BACKENDS = {
   // OmniRoute's OpenAI-compatible images endpoint. Pick the image model in OMNIROUTE_IMAGE_MODEL
   // (any image model connected in the OmniRoute dashboard, e.g. a FLUX model).
   omniroute: {
-    label: 'OmniRoute', tier: 'free', model: () => env.OMNIROUTE_IMAGE_MODEL || '',
-    enabled: () => !!(env.OMNIROUTE_BASE_URL && env.OMNIROUTE_IMAGE_MODEL),
+    label: 'OmniRoute', tier: 'free', model: () => env.OMNIROUTE_IMAGE_MODEL || gatewayImageModel(),
+    enabled: () => !!(omniBase() && (env.OMNIROUTE_IMAGE_MODEL || gatewayImageModel())),
     async run(prompt, aspect, signal) {
-      const base = env.OMNIROUTE_BASE_URL.replace(/\/+$/, '');
+      const base = omniBase();
       const model = this.model();
       const headers = { 'Content-Type': 'application/json' };
       if (env.OMNIROUTE_API_KEY) headers.Authorization = `Bearer ${env.OMNIROUTE_API_KEY}`;

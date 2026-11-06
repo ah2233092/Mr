@@ -69,7 +69,7 @@ if [ -z "$(getkv OMNIROUTE_API_KEY)" ]; then
     setkv OMNIROUTE_API_KEY "$KEY"
     docker compose up -d app
   else
-    echo "Could not create the OmniRoute key automatically — the app still works with the keys you add in Settings → AI keys."
+    echo "Could not create the OmniRoute key now — the app will keep trying to connect by itself."
   fi
 fi
 
@@ -78,7 +78,8 @@ say "✅ Ready:  https://$DOMAIN"
 cat <<EOF
   1. Open that link on your phone and on your PC.
   2. Sign up — the FIRST account is the admin.
-  3. The app opens "AI keys": paste a free key (Groq / Cerebras / Gemini) and press Save.
+  3. Connect free providers (Groq / Gemini / Cerebras keys) in the OmniRoute dashboard below —
+     their models appear in the app within a few minutes. Nothing to set inside the app.
   4. Install it as an app:
        Android (Chrome): menu ⋮ → Install app      iPhone (Safari): Share → Add to Home Screen
        Windows / Mac (Chrome or Edge): install icon in the address bar

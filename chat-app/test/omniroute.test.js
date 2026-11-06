@@ -7,14 +7,33 @@ import os from 'node:os';
 import path from 'node:path';
 
 const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
-const seen = { auth: [], models: [], images: [] };
+const seen = { auth: [], models: [], images: [], logins: 0 };
+const AUTO_KEY = 'sk-auto-created-by-app';
 
-// ---- fake OmniRoute ----
+// ---- fake OmniRoute (asks for an API key, like an install with REQUIRE_API_KEY on) ----
 const gateway = http.createServer((req, res) => {
   seen.auth.push(req.headers.authorization);
   let body = '';
   req.on('data', (c) => { body += c; });
   req.on('end', () => {
+    if (req.url === '/api/auth/login') {
+      seen.logins++;
+      const ok = JSON.parse(body).password === 'CHANGEME';
+      res.writeHead(ok ? 200 : 401, { 'Content-Type': 'application/json', ...(ok ? { 'Set-Cookie': 'auth_token=dash; Path=/; HttpOnly' } : {}) });
+      res.end(JSON.stringify({ success: ok }));
+      return;
+    }
+    if (req.url === '/api/keys' && req.method === 'POST') {
+      const ok = /auth_token=dash/.test(req.headers.cookie || '');
+      res.writeHead(ok ? 200 : 401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(ok ? { key: AUTO_KEY, name: JSON.parse(body).name } : { error: 'login' }));
+      return;
+    }
+    if (req.url.startsWith('/v1/') && req.headers.authorization !== `Bearer ${AUTO_KEY}`) {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: { message: 'Authentication required' } }));
+      return;
+    }
     if (req.url === '/v1/models') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       // Shape of a real OmniRoute /v1/models: owned_by = upstream provider id.
@@ -55,8 +74,8 @@ await new Promise((r) => gateway.listen(0, '127.0.0.1', r));
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'omniroute-test-'));
 Object.assign(process.env, {
   SKIP_DOTENV: '1', DATA_DIR: dir, HOST: '127.0.0.1', ENABLE_POLLINATIONS: 'false',
-  OMNIROUTE_BASE_URL: `http://127.0.0.1:${gateway.address().port}/v1`, OMNIROUTE_API_KEY: 'omni-test-key',
-  OMNIROUTE_IMAGE_MODEL: 'pollinations/flux', IMAGE_PROMPT_ENHANCE: 'false',
+  // Only the address is given: no key, no image model — the app sets those up by itself.
+  OMNIROUTE_BASE_URL: `http://127.0.0.1:${gateway.address().port}/v1`, IMAGE_PROMPT_ENHANCE: 'false',
   // backup engine for when the gateway is down
   ENABLE_MOCK: '1', MOCK_TOKEN_DELAY_MS: '1',
 });
@@ -92,7 +111,9 @@ test('OmniRoute models show with their real names; unofficial routes are hidden'
   assert.equal(byName['Gemini 2.5 Flash'].vision, true);
   assert.equal(byName['Gemini 2.5 Flash'].group, 'Google Gemini · Free');
   assert.ok(!m.models.some((x) => /flux/i.test(x.key)), 'image models are not in the chat list');
-  assert.ok(seen.auth.includes('Bearer omni-test-key'));
+  assert.ok(seen.logins >= 1, 'the app logged into OmniRoute by itself');
+  assert.ok(seen.auth.includes(`Bearer ${AUTO_KEY}`), 'and uses the key it created');
+  assert.equal(process.env.OMNIROUTE_API_KEY, AUTO_KEY);
 });
 
 test('Auto picks the fastest official model through OmniRoute', async () => {
@@ -131,21 +152,9 @@ test('If OmniRoute goes down, the backup engine still answers', async () => {
   assert.match(done.note, /GPT-6.1 Sol wasn't available/);
 });
 
-test('Zero-config: first account is admin and can save AI keys from the app', async () => {
-  const keys = await get('/api/admin/keys');
-  assert.ok(keys.keys.some((k) => k.key === 'GROQ_API_KEY'));
-  const omni = keys.keys.find((k) => k.key === 'OMNIROUTE_API_KEY');
-  assert.equal(omni.set, true);
-  assert.equal(omni.value, '••••-key', 'secrets are masked');
-  const r = await fetch(`${base}/api/admin/keys`, { method: 'POST', headers: { 'Content-Type': 'application/json', Cookie: cookie },
-    body: JSON.stringify({ values: { OMNIROUTE_IMAGE_MODEL: 'cloudflare-ai/flux-1-schnell', OMNIROUTE_API_KEY: '••••-key' } }) });
-  const j = await r.json();
-  assert.equal(r.status, 200);
-  assert.deepEqual(j.changed, ['OMNIROUTE_IMAGE_MODEL'], 'masked values are ignored');
-  assert.equal(process.env.OMNIROUTE_IMAGE_MODEL, 'cloudflare-ai/flux-1-schnell');
-  // a second account is not an admin
-  const r2 = await fetch(`${base}/api/auth/signup`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'second@test.dev', password: 'password123' }) });
-  const c2 = r2.headers.getSetCookie().map((c) => c.split(';')[0]).find((c) => c.startsWith('sid='));
-  const denied = await fetch(`${base}/api/admin/keys`, { headers: { Cookie: c2 } });
-  assert.equal(denied.status, 403);
+test('No API-key settings are exposed by the app', async () => {
+  const r = await fetch(`${base}/api/admin/keys`, { headers: { Cookie: cookie } });
+  assert.equal(r.status, 404);
+  const html = await (await fetch(`${base}/app.js`)).text();
+  assert.ok(!/AI keys|OPENAI_API_KEY/.test(html), 'interface has no key settings');
 });

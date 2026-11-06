@@ -14,8 +14,9 @@ aur desktop + mobile par **install hone wala app** (PWA). App ki taraf se **koi 
    - Mac: `ChatGPT-1.0.0-arm64.dmg` (M1/M2/M3…) ya `-x64.dmg` (Intel) → Applications mein daalein → right-click → Open
    - Linux: `ChatGPT-1.0.0.AppImage`
 2. App kholein → **Sign up** (pehla account khud **admin** ban jata hai).
-3. **AI keys** page khud khulta hai → ek free key paste karein (Groq / Cerebras / Gemini — "Get key" link wahin hai) → **Save**.
-   Bas — chat shuru. Sab kuch aapke PC par chalta hai, koi server nahi chahiye.
+3. Bas — chat shuru. App aapke PC par chal rahe **OmniRoute** (`localhost:20128`) se khud jud jati hai —
+   koi key ya setting app mein nahi. OmniRoute mein jo providers connect honge (Groq, Gemini, Cerebras…)
+   unke models menu mein khud aa jaate hain (har 5 minute mein list update hoti hai).
 
 ### 2) Phone + PC dono par, hamesha online — ek command
 Ek sasta VPS lein (Ubuntu, ~$5/mahina). Server par yeh 2 commands:
@@ -27,7 +28,7 @@ cd chat-app && sudo bash install.sh
 ```
 Installer khud: Docker install karta hai, saare passwords/secrets banata hai, **domain ke bina HTTPS link**
 deta hai (`https://1-2-3-4.sslip.io`), OmniRoute chalata hai aur us ki key bhi khud jodta hai.
-Aakhir mein link print hota hai → phone aur PC par kholein → Sign up → AI keys → Save.
+Aakhir mein link print hota hai → phone aur PC par kholein → Sign up → chat.
 Phone par app: Android (Chrome) ⋮ → **Install app** · iPhone (Safari) Share → **Add to Home Screen**.
 
 ---
@@ -104,13 +105,15 @@ Maine OmniRoute **3.8.52** asal mein chala kar check kiya hai.
    ```
    Browser mein `http://localhost:20128` → password installer ne aakhir mein print kiya tha (`chat-app/.env` mein
    `OMNIROUTE_DASHBOARD_PASSWORD`).
-2. (Optional) OmniRoute ke bajaye seedha app ke **Settings → AI keys** mein bhi keys daal sakte hain — dono chalte hain.
+2. App OmniRoute se **khud** judti hai: agar OmniRoute key maange to app dashboard mein login karke apni key khud
+   bana leti hai (`OMNIROUTE_PASSWORD`, warna OmniRoute ka default password). Dashboard password badla hai to
+   server ki `.env` (desktop app: `config.env`, neeche dekhein) mein `OMNIROUTE_PASSWORD=` likh dein.
 3. OmniRoute dashboard mein providers connect karein — **apni official API keys se** (Cerebras, Groq, Gemini,
    OpenRouter, Cloudflare AI, OpenAI…). Neeche table mein links hain.
 4. Images: dashboard se kisi official image provider (Cloudflare AI / Together / Pollinations FLUX…) ke model
-   ka exact id → app ke **Settings → AI keys → OmniRoute image model** mein.
-5. **Backup:** app ke **Settings → AI keys** mein Cerebras aur Groq ki keys bhi daal dein. OmniRoute kabhi
-   restart/band ho to app khud in se jawab deta rahega.
+   connect karein — app khud ek official image model (FLUX ko pehle) chun leti hai.
+5. **Backup (optional):** server ki `.env` mein `CEREBRAS_API_KEY` / `GROQ_API_KEY` bhi daal sakte hain —
+   OmniRoute kabhi band ho to app in se jawab deti rahegi.
 
 Kaise kaam karta hai:
 - Model menu: OmniRoute ke models apne **asli naam** aur asli provider ke saath aate hain
@@ -227,7 +230,12 @@ Browser ──SSE stream──▶ /api/chat
 - `public/` — frontend (vanilla JS, koi build step nahi), PWA manifest + service worker
 - `desktop/` — Electron desktop app (server isi ke andar chalta hai); GitHub Actions installers banata hai
 - `install.sh` — VPS ka one-command installer
-- `server/settings.js` — app ke andar se AI keys (Settings → AI keys)
+- `server/engine/omniroute.js` — OmniRoute se khud judna (key khud banana)
+- `server/settings.js` — backend settings jo app khud save karti hai (UI mein kuch nahi)
+
+**Desktop app ki backend settings (optional):** `config.env` file — Windows: `%APPDATA%\ChatGPT\config.env`,
+Mac: `~/Library/Application Support/ChatGPT/config.env`, Linux: `~/.config/ChatGPT/config.env`.
+Masalan `OMNIROUTE_PASSWORD=...` ya `OMNIROUTE_BASE_URL=http://my-server:20128/v1`.
 
 **Load test** (`npm run loadtest`, mock AI): 100 users ek saath × 2 rounds → **100/100 OK** dono rounds
 (~2.2s mein sab ke poore jawab); 200 users ek saath → **200/200 OK** (0.9s, ~210 MB memory).

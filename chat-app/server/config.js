@@ -54,7 +54,7 @@ export const config = {
     featured: list(env.FEATURED_MODELS),
     allow: regex(env.MODEL_ALLOW_REGEX),
     block: regex(env.MODEL_BLOCK_REGEX),
-    refreshHours: int(env.MODEL_REFRESH_HOURS, 6),
+    refreshMinutes: int(env.MODEL_REFRESH_MINUTES, 5),
     openrouterAll: bool(env.OPENROUTER_ALL_MODELS, false),
   },
 

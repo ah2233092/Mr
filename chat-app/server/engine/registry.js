@@ -3,6 +3,8 @@
 import { config } from '../config.js';
 import { enabledProviders, discoverModels, isChatModel, prettyName, supportsVision, rankModel, describeModel, modelPart } from './providers.js';
 import { Semaphore, Cooldowns } from './limiter.js';
+import { ensureOmniRoute } from './omniroute.js';
+import { isOfficialGatewayModel } from './providers.js';
 
 const MAX_PER_PROVIDER = parseInt(process.env.MAX_MODELS_PER_PROVIDER || '14', 10);
 const MAX_OPENAI = parseInt(process.env.MAX_OPENAI_MODELS || '40', 10);
@@ -42,7 +44,8 @@ function groupOf(m) {
   return { order: 2, label: `${m.providerLabel} · ${m.tier === 'paid' ? 'Premium' : 'Free'}` };
 }
 
-const state = { models: [], byKey: new Map(), providers: new Map(), refreshedAt: 0, refreshing: null, retryTimer: null, retries: 0 };
+const state = { models: [], byKey: new Map(), providers: new Map(), refreshedAt: 0, refreshing: null, retryTimer: null, retries: 0, gatewayImageModel: '' };
+export const gatewayImageModel = () => state.gatewayImageModel;
 export const cooldowns = new Cooldowns();
 const sems = new Map();
 export const stats = { requests: 0, fallbacks: 0, errors: 0, byProvider: {} };
@@ -61,12 +64,19 @@ export function semFor(providerId) {
 export async function refreshModels() {
   if (state.refreshing) return state.refreshing;
   state.refreshing = (async () => {
+    await ensureOmniRoute();
     const providers = enabledProviders();
     const results = await Promise.all(providers.map(async (p) => ({ p, ...(await discoverModels(p)) })));
     let models = [];
     state.providers.clear();
+    state.gatewayImageModel = '';
     for (const { p, list } of results) {
       state.providers.set(p.id, p);
+      if (p.gateway) {
+        // Pick an official image model automatically (prefer FLUX).
+        const imgs = list.filter((m) => Array.isArray(m.outputModalities) && m.outputModalities.includes('image') && isOfficialGatewayModel(m));
+        state.gatewayImageModel = (imgs.find((m) => /flux/i.test(m.id)) || imgs[0])?.id || '';
+      }
       const seen = new Set();
       const entries = [];
       for (const m of list) {
@@ -130,7 +140,8 @@ export async function refreshModels() {
 }
 
 export function startModelRefresh() {
-  const ms = Math.max(1, config.models.refreshHours) * 3600 * 1000;
+  // Short interval so providers you connect in OmniRoute show up within minutes.
+  const ms = Math.max(1, config.models.refreshMinutes) * 60 * 1000;
   setInterval(() => refreshModels().catch((e) => console.error('[models] refresh failed', e)), ms).unref();
   return refreshModels();
 }

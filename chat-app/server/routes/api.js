@@ -10,8 +10,7 @@ import {
   createSession, destroySession, destroyAllSessions, requireUser, requireAdmin, createUser, invalidateUserCache,
   createResetToken, consumeResetToken, sendMail, googleEnabled, googleAuthUrl, googleExchange,
 } from '../auth.js';
-import { publicModels, defaultModelKey, engineSnapshot, refreshModels, cooldowns } from '../engine/registry.js';
-import { listKeys, saveKeys } from '../settings.js';
+import { publicModels, defaultModelKey, engineSnapshot, refreshModels } from '../engine/registry.js';
 import { imageBackends } from '../engine/images.js';
 
 export function registerApi(r) {
@@ -280,24 +279,6 @@ export function registerApi(r) {
       memoryMb: Math.round(process.memoryUsage().rss / 1048576),
       uptimeSec: Math.round(process.uptime()),
     });
-  });
-
-  // AI keys, managed from Settings → AI keys (admin only)
-  r.get('/api/admin/keys', (req, res) => {
-    requireAdmin(req);
-    sendJson(res, 200, { keys: listKeys() });
-  });
-
-  r.post('/api/admin/keys', async (req, res) => {
-    requireAdmin(req);
-    const b = await readJson(req, 50_000);
-    const changed = saveKeys(b.values);
-    cooldowns.clearAll();
-    const models = changed.length ? await refreshModels() : publicModels();
-    const visible = models.filter((m) => !m.hidden);
-    const byProvider = {};
-    for (const m of visible) byProvider[m.providerLabel] = (byProvider[m.providerLabel] || 0) + 1;
-    sendJson(res, 200, { changed, models: visible.length, byProvider, images: imageBackends(), keys: listKeys() });
   });
 
   r.post('/api/admin/models/refresh', async (req, res) => {
