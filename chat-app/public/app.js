@@ -1,4 +1,4 @@
-// Sukhan AI — client app (vanilla JS, no build step).
+// ChatGPT (personal) — client app (vanilla JS, no build step).
 /* global marked, DOMPurify, hljs */
 
 // ---------------- utilities ----------------
@@ -33,9 +33,9 @@ async function copyText(text) {
 
 // ---------------- state ----------------
 const S = {
-  config: { appName: 'Sukhan AI' }, me: null, usage: null, limits: null,
-  models: [], imagesEnabled: false, chats: [], chatId: null, messages: [],
-  model: store.get('model', 'auto'), tool: null, attachments: [], streaming: null,
+  config: { appName: 'ChatGPT' }, me: null, usage: null, limits: null,
+  models: [], imagesEnabled: false, openaiConfigured: false, chats: [], chatId: null, messages: [],
+  model: store.get('model', null), tool: null, attachments: [], streaming: null,
   sendOnEnter: store.get('sendOnEnter', '1') === '1',
 };
 
@@ -136,7 +136,7 @@ async function boot() {
   applyTheme();
   registerSW();
   try { S.config = await api('/api/config'); } catch {}
-  setAppName(S.config.appName || 'Sukhan AI');
+  setAppName(S.config.appName || 'ChatGPT');
   const params = new URLSearchParams(location.search);
   const resetToken = params.get('reset');
   const authErr = params.get('auth_error');
@@ -148,7 +148,7 @@ async function boot() {
   } catch {
     showAuth('login');
     if (authErr) {
-      $('#authError').textContent = { google: 'Google sign-in failed. Please try again.', closed: 'Sign-ups are closed.', disabled: 'This account is disabled.' }[authErr] || 'Sign-in failed.';
+      $('#authError').textContent = { google: 'Google sign-in failed. Please try again.', closed: 'Sign-ups are closed.', disabled: 'This account is disabled.', private: 'This is a private app. That Google account is not allowed.' }[authErr] || 'Sign-in failed.';
     }
   }
   hideSplash();
@@ -261,7 +261,8 @@ async function enterApp(me) {
   const [models, chats] = await Promise.all([api('/api/models'), api('/api/chats')]);
   S.models = models.models;
   S.imagesEnabled = models.images;
-  if (S.model !== 'auto' && !S.models.some((m) => m.key === S.model)) S.model = 'auto';
+  S.openaiConfigured = models.openaiConfigured;
+  if (!S.model || (S.model !== 'auto' && !S.models.some((m) => m.key === S.model))) S.model = models.default || 'auto';
   $('#plusImage').hidden = !S.imagesEnabled;
   renderModelBtn();
   S.chats = chats.chats;
@@ -480,7 +481,7 @@ function renderModelBtn() {
 }
 
 function modelRow(m, selected) {
-  const badge = m.tier === 'paid' ? '<span class="badge paid">Premium</span>' : '';
+  const badge = '';
   return `<button class="model-row${m.available === false ? ' off' : ''}" data-key="${esc(m.key)}" data-search="${esc((m.name + ' ' + (m.providerLabel || '') + ' ' + m.key).toLowerCase())}">
     <span class="mt"><span class="mn">${esc(m.name)} ${badge}${m.vision ? `<span title="Can see images">${icon('i-eye', 'i sm')}</span>` : ''}</span>
     <span class="md2">${esc(m.description)}${m.available === false ? ' · busy right now' : ''}</span></span>
@@ -491,22 +492,31 @@ function renderModelMenu() {
   const menu = $('#modelMenu');
   let html = '';
   if (S.models.length > 8) html += '<div class="search"><input id="modelSearch" placeholder="Search models" autocomplete="off"></div>';
-  html += modelRow({ key: 'auto', name: 'Auto', description: 'Picks the fastest smart model that’s free right now', tier: 'free' }, S.model === 'auto');
+  // Groups arrive from the server already ordered: ChatGPT models first.
+  const groups = new Map();
+  for (const m of S.models) {
+    const g = m.group || m.providerLabel;
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g).push(m);
+  }
+  const chatgpt = groups.get('ChatGPT models');
+  if (chatgpt) {
+    html += '<div class="menu-label" data-group>ChatGPT models</div>';
+    for (const m of chatgpt) html += modelRow(m, S.model === m.key);
+    groups.delete('ChatGPT models');
+  } else if (!S.openaiConfigured) {
+    html += `<div class="menu-label" data-group>ChatGPT models</div><div class="model-row off" data-group style="cursor:default"><span class="mt"><span class="mn">GPT-6 · GPT-5 · o-series</span><span class="md2">Appear here once OPENAI_API_KEY is added on the server</span></span></div>`;
+  }
+  html += '<div class="menu-label" data-group>Free & fast</div>';
+  html += modelRow({ key: 'auto', name: 'Auto', description: 'Picks the fastest free model that’s available right now', tier: 'free' }, S.model === 'auto');
   const featured = S.models.filter((m) => m.featured);
   if (featured.length) {
     html += '<div class="menu-label" data-group>Recommended</div>';
     for (const m of featured) html += modelRow(m, S.model === m.key);
   }
-  const groups = new Map();
-  for (const m of S.models) {
-    const g = `${m.providerLabel}${m.tier === 'paid' ? ' · Premium' : ' · Free'}`;
-    if (!groups.has(g)) groups.set(g, []);
-    groups.get(g).push(m);
-  }
-  const order = [...groups.keys()].sort((a, b) => (a.includes('Premium') - b.includes('Premium')));
-  for (const g of order) {
+  for (const [g, list] of groups) {
     html += `<div class="menu-label" data-group>${esc(g)}</div>`;
-    for (const m of groups.get(g)) html += modelRow(m, S.model === m.key);
+    for (const m of list) html += modelRow(m, S.model === m.key);
   }
   if (!S.models.length) html += '<div class="menu-label">No models are configured on the server yet.</div>';
   menu.innerHTML = html;
@@ -536,7 +546,7 @@ $('#modelMenu').addEventListener('click', (e) => {
   closeMenus();
   renderModelBtn();
   const m = currentModel();
-  if (m?.tier === 'paid' && S.limits) toast(`${m.name} is a premium model: ${S.limits.premium} messages per day.`);
+  if (m?.tier === 'paid' && S.limits?.premium > 0) toast(`${m.name} is a premium model: ${S.limits.premium} messages per day.`);
 });
 
 // ---------------- thread rendering ----------------
@@ -1015,7 +1025,10 @@ function handleEvent(ev, d, live, ctx, finalize) {
       }
       break;
     }
-    case 'model': live.model = d; break;
+    case 'model':
+      live.model = d;
+      if (d.fallbackFrom?.length) live.el.querySelector('.live-note').innerHTML = `<div class="note">${icon('i-info')}<span>${esc(`${d.fallbackFrom[0]} wasn't available right now, so ${d.name} answered.`)}</span></div>`;
+      break;
     case 'notice': live.el.querySelector('.live-note').innerHTML = `<div class="note">${icon('i-info')}<span>${esc(d.message)}</span></div>`; break;
     case 'reasoning':
       if (!live.reasonStart) live.reasonStart = Date.now();
@@ -1155,6 +1168,7 @@ function openSettings(tab = 'general') {
 $('#settingsTabs').addEventListener('click', (e) => { const b = e.target.closest('[data-tab]'); if (b) showTab(b.dataset.tab); });
 
 function usageRow(label, used, limit) {
+  if (!limit) return `<div class="set-row"><span class="lbl">${label}</span><span style="color:var(--text-3)">${used} today · Unlimited</span></div>`;
   const pct = limit ? Math.min(100, Math.round((used / limit) * 100)) : 0;
   return `<div class="set-row" style="display:block"><div style="display:flex;justify-content:space-between"><span>${label}</span><span style="color:var(--text-3)">${used} / ${limit}</span></div><div class="usage-bar"><i style="width:${pct}%"></i></div></div>`;
 }
@@ -1169,8 +1183,8 @@ async function showTab(tab) {
     pane.innerHTML = `
       <div class="set-row"><span class="lbl">Theme</span><select id="setTheme"><option value="system">System</option><option value="dark">Dark</option><option value="light">Light</option></select></div>
       <div class="set-row"><span class="lbl">Enter to send<small>Off: use Ctrl/⌘ + Enter to send</small></span><button class="toggle${S.sendOnEnter ? ' on' : ''}" id="setEnter" aria-label="Enter to send"></button></div>
-      <div class="set-row" style="display:block;border:0;padding-bottom:0"><b style="font-size:14px">Today’s usage</b><div style="color:var(--text-3);font-size:12px;margin-top:2px">Free for everyone. Limits keep the service fast for all users and reset daily.</div></div>
-      ${S.usage ? usageRow('Messages', S.usage.messages, S.limits.messages) + usageRow('Premium model messages', S.usage.premium, S.limits.premium) + usageRow('Images', S.usage.images, S.limits.images) : ''}`;
+      <div class="set-row" style="display:block;border:0;padding-bottom:0"><b style="font-size:14px">Today’s usage</b><div style="color:var(--text-3);font-size:12px;margin-top:2px">No limits are set in this app. AI providers still have their own rate limits.</div></div>
+      ${S.usage ? usageRow('Messages', S.usage.messages, S.limits.messages) + usageRow('ChatGPT (paid API) messages', S.usage.premium, S.limits.premium) + usageRow('Images', S.usage.images, S.limits.images) : ''}`;
     $('#setTheme').value = pref;
     $('#setTheme').onchange = (e) => { store.set('theme', e.target.value); applyTheme(e.target.value); };
     $('#setEnter').onclick = (e) => { S.sendOnEnter = !S.sendOnEnter; store.set('sendOnEnter', S.sendOnEnter ? '1' : '0'); e.currentTarget.classList.toggle('on', S.sendOnEnter); };

@@ -1,8 +1,8 @@
 {
-  "name": "sukhan-ai",
+  "name": "chat-app",
   "version": "1.0.0",
   "private": true,
-  "description": "A fast, free, multi-model AI chat app (ChatGPT-style UI) with its own backend engine.",
+  "description": "Personal multi-model AI chat app (ChatGPT-style UI) with its own backend engine.",
   "type": "module",
   "engines": {
     "node": ">=22.13"

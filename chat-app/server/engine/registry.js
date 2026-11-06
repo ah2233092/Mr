@@ -5,6 +5,15 @@ import { enabledProviders, discoverModels, isChatModel, prettyName, supportsVisi
 import { Semaphore, Cooldowns } from './limiter.js';
 
 const MAX_PER_PROVIDER = parseInt(process.env.MAX_MODELS_PER_PROVIDER || '14', 10);
+const MAX_OPENAI = parseInt(process.env.MAX_OPENAI_MODELS || '40', 10);
+
+// Menu groups: real ChatGPT (OpenAI API) models first, then OpenAI's free
+// open-weight GPT-OSS models, then everything else.
+function groupOf(m) {
+  if (m.provider === 'openai') return { order: 0, label: 'ChatGPT models' };
+  if (/gpt-oss/i.test(m.id)) return { order: 1, label: 'OpenAI open models · Free' };
+  return { order: 2, label: `${m.providerLabel} · ${m.tier === 'paid' ? 'Premium' : 'Free'}` };
+}
 
 const state = { models: [], byKey: new Map(), providers: new Map(), refreshedAt: 0, refreshing: null };
 export const cooldowns = new Cooldowns();
@@ -42,12 +51,15 @@ export async function refreshModels() {
         entries.push({
           key, id: m.id, provider: p.id, providerLabel: p.label, tier: p.tier, speed: p.speed,
           name: prettyName(m.id), vision: supportsVision(p, m.id, m.inputModalities),
-          score, description: describeModel(p, score),
+          score, description: describeModel(p, score, m.id),
         });
       }
       entries.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
-      models.push(...entries.slice(0, MAX_PER_PROVIDER));
+      models.push(...entries.slice(0, p.id === 'openai' ? MAX_OPENAI : MAX_PER_PROVIDER));
     }
+    for (const m of models) { const g = groupOf(m); m.group = g.label; m.groupOrder = g.order; }
+    // Stable sort keeps provider order inside each group.
+    models.sort((a, b) => a.groupOrder - b.groupOrder || (a.groupOrder < 2 ? b.score - a.score : 0));
     state.models = models;
     state.byKey = new Map(models.map((m) => [m.key, m]));
     state.refreshedAt = Date.now();
@@ -93,7 +105,16 @@ export function autoOrder({ vision = false } = {}) {
 export function candidatesFor(modelKey, { vision = false } = {}) {
   const chosen = modelKey && modelKey !== 'auto' ? getModel(modelKey) : null;
   let chain = autoOrder({ vision });
-  if (chosen && (!vision || chosen.vision)) chain = [chosen, ...chain.filter((m) => m.key !== chosen.key)];
+  if (chosen && (!vision || chosen.vision)) {
+    // A chosen ChatGPT/paid model falls back to the next-best model of the
+    // same provider first, then to the free fast models.
+    const siblings = chosen.tier === 'paid'
+      ? state.models.filter((m) => m.provider === chosen.provider && m.key !== chosen.key && m.score <= chosen.score && (!vision || m.vision))
+        .sort((a, b) => b.score - a.score).slice(0, 2)
+      : [];
+    const head = [chosen, ...siblings];
+    chain = [...head, ...chain.filter((m) => !head.includes(m))];
+  }
   const healthy = chain.filter(isAvailable);
   const cooling = chain.filter((m) => !isAvailable(m));
   if (!chosen) {
@@ -107,14 +128,17 @@ export function candidatesFor(modelKey, { vision = false } = {}) {
   return [...healthy, ...cooling];
 }
 
+// Default selection: DEFAULT_MODEL if set, else the best ChatGPT model, else Auto.
 export function defaultModelKey() {
-  return 'auto';
+  if (config.models.default && state.byKey.has(config.models.default)) return config.models.default;
+  const best = state.models.filter((m) => m.provider === 'openai').sort((a, b) => b.score - a.score)[0];
+  return best ? best.key : 'auto';
 }
 
 export function publicModels() {
   const featured = new Set(config.models.featured);
   return state.models.map((m) => ({
-    key: m.key, name: m.name, provider: m.provider, providerLabel: m.providerLabel, tier: m.tier,
+    key: m.key, name: m.name, provider: m.provider, providerLabel: m.providerLabel, tier: m.tier, group: m.group,
     vision: m.vision, description: m.description, featured: featured.has(m.key),
     available: isAvailable(m),
   }));

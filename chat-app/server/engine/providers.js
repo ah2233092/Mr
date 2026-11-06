@@ -154,11 +154,30 @@ export function rankModel(id) {
   if (/mini/.test(s) && score > 80) score -= 10;
   if (/nano/.test(s) && score > 70) score -= 18;
   if (/preview|exp/.test(s)) score -= 1;
+  // Newer point releases rank above older ones (GPT-6.1 > GPT-6, GPT-5.2 > GPT-5.1).
+  const v = /gpt-\d+\.(\d+)/.exec(s);
+  if (v) score += Math.min(9, parseInt(v[1], 10)) / 10;
   return score;
 }
 
-export function describeModel(p, score) {
-  if (p.tier === 'paid') return score >= 92 ? 'Flagship · uses paid credits' : 'Paid model';
+// Short descriptions in the style of ChatGPT's model picker.
+function chatgptDescription(id) {
+  const s = id.toLowerCase();
+  if (/nano/.test(s)) return 'Fastest and lightest';
+  if (/mini/.test(s)) return 'Fast for everyday tasks';
+  if (/-pro\b|-pro-/.test(s)) return 'Research-grade intelligence';
+  if (/^gpt-6/.test(s)) return 'Newest flagship model';
+  if (/^gpt-5/.test(s)) return 'Great for most questions';
+  if (/^o\d/.test(s)) return 'Uses advanced reasoning';
+  if (/^chatgpt-/.test(s)) return 'The model used in ChatGPT';
+  if (/gpt-4/.test(s)) return 'Previous generation';
+  return 'OpenAI model';
+}
+
+export function describeModel(p, score, id = '') {
+  if (p.id === 'openai') return chatgptDescription(id);
+  if (/gpt-oss/i.test(id)) return `Free · OpenAI open model · runs on ${p.label}`;
+  if (p.tier === 'paid') return score >= 92 ? 'Flagship · uses your API credits' : 'Uses your API credits';
   if (p.speed >= 3) return score >= 78 ? 'Ultra-fast · strong reasoning' : 'Ultra-fast';
   return score >= 85 ? 'Smart · great for hard questions' : score >= 70 ? 'Fast and capable' : 'Lightweight';
 }

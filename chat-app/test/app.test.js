@@ -9,6 +9,8 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sukhan-test-'));
 Object.assign(process.env, {
   SKIP_DOTENV: '1', DATA_DIR: dir, ENABLE_MOCK: '1', ENABLE_POLLINATIONS: 'false', MOCK_TOKEN_DELAY_MS: '1',
   ADMIN_EMAILS: 'admin@test.dev', HOST: '127.0.0.1', IMAGE_PROMPT_ENHANCE: 'true',
+  // Fixed ChatGPT model list (no network discovery) to check menu order + default.
+  OPENAI_API_KEY: 'sk-test-dummy', OPENAI_MODELS: 'gpt-5-mini,gpt-6-sol,gpt-5.1,gpt-6.1-sol', OPENAI_IMAGES: 'false',
 });
 const { start, server } = await import('../server/index.js');
 let base;
@@ -178,4 +180,40 @@ test('units: model naming, ranking, image intent, semaphore', async () => {
   await assert.rejects(sem.acquire({ timeoutMs: 20 }), /queue timeout/);
   r2(); r3();
   assert.equal(sem.active, 0);
+});
+
+test('models: ChatGPT models come first, newest is the default', async () => {
+  const c = client();
+  await c('/api/auth/signup', { method: 'POST', body: { email: 'models@test.dev', password: 'password123' } });
+  const r = await c('/api/models');
+  assert.equal(r.json.default, 'openai:gpt-6.1-sol');
+  const names = r.json.models.filter((m) => m.group === 'ChatGPT models').map((m) => m.name);
+  assert.deepEqual(names, ['GPT-6.1 Sol', 'GPT-6 Sol', 'GPT-5.1', 'GPT-5 Mini']);
+  assert.equal(r.json.models[0].group, 'ChatGPT models');
+});
+
+test('limits: none by default (25 quick messages all go through)', async () => {
+  const c = client();
+  await c('/api/auth/signup', { method: 'POST', body: { email: 'unlimited@test.dev', password: 'password123' } });
+  const me = await c('/api/me');
+  assert.deepEqual(me.json.limits, { messages: 0, premium: 0, images: 0 });
+  let chatId;
+  for (let i = 0; i < 25; i++) {
+    const r = await c('/api/chat', { method: 'POST', body: { chatId, content: `msg ${i}`, model: 'mock:mock-fast' } });
+    assert.equal(r.status, 200, `message ${i} was refused`);
+    chatId = r.events[0].data.chatId;
+  }
+});
+
+test('private mode: only ALLOWED_EMAILS can sign up or log in', async () => {
+  const { config } = await import('../server/config.js');
+  config.allowedEmails.push('owner-only@test.dev');
+  try {
+    const r = await client()('/api/auth/signup', { method: 'POST', body: { email: 'someone@test.dev', password: 'password123' } });
+    assert.equal(r.status, 403);
+    const ok = await client()('/api/auth/signup', { method: 'POST', body: { email: 'owner-only@test.dev', password: 'password123' } });
+    assert.equal(ok.status, 201);
+    const l = await client()('/api/auth/login', { method: 'POST', body: { email: 'sara@test.dev', password: 'password123' } });
+    assert.equal(l.status, 403);
+  } finally { config.allowedEmails.length = 0; }
 });

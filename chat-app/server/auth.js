@@ -32,6 +32,14 @@ export function normalizeEmail(email) {
   if (e.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e)) throw new HttpError(400, 'Please enter a valid email address.');
   return e;
 }
+// Private mode: when ALLOWED_EMAILS is set, nobody else can sign up or log in.
+export function isEmailAllowed(email) {
+  return !config.allowedEmails.length || config.allowedEmails.includes(String(email).toLowerCase());
+}
+export function assertEmailAllowed(email) {
+  if (!isEmailAllowed(email)) throw new HttpError(403, 'This is a private app. This email is not allowed.');
+}
+
 export function validatePassword(pw) {
   pw = String(pw || '');
   if (pw.length < 8) throw new HttpError(400, 'Password must be at least 8 characters.');
@@ -84,7 +92,7 @@ export function getSessionUser(req) {
   if (cached && cached.until > now()) return cached.user;
   const row = q(`SELECT u.*, s.expires_at AS s_exp FROM sessions s JOIN users u ON u.id = s.user_id
                  WHERE s.token_hash = ?`).get(h);
-  if (!row || row.s_exp < now() || row.disabled) { sessionCache.delete(h); return null; }
+  if (!row || row.s_exp < now() || row.disabled || !isEmailAllowed(row.email)) { sessionCache.delete(h); return null; }
   // Sliding expiry: extend sessions that are used.
   if (row.s_exp - now() < (config.sessionDays * 86400 * 1000) / 2) {
     q('UPDATE sessions SET expires_at=? WHERE token_hash=?').run(now() + config.sessionDays * 86400 * 1000, h);

@@ -20,22 +20,25 @@ const regex = (v) => { if (!v) return null; try { return new RegExp(v, 'i'); } c
 export const config = {
   port: int(env.PORT, 3000),
   host: env.HOST || '0.0.0.0',
-  appName: env.APP_NAME || 'Sukhan AI',
+  appName: env.APP_NAME || 'ChatGPT',
   publicUrl: (env.PUBLIC_URL || '').replace(/\/+$/, ''),
   dataDir: path.resolve(ROOT, env.DATA_DIR || 'data'),
   cookieSecure: (env.COOKIE_SECURE || 'auto').toLowerCase(), // auto | true | false
   trustProxy: bool(env.TRUST_PROXY, true),
   adminEmails: list(env.ADMIN_EMAILS).map((e) => e.toLowerCase()),
   allowSignup: bool(env.ALLOW_SIGNUP, true),
+  // Private mode: only these emails can sign up / log in (empty = anyone)
+  allowedEmails: list(env.ALLOWED_EMAILS).map((e) => e.toLowerCase()),
   sessionDays: int(env.SESSION_DAYS, 30),
   signupsPerIpPerHour: int(env.SIGNUPS_PER_IP_PER_HOUR, 30),
 
+  // Per-user limits. 0 = unlimited (the default for a personal app).
   limits: {
-    userPerMinute: int(env.USER_MSGS_PER_MINUTE, 20),
-    userPerDay: int(env.USER_MSGS_PER_DAY, 500),
-    paidPerDay: int(env.USER_PAID_MSGS_PER_DAY, 25),
-    imagesPerDay: int(env.USER_IMAGES_PER_DAY, 40),
-    userConcurrent: int(env.USER_CONCURRENT, 2),
+    userPerMinute: int(env.USER_MSGS_PER_MINUTE, 0),
+    userPerDay: int(env.USER_MSGS_PER_DAY, 0),
+    paidPerDay: int(env.USER_PAID_MSGS_PER_DAY, 0),
+    imagesPerDay: int(env.USER_IMAGES_PER_DAY, 0),
+    userConcurrent: int(env.USER_CONCURRENT, 0),
     providerConcurrency: int(env.PROVIDER_CONCURRENCY, 32),
     queueWaitMs: int(env.QUEUE_WAIT_MS, 20000),
     firstTokenTimeoutMs: int(env.FIRST_TOKEN_TIMEOUT_MS, 25000),
@@ -48,6 +51,7 @@ export const config = {
   },
 
   models: {
+    default: env.DEFAULT_MODEL || '',     // e.g. "openai:gpt-6-sol"; empty = best ChatGPT model, else Auto
     auto: list(env.AUTO_MODELS),            // e.g. "cerebras:gpt-oss-120b,groq:openai/gpt-oss-120b"
     featured: list(env.FEATURED_MODELS),
     allow: regex(env.MODEL_ALLOW_REGEX),

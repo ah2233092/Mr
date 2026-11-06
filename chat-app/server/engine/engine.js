@@ -7,16 +7,19 @@ import { streamChat, ProviderError } from './providers.js';
 import { getProvider, semFor, noteFailure, noteSuccess, stats, autoOrder, isAvailable } from './registry.js';
 
 const IDLE_TIMEOUT_MS = 90_000;
-const MAX_ATTEMPTS = 6;
+const MAX_ATTEMPTS = 10;
 
 export async function generate({ candidates, buildMessages, signal, hadImages = false, onModel, onText, onReasoning, onReset }) {
   const tried = [];
   let lastErr = null;
+  const deadProviders = new Set(); // bad key / unreachable: skip that provider's other models too
+  let attempts = 0;
 
-  for (const m of candidates.slice(0, MAX_ATTEMPTS)) {
-    if (signal.aborted) break;
+  for (const m of candidates) {
+    if (signal.aborted || attempts >= MAX_ATTEMPTS) break;
     const p = getProvider(m.provider);
-    if (!p) continue;
+    if (!p || deadProviders.has(p.id)) continue;
+    attempts++;
 
     let release;
     try {
@@ -58,6 +61,7 @@ export async function generate({ candidates, buildMessages, signal, hadImages = 
       const err = e instanceof ProviderError ? e
         : new ProviderError(0, timedOut ? 'timed out' : (e.message || 'stream error'), { kind: timedOut ? 'timeout' : 'network' });
       noteFailure(m, err, { hadImages });
+      if (err.kind === 'auth' || err.kind === 'network') deadProviders.add(p.id);
       if (text) {
         // The answer was already partly shown; keep it instead of restarting.
         return { model: m, text, reasoning, error: err, partial: true, tried, latencyMs: Date.now() - t0 };

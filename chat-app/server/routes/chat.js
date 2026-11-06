@@ -11,8 +11,9 @@ import { candidatesFor, getModel, semFor } from '../engine/registry.js';
 import { generate, quickComplete } from '../engine/engine.js';
 import { looksLikeImageRequest, planImage, generateImage, imageBackends } from '../engine/images.js';
 
-const perMinute = new WindowLimiter(config.limits.userPerMinute, 60_000);
-setInterval(() => perMinute.sweep(), 5 * 60_000).unref();
+// Limits are off when set to 0 (default for a personal app).
+const perMinute = config.limits.userPerMinute > 0 ? new WindowLimiter(config.limits.userPerMinute, 60_000) : null;
+if (perMinute) setInterval(() => perMinute.sweep(), 5 * 60_000).unref();
 const inFlight = new Map();
 
 const MAX_IMAGES_PER_MSG = 4;
@@ -133,9 +134,9 @@ export function registerChat(r) {
 
     // ---- per-user limits ----
     const usage = getUsage(user.id);
-    if (usage.msgs >= config.limits.userPerDay) throw new HttpError(429, `You reached today's limit of ${config.limits.userPerDay} messages. It resets at midnight (UTC).`);
-    if ((inFlight.get(user.id) || 0) >= config.limits.userConcurrent) throw new HttpError(429, 'Please wait for the current reply to finish.');
-    const rl = perMinute.check(user.id);
+    if (config.limits.userPerDay > 0 && usage.msgs >= config.limits.userPerDay) throw new HttpError(429, `You reached today's limit of ${config.limits.userPerDay} messages. It resets at midnight (UTC).`);
+    if (config.limits.userConcurrent > 0 && (inFlight.get(user.id) || 0) >= config.limits.userConcurrent) throw new HttpError(429, 'Please wait for the current reply to finish.');
+    const rl = perMinute ? perMinute.check(user.id) : { ok: true };
     if (!rl.ok) throw new HttpError(429, `You're sending messages too fast. Try again in ${Math.ceil(rl.retryInMs / 1000)}s.`);
 
     // ---- chat + user message bookkeeping ----
@@ -214,7 +215,7 @@ async function runText({ user, chat, userMsg, assistantId, modelKey, hasImages, 
   let notice = '';
   let chosen = modelKey !== 'auto' ? getModel(modelKey) : null;
   if (modelKey !== 'auto' && !chosen) notice = 'The selected model is no longer available, so Auto was used.';
-  if (chosen?.tier === 'paid' && getUsage(user.id).paid_msgs >= config.limits.paidPerDay) {
+  if (chosen?.tier === 'paid' && config.limits.paidPerDay > 0 && getUsage(user.id).paid_msgs >= config.limits.paidPerDay) {
     notice = `You used today's ${config.limits.paidPerDay} premium messages, so a free model answered. Premium resets at midnight (UTC).`;
     chosen = null;
   }
@@ -261,6 +262,9 @@ async function runText({ user, chat, userMsg, assistantId, modelKey, hasImages, 
       : 'Could not get a reply from any AI model right now. Please try again.';
   }
 
+  if (m && result.tried?.length && status !== 'error' && !notice) {
+    note = `${result.tried[0].name} wasn't available right now, so ${m.name} answered.`;
+  }
   if (m && result.text) {
     bumpUsage(user.id, 'msgs');
     if (m.tier === 'paid') bumpUsage(user.id, 'paid_msgs');
@@ -283,7 +287,7 @@ async function runImage({ user, chat, userMsg, assistantId, sse, signal }) {
     sse.send('done', { message: rowToMessage(q('SELECT * FROM messages WHERE id=?').get(assistantId)) });
   };
   if (!imageBackends().length) return fail('Image generation is not configured on this server yet.');
-  if (usage.images >= config.limits.imagesPerDay) return fail(`You reached today's limit of ${config.limits.imagesPerDay} images. It resets at midnight (UTC).`);
+  if (config.limits.imagesPerDay > 0 && usage.images >= config.limits.imagesPerDay) return fail(`You reached today's limit of ${config.limits.imagesPerDay} images. It resets at midnight (UTC).`);
 
   sse.send('image_status', { stage: 'planning' });
   const plan = await planImage(userMsg.content);

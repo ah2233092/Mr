@@ -1,6 +1,6 @@
 {
-  "name": "Sukhan AI",
-  "short_name": "Sukhan",
+  "name": "ChatGPT",
+  "short_name": "ChatGPT",
   "description": "Fast, free AI chat with many models and image generation.",
   "id": "/",
   "start_url": "/",

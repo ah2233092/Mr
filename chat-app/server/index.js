@@ -44,7 +44,7 @@ async function handle(req, res) {
       return;
     }
     if (req.method !== 'GET' && req.method !== 'HEAD') throw new HttpError(405, 'Method not allowed.');
-    if (pathname === '/manifest.webmanifest' && config.appName !== 'Sukhan AI') {
+    if (pathname === '/manifest.webmanifest' && config.appName !== baseManifest.name) {
       // Installed-app name follows APP_NAME.
       res.writeHead(200, { 'Content-Type': 'application/manifest+json', 'Cache-Control': 'no-cache' });
       res.end(JSON.stringify({ ...baseManifest, name: config.appName, short_name: config.appName.split(' ')[0] }));
