@@ -78,6 +78,7 @@ export async function start(port = config.port, host = config.host) {
     const onListening = () => { server.off('error', onError); resolve(); };
     server.once('error', onError);
     server.once('listening', onListening);
+    process.env.LISTEN_HOST = host;
     server.listen(port, host);
   });
   const addr = server.address();

@@ -1,5 +1,6 @@
 // REST routes: auth, account, chats, files, models, admin.
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { config } from '../config.js';
@@ -23,7 +24,29 @@ export function registerApi(r) {
     imagesEnabled: imageBackends().length > 0,
   }));
 
-  r.get('/healthz', (req, res) => sendJson(res, 200, { ok: true, uptime: Math.round(process.uptime()) }));
+  // Health check. Also lets the phone app find this server on the Wi-Fi (hence the open CORS header).
+  r.get('/healthz', (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    sendJson(res, 200, { ok: true, app: 'chatgpt-personal', name: config.appName, uptime: Math.round(process.uptime()) });
+  });
+
+  // Addresses for using the app on a phone (Settings → Phone app).
+  r.get('/api/lan', (req, res) => {
+    requireUser(req);
+    const port = req.socket.localPort;
+    const urls = [];
+    if (!/^(127\.|::1$|localhost$)/.test(String(process.env.LISTEN_HOST || ''))) {
+      for (const list of Object.values(os.networkInterfaces())) {
+        for (const a of list || []) {
+          if (a.family === 'IPv4' && !a.internal && /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(a.address)) urls.push(`http://${a.address}:${port}`);
+        }
+      }
+    }
+    sendJson(res, 200, {
+      urls, publicUrl: config.publicUrl || null,
+      appUrl: process.env.APP_DOWNLOAD_URL || 'https://github.com/ah2233092/Mr/releases/tag/chatgpt-desktop-latest',
+    });
+  });
 
   // ---------- auth ----------
   r.post('/api/auth/signup', async (req, res) => {
@@ -247,7 +270,7 @@ export function registerApi(r) {
   });
 
   // ---------- private files ----------
-  r.get('/files/:id', async (req, res, { params }) => {
+  r.get('/files/:id', async (req, res, { params, url }) => {
     const u = requireUser(req);
     const f = q('SELECT * FROM files WHERE id=? AND user_id=?').get(params.id, u.id);
     if (!f || !/^[\w-]+\.\w+$/.test(f.id)) throw new HttpError(404, 'Not found.');
@@ -257,7 +280,8 @@ export function registerApi(r) {
     res.writeHead(200, {
       'Content-Type': f.mime || mimeOf(abs), 'Content-Length': st.size,
       'Cache-Control': 'private, max-age=31536000, immutable',
-      'Content-Disposition': `inline; filename="${f.id}"`,
+      // ?download=1 makes it a real download (needed by the phone app)
+      'Content-Disposition': `${url.searchParams.get('download') ? 'attachment' : 'inline'}; filename="chatgpt-${f.id}"`,
     });
     fs.createReadStream(abs).pipe(res);
   });

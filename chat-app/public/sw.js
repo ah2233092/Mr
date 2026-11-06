@@ -2,7 +2,7 @@
 // Always asks the server first, so an update shows up immediately;
 // the cache is only a fallback when the network is down.
 // API calls and private files are never cached.
-const VERSION = 'v5';
+const VERSION = 'v6';
 const SHELL = `shell-${VERSION}`;
 const ASSETS = ['/', '/styles.css', '/app.js', '/boot.js', '/logo.svg', '/favicon.svg', '/manifest.webmanifest',
   '/vendor/marked.umd.js', '/vendor/purify.min.js', '/vendor/highlight.min.js', '/icons/icon-192.png'];

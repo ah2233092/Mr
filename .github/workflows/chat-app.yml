@@ -63,8 +63,50 @@ jobs:
           path: ${{ matrix.files }}
           if-no-files-found: error
 
+  android:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+      # Signing key: created once, kept only in this repository's private Actions cache.
+      - name: Restore signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android-signing
+          key: android-signing-v1
+      - name: Prepare signing key
+        run: |
+          mkdir -p ~/.android-signing
+          if [ ! -f ~/.android-signing/release.p12 ]; then
+            openssl rand -hex 24 > ~/.android-signing/pass
+            P=$(cat ~/.android-signing/pass)
+            keytool -genkeypair -keystore ~/.android-signing/release.p12 -storetype PKCS12 -alias chatgpt \
+              -keyalg RSA -keysize 2048 -validity 10000 -storepass "$P" -keypass "$P" -dname "CN=ChatGPT Personal"
+          fi
+          P=$(cat ~/.android-signing/pass)
+          echo "::add-mask::$P"
+          echo "ANDROID_KEYSTORE=$HOME/.android-signing/release.p12" >> "$GITHUB_ENV"
+          echo "ANDROID_KEYSTORE_PASSWORD=$P" >> "$GITHUB_ENV"
+      - name: Build APK
+        working-directory: chat-app/android
+        run: gradle assembleRelease --no-daemon --stacktrace
+      - name: Name the APK
+        run: cp chat-app/android/app/build/outputs/apk/release/app-release.apk ChatGPT-Android.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ChatGPT-Android
+          path: ChatGPT-Android.apk
+          if-no-files-found: error
+
   release:
-    needs: desktop
+    needs: [desktop, android]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -82,5 +124,7 @@ jobs:
             - **Windows:** `ChatGPT-Setup-1.0.0.exe` → open it (if Windows says "protected your PC": More info → Run anyway).
             - **Mac (Apple chip M1/M2/M3…):** `ChatGPT-1.0.0-arm64.dmg` · **Mac (Intel):** `ChatGPT-1.0.0-x64.dmg` → drag to Applications, then right-click the app → Open.
             - **Linux:** `ChatGPT-1.0.0.AppImage` → make it executable and run.
+            - **Android:** `ChatGPT-Android.apk` → open it on the phone and allow "Install unknown apps" once. On first open, enter your ChatGPT address (shown on your PC/server: profile menu → Phone app).
+            - **iPhone:** open your ChatGPT address in Safari → Share → Add to Home Screen.
 
             First launch: create your account (the first account is the admin), then paste a free AI key in the "AI keys" page that opens.

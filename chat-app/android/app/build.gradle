@@ -1,0 +1,45 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'app.personal.chatgpt'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'app.personal.chatgpt'
+        minSdk 24
+        targetSdk 34
+        // Each CI build gets a higher number, so a new APK installs over the old one.
+        versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1') as Integer)
+        versionName '1.0.' + (System.getenv('GITHUB_RUN_NUMBER') ?: '0')
+    }
+
+    // The signing key is never stored in the repository. CI creates it once and keeps it in
+    // the private GitHub Actions cache, so new versions install over old ones.
+    // Without ANDROID_KEYSTORE (local builds) the debug key is used.
+    def keystore = System.getenv('ANDROID_KEYSTORE')
+    signingConfigs {
+        release {
+            if (keystore) {
+                storeFile file(keystore)
+                storeType 'pkcs12'
+                storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                keyAlias 'chatgpt'
+                keyPassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig keystore ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

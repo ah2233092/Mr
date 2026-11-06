@@ -443,6 +443,7 @@ $('#profileMenu').addEventListener('click', (e) => {
   if (act === 'personalize') openSettings('personal');
   if (act === 'admin') openSettings('admin');
   if (act === 'install') promptInstall();
+  if (act === 'phone') { if (inAndroidApp) window.AndroidApp.changeServer(); else openPhone(); }
   if (act === 'logout') logout();
 });
 
@@ -581,7 +582,7 @@ function assistantActions(m, isLast) {
   let h = '<div class="msg-actions">';
   if (isImage) {
     const a = m.attachments.find((x) => x.type === 'image');
-    h += `<a class="act" href="${esc(a.url)}" download title="Download">${icon('i-download')}</a>`;
+    h += `<a class="act" href="${esc(a.url)}?download=1" download title="Download">${icon('i-download')}</a>`;
   } else if (m.content) {
     h += `<button class="act" data-act="copy" title="Copy">${icon('i-copy')}</button>`;
     h += `<button class="act${m.rating === 1 ? ' on' : ''}" data-act="up" title="Good response">${icon('i-up-thumb')}</button>`;
@@ -595,7 +596,7 @@ function assistantActions(m, isLast) {
 
 function imageBlock(a) {
   return `<div class="gen-img" data-aspect="${esc(a.aspect || '1:1')}"><img src="${esc(a.url)}" alt="${esc(a.prompt || 'Generated image')}" data-zoom loading="lazy">
-    <div class="img-tools"><a href="${esc(a.url)}" download title="Download"><button type="button" tabindex="-1">${icon('i-download', 'i sm')}</button></a></div></div>`;
+    <div class="img-tools"><a href="${esc(a.url)}?download=1" download title="Download"><button type="button" tabindex="-1">${icon('i-download', 'i sm')}</button></a></div></div>`;
 }
 
 function assistantMessageEl(m, isLast) {
@@ -1122,7 +1123,7 @@ function openLightbox(src) {
 }
 $('#lbDownload').addEventListener('click', () => {
   const a = document.createElement('a');
-  a.href = $('#lbImg').src; a.download = ''; document.body.appendChild(a); a.click(); a.remove();
+  a.href = $('#lbImg').src + '?download=1'; a.download = ''; document.body.appendChild(a); a.click(); a.remove();
 });
 $('#lightbox').addEventListener('click', (e) => { if (e.target === $('#lightbox')) $('#lightbox').close(); });
 
@@ -1290,6 +1291,31 @@ async function exportChats() {
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   } catch (e) { toast(e.message, true); }
+}
+
+// ---------------- phone app ----------------
+const inAndroidApp = /ChatGPTAndroid/.test(navigator.userAgent) && !!window.AndroidApp;
+if (inAndroidApp) $('#phoneItem span').textContent = 'Change server';
+
+async function openPhone() {
+  const body = $('#phoneBody');
+  body.innerHTML = '<div class="sb-empty">Loading…</div>';
+  $('#phoneDlg').showModal();
+  let d = { urls: [], publicUrl: null, appUrl: '' };
+  try { d = await api('/api/lan'); } catch {}
+  const here = location.origin.startsWith('https://') ? location.origin : null;
+  const addresses = [...new Set([d.publicUrl, here, ...d.urls].filter(Boolean))];
+  const addrHtml = addresses.length
+    ? addresses.map((u) => `<div class="set-row"><code style="font-size:15px">${esc(u)}</code><button class="btn" data-copy-url="${esc(u)}">Copy</button></div>`).join('')
+    : `<p>This ChatGPT is only on this computer right now. To use it on your phone from anywhere, put it online with the one-command server install (see README → “Phone + PC”).</p>`;
+  body.innerHTML = `
+    <p><b>1.</b> Install the app — Android: download <b>ChatGPT-Android.apk</b> from <a class="link" href="${esc(d.appUrl)}" target="_blank" rel="noopener">the download page</a>.
+       iPhone: open the address below in Safari → Share → <b>Add to Home Screen</b>.</p>
+    <p><b>2.</b> Open it and enter this address (only once):</p>
+    ${addrHtml}`;
+  body.querySelectorAll('[data-copy-url]').forEach((b) => b.addEventListener('click', async () => {
+    if (await copyText(b.dataset.copyUrl)) { b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy'; }, 1500); }
+  }));
 }
 
 // ---------------- install (PWA) ----------------

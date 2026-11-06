@@ -18,6 +18,12 @@ aur desktop + mobile par **install hone wala app** (PWA). App ki taraf se **koi 
    koi key ya setting app mein nahi. OmniRoute mein jo providers connect honge (Groq, Gemini, Cerebras…)
    unke models menu mein khud aa jaate hain (har 5 minute mein list update hoti hai).
 
+### 📱 Android app
+Releases page se **`ChatGPT-Android.apk`** phone par download karke kholein (pehli dafa "Install unknown apps"
+allow karna hoga). App pehli dafa aapke ChatGPT ka address poochti hai (ek hi dafa) — address ChatGPT mein
+**profile menu → Phone app** par likha hota hai. iPhone: wahi address Safari mein kholein → Share →
+**Add to Home Screen**. Phone ko ek **online** ChatGPT chahiye — neeche wala server (option 2).
+
 ### 2) Phone + PC dono par, hamesha online — ek command
 Ek sasta VPS lein (Ubuntu, ~$5/mahina). Server par yeh 2 commands:
 ```bash

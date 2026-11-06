@@ -31,7 +31,7 @@ function client() {
     if (type.includes('event-stream')) return { status: r.status, events: parseSse(await r.text()) };
     const text = await r.text();
     let json = null; try { json = JSON.parse(text); } catch {}
-    return { status: r.status, json, text };
+    return { status: r.status, json, text, headers: r.headers };
   };
 }
 function parseSse(text) {
@@ -203,4 +203,23 @@ test('limits: none by default (25 quick messages all go through)', async () => {
     assert.equal(r.status, 200, `message ${i} was refused`);
     chatId = r.events[0].data.chatId;
   }
+});
+
+test('phone app: server can be found and files can be downloaded', async () => {
+  const h = await fetch(base + '/healthz');
+  assert.equal(h.headers.get('access-control-allow-origin'), '*');
+  assert.equal((await h.json()).app, 'chatgpt-personal');
+  const c = client();
+  await c('/api/auth/signup', { method: 'POST', body: { email: 'phone@test.dev', password: 'password123' } });
+  const lan = await c('/api/lan');
+  assert.equal(lan.status, 200);
+  assert.ok(Array.isArray(lan.json.urls));
+  assert.match(lan.json.appUrl, /releases/);
+  const r = await c('/api/chat', { method: 'POST', body: { content: 'draw an image of a boat' } });
+  const url = r.events.find((e) => e.ev === 'done').data.message.attachments[0].url;
+  const inline = await c(url);
+  assert.equal(inline.status, 200);
+  assert.match(inline.headers.get('content-disposition'), /^inline/);
+  const dl = await c(`${url}?download=1`);
+  assert.match(dl.headers.get('content-disposition'), /^attachment/);
 });

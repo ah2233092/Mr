@@ -162,6 +162,7 @@
   <button class="menu-item" data-act="personalize"><svg class="i"><use href="#i-sliders"/></svg>Customize</button>
   <button class="menu-item" data-act="admin" id="adminItem" hidden><svg class="i"><use href="#i-shield"/></svg>Admin</button>
   <button class="menu-item" data-act="install" id="installItem" hidden><svg class="i"><use href="#i-install"/></svg>Install app</button>
+  <button class="menu-item" data-act="phone" id="phoneItem"><svg class="i"><use href="#i-install"/></svg><span>Phone app</span></button>
   <div class="menu-sep"></div>
   <button class="menu-item" data-act="logout"><svg class="i"><use href="#i-logout"/></svg>Log out</button>
 </div>
@@ -194,6 +195,10 @@
     <button id="lbDownload" title="Download"><svg class="i"><use href="#i-download"/></svg></button>
     <button data-close title="Close"><svg class="i"><use href="#i-x"/></svg></button>
   </div>
+</dialog>
+<dialog id="phoneDlg">
+  <div class="dlg-head"><h2>Use ChatGPT on your phone</h2><button class="icon-btn" data-close><svg class="i"><use href="#i-x"/></svg></button></div>
+  <div class="dlg-body" id="phoneBody"></div>
 </dialog>
 <dialog id="confirmDlg">
   <div class="dlg-head"><h2 id="confirmTitle">Are you sure?</h2></div>
