@@ -3,7 +3,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { config, ROOT } from './config.js';
-import { cleanup, db } from './db.js';
+import { cleanup, db, backupDatabase } from './db.js';
 import { Router, HttpError, sendJson, createStatic, securityHeaders, originOf } from './http.js';
 import { getSessionUser } from './auth.js';
 import { registerApi } from './routes/api.js';
@@ -68,6 +68,9 @@ server.maxConnections = 5000;
 export async function start(port = config.port) {
   await startModelRefresh().catch((e) => console.error('[models] initial load failed', e));
   setInterval(cleanup, 60 * 60 * 1000).unref();
+  const backup = () => { try { backupDatabase(); } catch (e) { console.error('[backup] failed:', e.message); } };
+  setTimeout(backup, 30_000).unref();
+  setInterval(backup, 6 * 60 * 60 * 1000).unref();
   await new Promise((resolve) => server.listen(port, config.host, resolve));
   const addr = server.address();
   console.log(`[server] ${config.appName} listening on http://${config.host === '0.0.0.0' ? 'localhost' : config.host}:${addr.port}`);
@@ -80,10 +83,15 @@ function shutdown(sig) {
   setTimeout(() => process.exit(0), 10_000).unref();
 }
 
+// Never let one bad request take the whole app down: log and keep serving.
+// (Docker's restart policy covers anything worse, such as running out of memory.)
+process.on('unhandledRejection', (e) => console.error('[guard] unhandled rejection:', e));
+process.on('uncaughtException', (e) => console.error('[guard] uncaught exception:', e));
+
 if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(ROOT, 'server', 'index.js')) {
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
-  start();
+  start().catch((e) => { console.error('[server] failed to start:', e); process.exit(1); });
 }
 
 export { server };

@@ -1055,6 +1055,8 @@ function handleEvent(ev, d, live, ctx, finalize) {
       const m = d.message;
       if (m.status === 'error' && !m.note) m.note = live.error;
       finalize(m);
+      // The reply is complete: free the composer now (the chat title may still arrive on this stream).
+      if (S.streaming?.live === live) { S.streaming = null; syncSend(); }
       if (m.attachments?.some((a) => a.type === 'image') && S.usage) S.usage.images++;
       else if (m.content && S.usage) S.usage.messages++;
       break;

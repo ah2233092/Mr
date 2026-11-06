@@ -156,6 +156,18 @@ export function rowToMessage(m) {
   };
 }
 
+// Daily snapshot of the database into data/backups (keeps the newest 7).
+export function backupDatabase() {
+  const dir = path.join(config.dataDir, 'backups');
+  fs.mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, `app-${new Date().toISOString().slice(0, 10)}.db`);
+  if (fs.existsSync(file)) return file;
+  db.exec(`VACUUM INTO '${file.replace(/'/g, "''")}'`);
+  const old = fs.readdirSync(dir).filter((f) => /^app-\d{4}-\d{2}-\d{2}\.db$/.test(f)).sort().reverse().slice(7);
+  for (const f of old) fs.rmSync(path.join(dir, f), { force: true });
+  return file;
+}
+
 // Periodic cleanup of expired sessions / reset tokens.
 export function cleanup() {
   const t = now();

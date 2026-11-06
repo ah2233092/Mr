@@ -10,6 +10,15 @@ import { WindowLimiter } from '../engine/limiter.js';
 import { candidatesFor, getModel, semFor } from '../engine/registry.js';
 import { generate, quickComplete } from '../engine/engine.js';
 import { looksLikeImageRequest, planImage, generateImage, imageBackends } from '../engine/images.js';
+import { prettyName } from '../engine/providers.js';
+
+// The name to show for the model that answered. For a gateway "Auto" route,
+// use the model the gateway says it actually ran.
+function answeredName(m, served) {
+  if (!m) return null;
+  if (m.autoRoute) return served && !/^auto(\/|$)/i.test(served) ? prettyName(served) : 'Auto';
+  return m.name;
+}
 
 // Limits are off when set to 0 (default for a personal app).
 const perMinute = config.limits.userPerMinute > 0 ? new WindowLimiter(config.limits.userPerMinute, 60_000) : null;
@@ -189,16 +198,19 @@ export function registerChat(r) {
     const assistantId = newId();
     sse.send('start', { chatId: chat.id, isNew, title: chat.title, userMessage: userMsg, assistantId, kind: wantsImage ? 'image' : 'chat' });
 
-    const titlePromise = isNew ? makeTitle(userMsg.content || 'Image') : Promise.resolve(null);
+    // The title is made once the answer has started, so it never delays the first word.
+    let titlePromise = null;
+    const startTitle = () => { if (isNew && !titlePromise) titlePromise = makeTitle(userMsg.content || 'Image'); };
     const finishTitle = async () => {
       if (!isNew) return;
+      startTitle();
       const t = await Promise.race([titlePromise, new Promise((r) => setTimeout(() => r(null), 2500))]);
       if (t) { q('UPDATE chats SET title=? WHERE id=?').run(t, chat.id); sse.send('title', { chatId: chat.id, title: t }); }
     };
 
     try {
       if (wantsImage) await runImage({ user, chat, userMsg, assistantId, sse, signal: ctrl.signal });
-      else await runText({ user, chat, userMsg, assistantId, modelKey, hasImages, sse, signal: ctrl.signal });
+      else await runText({ user, chat, userMsg, assistantId, modelKey, hasImages, sse, signal: ctrl.signal, onStarted: startTitle });
       await finishTitle();
     } catch (e) {
       console.error('[chat]', e);
@@ -211,7 +223,7 @@ export function registerChat(r) {
   });
 }
 
-async function runText({ user, chat, userMsg, assistantId, modelKey, hasImages, sse, signal }) {
+async function runText({ user, chat, userMsg, assistantId, modelKey, hasImages, sse, signal, onStarted }) {
   let notice = '';
   let chosen = modelKey !== 'auto' ? getModel(modelKey) : null;
   if (modelKey !== 'auto' && !chosen) notice = 'The selected model is no longer available, so Auto was used.';
@@ -241,10 +253,14 @@ async function runText({ user, chat, userMsg, assistantId, modelKey, hasImages, 
   const result = await generate({
     candidates, signal, hadImages: hasImages,
     buildMessages: (m) => [{ role: 'system', content: systemPrompt(user, m) }, ...buildHistory(rows, m, config.context.maxChars)],
-    onModel: (m, tried) => sse.send('model', {
-      key: m.key, name: m.name, provider: m.provider, providerLabel: m.providerLabel, tier: m.tier,
-      fallbackFrom: tried.map((x) => x.name),
-    }),
+    onModel: (m, tried, served) => {
+      sse.send('model', {
+        key: m.key, name: answeredName(m, served), provider: m.provider, providerLabel: m.providerLabel, tier: m.tier,
+        // Only mention a fallback when the user picked a specific model.
+        fallbackFrom: chosen && tried[0]?.key === chosen.key ? [chosen.name] : [],
+      });
+      onStarted?.();
+    },
     onText: (t) => { pending += t; schedule(); },
     onReasoning: (t) => { pendingR += t; schedule(); },
     onReset: () => { clearTimeout(flushTimer); flushTimer = null; pending = ''; pendingR = ''; sse.send('reset', {}); },
@@ -262,8 +278,8 @@ async function runText({ user, chat, userMsg, assistantId, modelKey, hasImages, 
       : 'Could not get a reply from any AI model right now. Please try again.';
   }
 
-  if (m && result.tried?.length && status !== 'error' && !notice) {
-    note = `${result.tried[0].name} wasn't available right now, so ${m.name} answered.`;
+  if (m && chosen && result.tried?.[0]?.key === chosen.key && status !== 'error' && !notice) {
+    note = `${result.tried[0].name} wasn't available right now, so ${answeredName(m, result.served)} answered.`;
   }
   if (m && result.text) {
     bumpUsage(user.id, 'msgs');
@@ -271,7 +287,7 @@ async function runText({ user, chat, userMsg, assistantId, modelKey, hasImages, 
   }
   q(`INSERT INTO messages(id, chat_id, seq, role, content, reasoning, model, model_name, provider, status, note, latency_ms, created_at)
      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(assistantId, chat.id, nextSeq(chat.id), 'assistant', result.text || '', result.reasoning || null,
-    m?.key || null, m?.name || null, m?.providerLabel || null, status, note || (notice || null), result.latencyMs || null, now());
+    m?.key || null, answeredName(m, result.served), m?.providerLabel || null, status, note || (notice || null), result.latencyMs || null, now());
   q('UPDATE chats SET updated_at=? WHERE id=?').run(now(), chat.id);
   const saved = rowToMessage(q('SELECT * FROM messages WHERE id=?').get(assistantId));
   if (status === 'error') sse.send('error', { message: note, message_id: assistantId });

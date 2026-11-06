@@ -37,7 +37,10 @@ aur desktop + mobile par **install hone wala app** (PWA). App ki taraf se **koi 
 - Email + password (scrypt hashing, secure httpOnly cookies), "Continue with Google",
   password reset email, brute-force protection
 
-**Engine**
+**Engine (OmniRoute se powered)**
+- Backend ka main engine **OmniRoute** hai (ek gateway jo bohat saare AI providers ko ek jagah jodta hai);
+  interface wahi rehta hai — model ke naam, menu, sab kuch same
+- OmniRoute band ho jaye to direct keys (Cerebras/Groq…) **backup** ban kar jawab dete hain — chat kabhi nahi rukti
 - Har provider ki apni queue taake rate-limit na lage; 100–200 log ek saath bhi chala sakte hain
 - Circuit breaker: jo model/provider fail ho use kuch der skip karta hai — intezar nahi
 - Fallback: ChatGPT model fail ho to pehle doosra ChatGPT model, phir free fast models
@@ -63,6 +66,52 @@ aur desktop + mobile par **install hone wala app** (PWA). App ki taraf se **koi 
 
 ---
 
+## OmniRoute setup (main engine)
+
+OmniRoute aapke server par app ke saath hi chalta hai (`docker compose` dono ko start karta hai).
+Maine OmniRoute **3.8.52** asal mein chala kar check kiya hai.
+
+1. `.env` mein OmniRoute ke 3 secrets bharein (in ke bina compose start hi nahi hoga):
+   ```bash
+   openssl rand -base64 24   # OMNIROUTE_DASHBOARD_PASSWORD
+   ```
+   ```bash
+   openssl rand -base64 48   # OMNIROUTE_JWT_SECRET
+   ```
+   ```bash
+   openssl rand -hex 32      # OMNIROUTE_API_KEY_SECRET
+   ```
+2. `docker compose up -d --build`, phir apne PC se SSH tunnel kholein:
+   ```bash
+   ssh -L 20128:localhost:20128 root@YOUR_SERVER_IP
+   ```
+   Browser mein `http://localhost:20128` → OmniRoute dashboard (password = `OMNIROUTE_DASHBOARD_PASSWORD`).
+3. Dashboard mein providers connect karein — **apni official API keys se** (Cerebras, Groq, Gemini,
+   OpenRouter, Cloudflare AI, OpenAI…). Neeche table mein links hain.
+4. Dashboard → **Endpoints** se API key copy karein → `.env` mein `OMNIROUTE_API_KEY=` →
+   `docker compose up -d` dobara.
+5. Images: dashboard se kisi official image provider (Cloudflare AI / Together / Pollinations FLUX…) ke model
+   ka exact id → `.env` mein `OMNIROUTE_IMAGE_MODEL=`.
+6. **Backup:** `.env` mein `CEREBRAS_API_KEY` aur `GROQ_API_KEY` bhi direct daal dein. OmniRoute kabhi
+   restart/band ho to app khud in se jawab deta rahega.
+
+Kaise kaam karta hai:
+- Model menu: OmniRoute ke models apne **asli naam** aur asli provider ke saath aate hain
+  (`openai/gpt-6.1-sol` → "GPT-6.1 Sol" ChatGPT group mein, `groq/llama-3.3-70b` → "Groq · Free").
+- **Auto** = app ka apna engine, OmniRoute ke official models mein se sab se tez wala chunta hai
+  (masalan Cerebras ka GPT-OSS 120B). Jawab ke neeche asli model ka naam aata hai.
+- OmniRoute start hone mein der kare to app thodi der baad khud dobara model list le leta hai.
+
+⚠️ **Sirf official API wale providers use hote hain.** OmniRoute bina kisi key ke bhi bohat se "free" models
+dikhata hai — jaise GPT-6 Astra, GPT-5.6, Claude — jo DuckDuckGo web chat, Devin CLI, Codex app,
+Cloudflare playground, g4f waghera ke raste chalte hain. Yeh un services ki terms ke khilaf hai (OmniRoute
+khud DuckDuckGo wale ko "avoid" kehta hai), kabhi bhi band ho sakte hain aur accounts ban ho sakte hain. Is liye
+app inhein **na list karta hai na un par bhejta hai**, aur OmniRoute ke apne `auto/*` combos bhi istemal nahi
+karta (woh in raston par ja sakte hain). OmniRoute ke "stealth"/fingerprint features bhi on na karein.
+Koi aur **official** API provider jodna ho to: `OMNIROUTE_ALLOW_PROVIDERS=provider-id`.
+
+---
+
 ## API keys kahan se lein
 
 | Provider | Kya milta hai | Link |
@@ -75,7 +124,13 @@ aur desktop + mobile par **install hone wala app** (PWA). App ki taraf se **koi 
 | **Mistral** (free plan) | Mistral models | https://console.mistral.ai/api-keys |
 | **Cloudflare Workers AI** (free quota) | FLUX images | https://dash.cloudflare.com → AI → Workers AI |
 
-Best setup: **OpenAI + Cerebras + Groq + Gemini** (ChatGPT models upar, aur fallback ke liye tez free models).
+Yeh keys OmniRoute dashboard mein connect karein (Cerebras + Groq ko `.env` mein bhi backup ke liye daalein).
+
+**Sab se behtar FREE setup:**
+- **Chat (tez):** Cerebras + Groq → GPT-OSS 120B, Llama — sab se tez jawab
+- **Chat (smart + images samajhna):** Google Gemini
+- **Images:** Cloudflare Workers AI (FLUX, roz free quota) — Pollinations bina key ke pehle se on hai
+- **ChatGPT models (GPT-6 / GPT-5):** sirf OpenAI key se (paid) — koi free official tareeqa nahi hai
 
 ---
 
@@ -106,10 +161,12 @@ npm run loadtest          # 100 users ek saath (mock AI)
 3. Server par:
    ```bash
    git clone <your-repo> && cd <repo>/chat-app
-   cp .env.example .env && nano .env      # keys + DOMAIN + PUBLIC_URL + ADMIN_EMAILS
+   cp .env.example .env && nano .env      # DOMAIN + PUBLIC_URL + ADMIN_EMAILS + OmniRoute secrets + backup keys
    docker compose up -d --build
    ```
-   Caddy khud HTTPS laga dega. Data `appdata` volume mein safe rehta hai.
+   Teen cheezein chalti hain: **app**, **OmniRoute**, **Caddy** (HTTPS). Teeno band hon to khud restart.
+   Phir upar "OmniRoute setup" wale steps karein. Chats `appdata` volume mein safe rehti hain, aur app
+   roz database ka backup `data/backups/` mein rakhta hai (aakhri 7 din).
 
 ### Option B — Railway / Render
 - GitHub repo connect, **Root directory = `chat-app`**, Dockerfile se build.
@@ -154,10 +211,17 @@ Browser ──SSE stream──▶ /api/chat
 
 **Load test** (`npm run loadtest`, mock AI): 100 users ek saath × 2 rounds → **100/100 OK** dono rounds
 (~2.2s mein sab ke poore jawab); 200 users ek saath → **200/200 OK** (0.9s, ~210 MB memory).
+OmniRoute ke raste (`VIA=omniroute npm run loadtest`, fake gateway): 100 users × 2 rounds → **100/100 OK**,
+pehla word ~0.13–0.27s, poora jawab ~1s.
 
 ---
 
 ## Aham settings (`.env`)
+
+- `OMNIROUTE_BASE_URL`, `OMNIROUTE_API_KEY` — OmniRoute connection (compose mein base URL khud set hai)
+- `OMNIROUTE_IMAGE_MODEL` — OmniRoute ka image model
+- `OMNIROUTE_AUTO_MODELS` — (optional) apna OmniRoute combo (sirf official providers) jo Auto pehle try kare
+- `OMNIROUTE_ALLOW_PROVIDERS` — OmniRoute ke aur official API providers allow karein
 
 - `APP_NAME` — app ka naam (default **ChatGPT**)
 - `ADMIN_EMAILS` — Admin panel

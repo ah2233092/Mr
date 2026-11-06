@@ -29,6 +29,32 @@ async function fetchJson(url, opts, ms = 90000) {
 }
 
 export const IMAGE_BACKENDS = {
+  // OmniRoute's OpenAI-compatible images endpoint. Pick the image model in OMNIROUTE_IMAGE_MODEL
+  // (any image model connected in the OmniRoute dashboard, e.g. a FLUX model).
+  omniroute: {
+    label: 'OmniRoute', tier: 'free', model: () => env.OMNIROUTE_IMAGE_MODEL || '',
+    enabled: () => !!(env.OMNIROUTE_BASE_URL && env.OMNIROUTE_IMAGE_MODEL),
+    async run(prompt, aspect, signal) {
+      const base = env.OMNIROUTE_BASE_URL.replace(/\/+$/, '');
+      const model = this.model();
+      const headers = { 'Content-Type': 'application/json' };
+      if (env.OMNIROUTE_API_KEY) headers.Authorization = `Bearer ${env.OMNIROUTE_API_KEY}`;
+      const j = await fetchJson(`${base}/images/generations`, {
+        method: 'POST', signal, headers,
+        body: JSON.stringify({ model, prompt, n: 1, size: SIZES.openai[aspect] || '1024x1024', response_format: 'b64_json' }),
+      }, 180000);
+      const d = j?.data?.[0];
+      if (d?.b64_json) return { buf: Buffer.from(d.b64_json, 'base64'), mime: 'image/png', model: model.slice(model.lastIndexOf('/') + 1) };
+      if (d?.url) {
+        const url = /^https?:/i.test(d.url) ? d.url : new URL(d.url, base).href;
+        const r = await fetch(url, { signal: AbortSignal.timeout(60000) });
+        const type = r.headers.get('content-type') || 'image/png';
+        if (!r.ok || !type.startsWith('image/')) throw new Error(`image download failed: HTTP ${r.status}`);
+        return { buf: Buffer.from(await r.arrayBuffer()), mime: type.split(';')[0], model: model.slice(model.lastIndexOf('/') + 1) };
+      }
+      throw new Error('no image in response');
+    },
+  },
   openai: {
     label: 'OpenAI', tier: 'paid', model: () => env.OPENAI_IMAGE_MODEL || 'gpt-image-1',
     enabled: () => !!env.OPENAI_API_KEY && env.OPENAI_IMAGES !== 'false',
@@ -116,7 +142,7 @@ export const IMAGE_BACKENDS = {
   },
 };
 
-const DEFAULT_ORDER = ['mock', 'cloudflare', 'together', 'gemini', 'pollinations', 'openai'];
+const DEFAULT_ORDER = ['omniroute', 'cloudflare', 'together', 'gemini', 'pollinations', 'openai', 'mock'];
 
 export function imageBackends() {
   const order = config.images.order.length ? config.images.order : DEFAULT_ORDER;

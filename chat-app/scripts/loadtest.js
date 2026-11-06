@@ -1,8 +1,9 @@
 // Load test: N users sign up and all send messages at the same moment.
 //   node scripts/loadtest.js                    -> boots a local server with the mock AI
 //   node scripts/loadtest.js https://your.site   -> tests a running deployment (uses real AI, costs quota!)
-// Options: USERS=100 ROUNDS=2
+// Options: USERS=100 ROUNDS=2 VIA=omniroute (route through a fake OmniRoute gateway instead of the mock AI)
 import fs from 'node:fs';
+import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -11,17 +12,36 @@ const ROUNDS = parseInt(process.env.ROUNDS || '2', 10);
 let base = process.argv[2];
 let stop = () => {};
 
+let gateway = null;
+if (!base && process.env.VIA === 'omniroute') {
+  // Fake OmniRoute: streams ~40 tokens at ~50 tokens/sec, like a real fast model.
+  gateway = http.createServer((req, res) => {
+    let body = ''; req.on('data', (c) => { body += c; });
+    req.on('end', async () => {
+      if (req.url === '/v1/models') { res.end(JSON.stringify({ data: [{ id: 'cerebras/gpt-oss-120b' }] })); return; }
+      res.writeHead(200, { 'Content-Type': 'text/event-stream' });
+      for (let i = 0; i < 40; i++) {
+        await new Promise((r) => setTimeout(r, 20));
+        res.write(`data: ${JSON.stringify({ model: 'cerebras/gpt-oss-120b', choices: [{ delta: { content: `w${i} ` } }] })}\n\n`);
+      }
+      res.end('data: [DONE]\n\n');
+    });
+  });
+  await new Promise((r) => gateway.listen(0, '127.0.0.1', r));
+  process.env.OMNIROUTE_BASE_URL = `http://127.0.0.1:${gateway.address().port}/v1`;
+}
+
 if (!base) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sukhan-load-'));
   Object.assign(process.env, {
-    SKIP_DOTENV: '1', DATA_DIR: dir, ENABLE_MOCK: '1', ENABLE_POLLINATIONS: 'false', HOST: '127.0.0.1',
+    SKIP_DOTENV: '1', DATA_DIR: dir, ENABLE_MOCK: gateway ? '0' : '1', ENABLE_POLLINATIONS: 'false', HOST: '127.0.0.1',
     MOCK_TOKEN_DELAY_MS: process.env.MOCK_TOKEN_DELAY_MS || '20', // ~50 tokens/sec per stream, like a real model
     SIGNUPS_PER_IP_PER_HOUR: '100000', PROVIDER_CONCURRENCY: process.env.PROVIDER_CONCURRENCY || '32',
   });
   const { start, server } = await import('../server/index.js');
   await start(0);
   base = `http://127.0.0.1:${server.address().port}`;
-  stop = () => { server.close(); server.closeAllConnections?.(); fs.rmSync(dir, { recursive: true, force: true }); };
+  stop = () => { server.close(); server.closeAllConnections?.(); gateway?.close(); fs.rmSync(dir, { recursive: true, force: true }); };
 }
 
 async function signup(i) {

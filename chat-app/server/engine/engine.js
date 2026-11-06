@@ -40,31 +40,32 @@ export async function generate({ candidates, buildMessages, signal, hadImages = 
     const arm = (ms) => { clearTimeout(timer); timer = setTimeout(() => { timedOut = true; ctrl.abort(); }, ms); };
     arm(config.limits.firstTokenTimeoutMs);
 
-    let started = false, text = '', reasoning = '';
+    let started = false, text = '', reasoning = '', served = null;
     const t0 = Date.now();
     try {
       for await (const ev of streamChat(p, m.id, buildMessages(m), { signal: ctrl.signal })) {
+        if (ev.type === 'served') { served = ev.model; continue; }
         if (ev.type !== 'text' && ev.type !== 'reasoning') continue;
         arm(IDLE_TIMEOUT_MS);
-        if (!started) { started = true; onModel?.(m, tried); }
+        if (!started) { started = true; onModel?.(m, tried, served); }
         if (ev.type === 'text') { text += ev.text; onText?.(ev.text); }
         else { reasoning += ev.text; onReasoning?.(ev.text); }
       }
       clearTimeout(timer);
       if (!text && !signal.aborted) throw new ProviderError(502, 'empty response', { kind: 'server' });
-      if (signal.aborted) return { model: started ? m : null, text, reasoning, aborted: true, tried, latencyMs: Date.now() - t0 };
+      if (signal.aborted) return { model: started ? m : null, text, reasoning, served, aborted: true, tried, latencyMs: Date.now() - t0 };
       noteSuccess(m);
-      return { model: m, text, reasoning, tried, latencyMs: Date.now() - t0 };
+      return { model: m, text, reasoning, served, tried, latencyMs: Date.now() - t0 };
     } catch (e) {
       clearTimeout(timer);
-      if (signal.aborted) return { model: started ? m : null, text, reasoning, aborted: true, tried, latencyMs: Date.now() - t0 };
+      if (signal.aborted) return { model: started ? m : null, text, reasoning, served, aborted: true, tried, latencyMs: Date.now() - t0 };
       const err = e instanceof ProviderError ? e
         : new ProviderError(0, timedOut ? 'timed out' : (e.message || 'stream error'), { kind: timedOut ? 'timeout' : 'network' });
       noteFailure(m, err, { hadImages });
       if (err.kind === 'auth' || err.kind === 'network') deadProviders.add(p.id);
       if (text) {
         // The answer was already partly shown; keep it instead of restarting.
-        return { model: m, text, reasoning, error: err, partial: true, tried, latencyMs: Date.now() - t0 };
+        return { model: m, text, reasoning, served, error: err, partial: true, tried, latencyMs: Date.now() - t0 };
       }
       if (started) onReset?.();
       lastErr = err;

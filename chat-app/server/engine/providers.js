@@ -18,6 +18,10 @@ export class ProviderError extends Error {
 //       "paid"  -> every request costs the owner money; users get a smaller daily cap
 // speed: rough tokens/sec class, used to order the "Auto" model.
 export const PROVIDERS = [
+  // OmniRoute: self-hosted gateway in front of many providers (https://github.com/diegosouzapw/OmniRoute).
+  // When set, it is the primary engine; direct keys below act as an emergency backup.
+  { id: 'omniroute', label: 'OmniRoute', base: (env.OMNIROUTE_BASE_URL || '').replace(/\/+$/, ''), keyEnv: 'OMNIROUTE_API_KEY',
+    tier: 'free', speed: 3, fallbackModels: [], keyOptional: true, gateway: true, concurrency: 100 },
   { id: 'cerebras', label: 'Cerebras', base: 'https://api.cerebras.ai/v1', keyEnv: 'CEREBRAS_API_KEY', tier: 'free', speed: 3,
     fallbackModels: ['gpt-oss-120b', 'llama-3.3-70b', 'qwen-3-235b-a22b-instruct-2507', 'llama3.1-8b'] },
   { id: 'groq', label: 'Groq', base: 'https://api.groq.com/openai/v1', keyEnv: 'GROQ_API_KEY', tier: 'free', speed: 3,
@@ -46,7 +50,7 @@ export function providerKey(p) { return env[p.keyEnv] || ''; }
 
 export function enabledProviders() {
   const list = PROVIDERS.filter((p) => {
-    if (p.id === 'custom') return !!p.base;
+    if (p.keyOptional) return !!p.base;
     return !!providerKey(p) && p.base;
   });
   if (config.enableMock) list.push(MOCK);
@@ -69,8 +73,8 @@ function extraBody(p) {
 // ---------- model discovery ----------
 export async function discoverModels(p) {
   const fixed = env[`${p.id.toUpperCase()}_MODELS`];
-  if (fixed) return fixed.split(',').map((s) => ({ id: s.trim() })).filter((m) => m.id);
-  if (p.id === 'mock') return MOCK.fallbackModels.map((id) => ({ id }));
+  if (fixed) return { ok: true, list: fixed.split(',').map((s) => ({ id: s.trim() })).filter((m) => m.id) };
+  if (p.id === 'mock') return { ok: true, list: MOCK.fallbackModels.map((id) => ({ id })) };
   try {
     const r = await fetch(`${p.base}/models`, { headers: providerHeaders(p), signal: AbortSignal.timeout(8000) });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -79,21 +83,52 @@ export async function discoverModels(p) {
     const out = arr.map((m) => ({
       id: String(m.id || m.name || '').replace(/^models\//, ''),
       name: m.display_name || m.displayName || null,
-      inputModalities: m.architecture?.input_modalities || null,
+      ownedBy: typeof m.owned_by === 'string' ? m.owned_by : null,
+      inputModalities: m.architecture?.input_modalities || m.input_modalities || null,
+      outputModalities: m.architecture?.output_modalities || m.output_modalities || null,
     })).filter((m) => m.id);
     if (!out.length) throw new Error('empty model list');
-    return out;
+    return { ok: true, list: out };
   } catch (e) {
     console.warn(`[models] ${p.id}: discovery failed (${e.message}); using built-in list`);
-    return p.fallbackModels.map((id) => ({ id }));
+    return { ok: false, list: p.fallbackModels.map((id) => ({ id })) };
   }
 }
 
 const NOT_CHAT = /(embed|whisper|tts|transcri|audio|realtime|moderation|guard|dall-e|image|imagen|veo|sora|search|davinci|babbage|computer-use|native-audio|-live|aqa|rerank|playai|speech|deep-research|codex|learnlm|robotics|ocr|-diarize|gpt-3\.5|gpt-4-|^gpt-4$|lyria|nano-banana)/i;
 
+export const modelPart = (id) => String(id).slice(String(id).lastIndexOf('/') + 1);
+
+// Through OmniRoute only official, first-party APIs (connected with your own API key) are used.
+// OmniRoute also ships keyless / web-scraping / app-backend routes (DuckDuckGo web chat, Devin CLI,
+// Codex app server, Cloudflare playground, g4f, ...). Those break the terms of the services behind
+// them and can get accounts banned, so they are never listed or routed to.
+// OMNIROUTE_ALLOW_PROVIDERS can add more official API providers (OmniRoute provider ids).
+export const OFFICIAL_GATEWAY_PROVIDERS = new Set([
+  'openai', 'azure-openai', 'azure-ai', 'anthropic', 'gemini', 'vertex', 'groq', 'cerebras', 'openrouter', 'mistral',
+  'codestral', 'deepseek', 'xai', 'together', 'fireworks', 'deepinfra', 'nvidia', 'huggingface', 'sambanova', 'novita',
+  'cohere', 'perplexity', 'cloudflare-ai', 'ollama-cloud', 'ollama', 'lm-studio', 'moonshot', 'kimi', 'zai', 'glm',
+  'minimax', 'alibaba', 'qwen-cloud', 'bedrock', 'nebius', 'hyperbolic', 'scaleway', 'ovhcloud', 'upstage', 'ai21',
+  'writer', 'reka', 'stepfun', 'siliconflow', 'baseten', 'lambda-ai', 'chutes', 'pollinations', 'databricks',
+  'snowflake', 'digitalocean', 'modal', 'friendliai', 'inference-net', 'liquid', 'yi', 'meta-llama', 'inception',
+  'nous-research', 'arcee-ai', 'sarvam', 'watsonx', 'requesty', 'vercel-ai-gateway', 'llmgateway',
+  ...String(env.OMNIROUTE_ALLOW_PROVIDERS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
+]);
+
+export function isOfficialGatewayModel(m) {
+  const owner = (m.ownedBy || String(m.id).split('/')[0] || '').toLowerCase();
+  return OFFICIAL_GATEWAY_PROVIDERS.has(owner);
+}
+
 export function isChatModel(p, m) {
   const id = m.id;
   if (NOT_CHAT.test(id)) return false;
+  if (p.gateway) {
+    if (/^(auto|combo)(\/|$)/i.test(id) || m.ownedBy === 'combo') return false;
+    if (Array.isArray(m.outputModalities) && !m.outputModalities.includes('text')) return false;
+    if (/(flux|sdxl|stable-diffusion|dreamshaper|midjourney|turbo-image|kling|seedream|seedance|veo|wan-|hunyuan-video|-tts|embedding)/i.test(id)) return false;
+    return isOfficialGatewayModel(m);
+  }
   if (p.id === 'openai') {
     if (!/^(gpt-|o\d|chatgpt-)/.test(id)) return false;
     if (/-\d{4}-\d{2}-\d{2}$/.test(id)) return false; // dated snapshots duplicate the alias
@@ -243,6 +278,7 @@ export async function* streamChat(p, modelId, messages, { signal } = {}) {
   }
   if (!res.ok) throw await errorFrom(res);
 
+  let servedSent = false;
   for await (const line of lines(res.body)) {
     if (!line.startsWith('data:')) continue;
     const data = line.slice(5).trim();
@@ -254,6 +290,7 @@ export async function* streamChat(p, modelId, messages, { signal } = {}) {
       const msg = j.error.message || JSON.stringify(j.error);
       throw new ProviderError(j.error.code && +j.error.code >= 400 ? +j.error.code : 500, msg, { kind: classify(+j.error.code || 500, msg) });
     }
+    if (!servedSent && typeof j.model === 'string' && j.model) { servedSent = true; yield { type: 'served', model: j.model }; }
     const ch = j.choices?.[0];
     const d = ch?.delta || ch?.message;
     if (d) {
