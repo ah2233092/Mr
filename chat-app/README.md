@@ -9,7 +9,7 @@ aur desktop + mobile par **install hone wala app** (PWA). App ki taraf se **koi 
 ## 🚀 Sab se aasaan tareeqa — koi password ya file edit nahi
 
 ### 1) PC app (Windows / Mac / Linux) — sirf download karein
-1. GitHub par repo → **Releases** → **"ChatGPT desktop app"** → apne computer wali file download karein:
+1. GitHub par repo → **Releases** → **"ChatGPT app (PC + Android)"** → apne computer wali file download karein:
    - Windows: `ChatGPT-Setup-1.0.0.exe` (agar "Windows protected your PC" aaye: *More info → Run anyway*)
    - Mac: `ChatGPT-1.0.0-arm64.dmg` (M1/M2/M3…) ya `-x64.dmg` (Intel) → Applications mein daalein → right-click → Open
    - Linux: `ChatGPT-1.0.0.AppImage`

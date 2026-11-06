@@ -116,7 +116,7 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: chatgpt-desktop-latest
-          name: ChatGPT desktop app
+          name: ChatGPT app (PC + Android)
           target_commitish: ${{ github.sha }}
           files: out/*
           body: |
@@ -127,4 +127,4 @@ jobs:
             - **Android:** `ChatGPT-Android.apk` → open it on the phone and allow "Install unknown apps" once. On first open, enter your ChatGPT address (shown on your PC/server: profile menu → Phone app).
             - **iPhone:** open your ChatGPT address in Safari → Share → Add to Home Screen.
 
-            First launch: create your account (the first account is the admin), then paste a free AI key in the "AI keys" page that opens.
+            First launch: create your account (the first account is the admin). The app connects to OmniRoute on your PC by itself — connect free providers (Groq, Gemini, Cerebras) in the OmniRoute dashboard and their models appear in the app.
