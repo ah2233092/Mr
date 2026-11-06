@@ -20,7 +20,7 @@ const regex = (v) => { if (!v) return null; try { return new RegExp(v, 'i'); } c
 export const config = {
   port: int(env.PORT, 3000),
   host: env.HOST || '0.0.0.0',
-  appName: env.APP_NAME || 'ChatGPT',
+  appName: env.APP_NAME || 'Sukhan AI Pro',
   publicUrl: (env.PUBLIC_URL || '').replace(/\/+$/, ''),
   dataDir: path.resolve(ROOT, env.DATA_DIR || 'data'),
   cookieSecure: (env.COOKIE_SECURE || 'auto').toLowerCase(), // auto | true | false

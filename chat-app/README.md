@@ -1,4 +1,4 @@
-# ChatGPT (personal) — apna multi-model AI chat
+# Sukhan AI Pro — apna multi-model AI chat
 
 Aapka apna, **personal** ChatGPT jaisa app: wohi look, apna backend engine, login, model menu mein
 **sab se upar asli ChatGPT models** (GPT-6.x, GPT-5.x, o-series), free fast models, image generation,
@@ -9,20 +9,20 @@ aur desktop + mobile par **install hone wala app** (PWA). App ki taraf se **koi 
 ## 🚀 Sab se aasaan tareeqa — koi password ya file edit nahi
 
 ### 1) PC app (Windows / Mac / Linux) — sirf download karein
-1. GitHub par repo → **Releases** → **"ChatGPT app (PC + Android)"** → apne computer wali file download karein:
-   - Windows: `ChatGPT-Setup-1.0.0.exe` (agar "Windows protected your PC" aaye: *More info → Run anyway*)
-   - Mac: `ChatGPT-1.0.0-arm64.dmg` (M1/M2/M3…) ya `-x64.dmg` (Intel) → Applications mein daalein → right-click → Open
-   - Linux: `ChatGPT-1.0.0.AppImage`
+1. GitHub par repo → **Releases** → **"Sukhan AI Pro (PC + Android)"** → apne computer wali file download karein:
+   - Windows: `Sukhan-AI-Pro-Setup-1.0.0.exe` (agar "Windows protected your PC" aaye: *More info → Run anyway*)
+   - Mac: `Sukhan-AI-Pro-1.0.0-arm64.dmg` (M1/M2/M3…) ya `-x64.dmg` (Intel) → Applications mein daalein → right-click → Open
+   - Linux: `Sukhan-AI-Pro-1.0.0.AppImage`
 2. App kholein → **Sign up** (pehla account khud **admin** ban jata hai).
 3. Bas — chat shuru. App aapke PC par chal rahe **OmniRoute** (`localhost:20128`) se khud jud jati hai —
    koi key ya setting app mein nahi. OmniRoute mein jo providers connect honge (Groq, Gemini, Cerebras…)
    unke models menu mein khud aa jaate hain (har 5 minute mein list update hoti hai).
 
 ### 📱 Android app
-Releases page se **`ChatGPT-Android.apk`** phone par download karke kholein (pehli dafa "Install unknown apps"
-allow karna hoga). App pehli dafa aapke ChatGPT ka address poochti hai (ek hi dafa) — address ChatGPT mein
+Releases page se **`Sukhan-AI-Pro-Android.apk`** phone par download karke kholein (pehli dafa "Install unknown apps"
+allow karna hoga). App pehli dafa aapki app ka address poochti hai (ek hi dafa) — address PC app mein
 **profile menu → Phone app** par likha hota hai. iPhone: wahi address Safari mein kholein → Share →
-**Add to Home Screen**. Phone ko ek **online** ChatGPT chahiye — neeche wala server (option 2).
+**Add to Home Screen**. Phone ko PC app (same Wi-Fi) ya online server chahiye — neeche wala server (option 2).
 
 ### 2) Phone + PC dono par, hamesha online — ek command
 Ek sasta VPS lein (Ubuntu, ~$5/mahina). Server par yeh 2 commands:
@@ -239,8 +239,8 @@ Browser ──SSE stream──▶ /api/chat
 - `server/engine/omniroute.js` — OmniRoute se khud judna (key khud banana)
 - `server/settings.js` — backend settings jo app khud save karti hai (UI mein kuch nahi)
 
-**Desktop app ki backend settings (optional):** `config.env` file — Windows: `%APPDATA%\ChatGPT\config.env`,
-Mac: `~/Library/Application Support/ChatGPT/config.env`, Linux: `~/.config/ChatGPT/config.env`.
+**Desktop app ki backend settings (optional):** `config.env` file — Windows: `%APPDATA%\Sukhan AI Pro\config.env`,
+Mac: `~/Library/Application Support/Sukhan AI Pro/config.env`, Linux: `~/.config/Sukhan AI Pro/config.env`.
 Masalan `OMNIROUTE_PASSWORD=...` ya `OMNIROUTE_BASE_URL=http://my-server:20128/v1`.
 
 **Load test** (`npm run loadtest`, mock AI): 100 users ek saath × 2 rounds → **100/100 OK** dono rounds
@@ -257,7 +257,7 @@ pehla word ~0.13–0.27s, poora jawab ~1s.
 - `OMNIROUTE_AUTO_MODELS` — (optional) apna OmniRoute combo (sirf official providers) jo Auto pehle try kare
 - `OMNIROUTE_ALLOW_PROVIDERS` — OmniRoute ke aur official API providers allow karein
 
-- `APP_NAME` — app ka naam (default **ChatGPT**)
+- `APP_NAME` — app ka naam (default **Sukhan AI Pro**)
 - `ADMIN_EMAILS` — Admin panel
 - `DEFAULT_MODEL` — default model, masalan `openai:gpt-6.1-sol`
 - `OPENAI_MODELS` — OpenAI models ki fixed list (warna khud discover hoti hai)

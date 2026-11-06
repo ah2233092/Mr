@@ -1,4 +1,4 @@
-// ChatGPT (personal) — client app (vanilla JS, no build step).
+// Sukhan AI Pro — client app (vanilla JS, no build step).
 /* global marked, DOMPurify, hljs */
 
 // ---------------- utilities ----------------
@@ -33,7 +33,7 @@ async function copyText(text) {
 
 // ---------------- state ----------------
 const S = {
-  config: { appName: 'ChatGPT' }, me: null, usage: null, limits: null,
+  config: { appName: 'Sukhan AI Pro' }, me: null, usage: null, limits: null,
   models: [], imagesEnabled: false, openaiConfigured: false, chats: [], chatId: null, messages: [],
   model: store.get('model', null), tool: null, attachments: [], streaming: null,
   sendOnEnter: store.get('sendOnEnter', '1') === '1',
@@ -136,7 +136,7 @@ async function boot() {
   applyTheme();
   registerSW();
   try { S.config = await api('/api/config'); } catch {}
-  setAppName(S.config.appName || 'ChatGPT');
+  setAppName(S.config.appName || 'Sukhan AI Pro');
   const params = new URLSearchParams(location.search);
   const resetToken = params.get('reset');
   const authErr = params.get('auth_error');
@@ -1306,14 +1306,14 @@ async function openPhone() {
   const here = location.origin.startsWith('https://') ? location.origin : null;
   const addresses = [...new Set([d.publicUrl, here, ...d.urls].filter(Boolean))];
   if (!addresses.length) {
-    body.innerHTML = `<p>Phone access isn’t available here. Use the ChatGPT app on your PC — it lets your phone connect over Wi-Fi.</p>`;
+    body.innerHTML = `<p>Phone access isn’t available here. Use the app on your PC — it lets your phone connect over Wi-Fi.</p>`;
     return;
   }
   body.innerHTML = `
     <div class="phone-addr">${addresses.map((u) => `<div class="pa-row"><span>${esc(u)}</span><button class="btn" data-copy-url="${esc(u)}">Copy</button></div>`).join('')}</div>
     <ol class="phone-steps">
       <li>Put your phone on the <b>same Wi-Fi</b> as this PC.</li>
-      <li>Install <b>ChatGPT</b> on your phone — <a class="link" href="${esc(d.apkUrl || d.appUrl)}" target="_blank" rel="noopener">Download for Android</a>.</li>
+      <li>Install the app on your phone — <a class="link" href="${esc(d.apkUrl || d.appUrl)}" target="_blank" rel="noopener">Download for Android</a>.</li>
       <li>Open it and type the address above.</li>
       <li>Log in with the <b>same email and password</b>. Done!</li>
     </ol>

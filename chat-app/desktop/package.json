@@ -1,8 +1,8 @@
 {
   "name": "chatgpt-desktop",
-  "productName": "ChatGPT",
+  "productName": "Sukhan AI Pro",
   "version": "1.0.0",
-  "description": "Personal multi-model AI chat \u2014 desktop app",
+  "description": "Personal multi-model AI chat — desktop app",
   "author": "Personal",
   "license": "MIT",
   "private": true,
@@ -20,7 +20,7 @@
   },
   "build": {
     "appId": "app.personal.chatgpt",
-    "productName": "ChatGPT",
+    "productName": "Sukhan AI Pro",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -59,8 +59,8 @@
       "perMachine": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "ChatGPT",
-      "artifactName": "ChatGPT-Setup-${version}.${ext}"
+      "shortcutName": "Sukhan AI Pro",
+      "artifactName": "Sukhan-AI-Pro-Setup-${version}.${ext}"
     },
     "mac": {
       "target": [
@@ -74,7 +74,7 @@
       ],
       "category": "public.app-category.productivity",
       "icon": "build/icon.png",
-      "artifactName": "ChatGPT-${version}-${arch}.${ext}",
+      "artifactName": "Sukhan-AI-Pro-${version}-${arch}.${ext}",
       "identity": "-",
       "hardenedRuntime": false
     },
@@ -84,8 +84,8 @@
       ],
       "category": "Utility",
       "icon": "build/icon.png",
-      "artifactName": "ChatGPT-${version}.${ext}",
-      "executableName": "chatgpt"
+      "artifactName": "Sukhan-AI-Pro-${version}.${ext}",
+      "executableName": "sukhan-ai-pro"
     }
   },
   "repository": "https://github.com/ah2233092/Mr"

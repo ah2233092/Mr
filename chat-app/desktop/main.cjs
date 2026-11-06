@@ -41,7 +41,7 @@ async function startServer() {
     HOST: '0.0.0.0',
     LOCAL_SIGNUP_ONLY: '1',
     PORT: String(port),
-    APP_NAME: process.env.APP_NAME || 'ChatGPT',
+    APP_NAME: process.env.APP_NAME || 'Sukhan AI Pro',
     COOKIE_SECURE: 'false',
     TRUST_PROXY: 'false',
   });

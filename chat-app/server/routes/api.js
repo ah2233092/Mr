@@ -17,7 +17,7 @@ import { imageBackends } from '../engine/images.js';
 // The request comes from this computer itself (not from the phone / another device).
 const isLocalRequest = (req) => ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
 const signupAllowed = (req) => config.allowSignup && (!config.localSignupOnly || isLocalRequest(req));
-const SIGNUP_ON_PC_ONLY = 'Create your account in the ChatGPT app on your PC, then log in here with the same email and password.';
+const SIGNUP_ON_PC_ONLY = 'Create your account in the app on your PC, then log in here with the same email and password.';
 
 export function registerApi(r) {
   // ---------- public config ----------
@@ -49,8 +49,8 @@ export function registerApi(r) {
     }
     sendJson(res, 200, {
       urls, publicUrl: config.publicUrl || null,
-      appUrl: process.env.APP_DOWNLOAD_URL || 'https://github.com/ah2233092/Mr/releases/tag/chatgpt-desktop-latest',
-      apkUrl: process.env.APK_DOWNLOAD_URL || 'https://github.com/ah2233092/Mr/releases/download/chatgpt-desktop-latest/ChatGPT-Android.apk',
+      appUrl: process.env.APP_DOWNLOAD_URL || 'https://github.com/ah2233092/Mr/releases/tag/app-latest',
+      apkUrl: process.env.APK_DOWNLOAD_URL || 'https://github.com/ah2233092/Mr/releases/download/app-latest/Sukhan-AI-Pro-Android.apk',
     });
   });
 

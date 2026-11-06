@@ -1,6 +1,6 @@
-# Builds the ChatGPT desktop app for Windows, macOS and Linux and puts the
-# installers on the repository's Releases page ("ChatGPT desktop app").
-name: ChatGPT app
+# Builds the desktop app for Windows, macOS and Linux and puts the
+# installers on the repository's Releases page ("Sukhan AI Pro").
+name: Sukhan AI Pro app
 
 on:
   push:
@@ -59,7 +59,7 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
       - uses: actions/upload-artifact@v4
         with:
-          name: ChatGPT-${{ runner.os }}
+          name: App-${{ runner.os }}
           path: ${{ matrix.files }}
           if-no-files-found: error
 
@@ -98,11 +98,11 @@ jobs:
         working-directory: chat-app/android
         run: gradle assembleRelease --no-daemon --stacktrace
       - name: Name the APK
-        run: cp chat-app/android/app/build/outputs/apk/release/app-release.apk ChatGPT-Android.apk
+        run: cp chat-app/android/app/build/outputs/apk/release/app-release.apk Sukhan-AI-Pro-Android.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ChatGPT-Android
-          path: ChatGPT-Android.apk
+          name: App-Android
+          path: Sukhan-AI-Pro-Android.apk
           if-no-files-found: error
 
   release:
@@ -115,16 +115,16 @@ jobs:
           merge-multiple: true
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: chatgpt-desktop-latest
-          name: ChatGPT app (PC + Android)
+          tag_name: app-latest
+          name: Sukhan AI Pro (PC + Android)
           target_commitish: ${{ github.sha }}
           files: out/*
           body: |
             Download the file for your computer:
-            - **Windows:** `ChatGPT-Setup-1.0.0.exe` → open it (if Windows says "protected your PC": More info → Run anyway).
-            - **Mac (Apple chip M1/M2/M3…):** `ChatGPT-1.0.0-arm64.dmg` · **Mac (Intel):** `ChatGPT-1.0.0-x64.dmg` → drag to Applications, then right-click the app → Open.
-            - **Linux:** `ChatGPT-1.0.0.AppImage` → make it executable and run.
-            - **Android:** `ChatGPT-Android.apk` → open it on the phone and allow "Install unknown apps" once. On first open, enter your ChatGPT address (shown on your PC/server: profile menu → Phone app).
-            - **iPhone:** open your ChatGPT address in Safari → Share → Add to Home Screen.
+            - **Windows:** `Sukhan-AI-Pro-Setup-1.0.0.exe` → open it (if Windows says "protected your PC": More info → Run anyway).
+            - **Mac (Apple chip M1/M2/M3…):** `Sukhan-AI-Pro-1.0.0-arm64.dmg` · **Mac (Intel):** `Sukhan-AI-Pro-1.0.0-x64.dmg` → drag to Applications, then right-click the app → Open.
+            - **Linux:** `Sukhan-AI-Pro-1.0.0.AppImage` → make it executable and run.
+            - **Android:** `Sukhan-AI-Pro-Android.apk` → open it on the phone and allow "Install unknown apps" once. On first open, enter your app address (shown on your PC/server: profile menu → Phone app).
+            - **iPhone:** open your app address in Safari → Share → Add to Home Screen.
 
             First launch: create your account (the first account is the admin). The app connects to OmniRoute on your PC by itself — connect free providers (Groq, Gemini, Cerebras) in the OmniRoute dashboard and their models appear in the app.
