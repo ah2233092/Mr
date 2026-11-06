@@ -346,6 +346,11 @@ textarea.text-input { height: auto; min-height: 140px; padding: 10px; line-heigh
 #confirmDlg { width: 420px; }
 #phoneDlg { width: 520px; }
 #phoneDlg p { color: var(--text-2); line-height: 1.6; margin: 0 0 12px; font-size: 14px; }
+.phone-addr { background: var(--hover); border-radius: 16px; padding: 6px 6px 6px 18px; margin-bottom: 16px; }
+.pa-row { display: flex; align-items: center; gap: 12px; }
+.pa-row span { flex: 1; font-size: 20px; font-weight: 600; letter-spacing: -.01em; word-break: break-all; }
+.pa-row .btn { height: 36px; }
+.phone-steps { margin: 0 0 12px; padding-left: 22px; line-height: 1.9; font-size: 15px; }
 #confirmDlg .dlg-body p { color: var(--text-2); margin: 0 0 18px; line-height: 1.5; }
 .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; }
 

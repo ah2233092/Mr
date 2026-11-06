@@ -36,14 +36,17 @@ async function startServer() {
   Object.assign(process.env, {
     SKIP_DOTENV: '1',
     DATA_DIR: process.env.DATA_DIR || path.join(app.getPath('userData'), 'data'),
-    HOST: '127.0.0.1',
+    // Also reachable from your phone on the same Wi-Fi. New accounts can only be
+    // created on this PC (LOCAL_SIGNUP_ONLY); the phone just logs in.
+    HOST: '0.0.0.0',
+    LOCAL_SIGNUP_ONLY: '1',
     PORT: String(port),
     APP_NAME: process.env.APP_NAME || 'ChatGPT',
     COOKIE_SECURE: 'false',
     TRUST_PROXY: 'false',
   });
   const server = await import(pathToFileURL(path.join(APP_DIR, 'server', 'index.js')).href);
-  await server.start(port, '127.0.0.1');
+  await server.start(port, '0.0.0.0');
   return `http://127.0.0.1:${port}`;
 }
 

@@ -1301,18 +1301,23 @@ async function openPhone() {
   const body = $('#phoneBody');
   body.innerHTML = '<div class="sb-empty">Loading…</div>';
   $('#phoneDlg').showModal();
-  let d = { urls: [], publicUrl: null, appUrl: '' };
+  let d = { urls: [], publicUrl: null, appUrl: '', apkUrl: '' };
   try { d = await api('/api/lan'); } catch {}
   const here = location.origin.startsWith('https://') ? location.origin : null;
   const addresses = [...new Set([d.publicUrl, here, ...d.urls].filter(Boolean))];
-  const addrHtml = addresses.length
-    ? addresses.map((u) => `<div class="set-row"><code style="font-size:15px">${esc(u)}</code><button class="btn" data-copy-url="${esc(u)}">Copy</button></div>`).join('')
-    : `<p>This ChatGPT is only on this computer right now. To use it on your phone from anywhere, put it online with the one-command server install (see README → “Phone + PC”).</p>`;
+  if (!addresses.length) {
+    body.innerHTML = `<p>Phone access isn’t available here. Use the ChatGPT app on your PC — it lets your phone connect over Wi-Fi.</p>`;
+    return;
+  }
   body.innerHTML = `
-    <p><b>1.</b> Install the app — Android: download <b>ChatGPT-Android.apk</b> from <a class="link" href="${esc(d.appUrl)}" target="_blank" rel="noopener">the download page</a>.
-       iPhone: open the address below in Safari → Share → <b>Add to Home Screen</b>.</p>
-    <p><b>2.</b> Open it and enter this address (only once):</p>
-    ${addrHtml}`;
+    <div class="phone-addr">${addresses.map((u) => `<div class="pa-row"><span>${esc(u)}</span><button class="btn" data-copy-url="${esc(u)}">Copy</button></div>`).join('')}</div>
+    <ol class="phone-steps">
+      <li>Put your phone on the <b>same Wi-Fi</b> as this PC.</li>
+      <li>Install <b>ChatGPT</b> on your phone — <a class="link" href="${esc(d.apkUrl || d.appUrl)}" target="_blank" rel="noopener">Download for Android</a>.</li>
+      <li>Open it and type the address above.</li>
+      <li>Log in with the <b>same email and password</b>. Done!</li>
+    </ol>
+    <p style="font-size:12px;color:var(--text-3)">iPhone: open the address in Safari → Share → Add to Home Screen.</p>`;
   body.querySelectorAll('[data-copy-url]').forEach((b) => b.addEventListener('click', async () => {
     if (await copyText(b.dataset.copyUrl)) { b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy'; }, 1500); }
   }));

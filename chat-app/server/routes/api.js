@@ -14,11 +14,16 @@ import {
 import { publicModels, defaultModelKey, engineSnapshot, refreshModels } from '../engine/registry.js';
 import { imageBackends } from '../engine/images.js';
 
+// The request comes from this computer itself (not from the phone / another device).
+const isLocalRequest = (req) => ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
+const signupAllowed = (req) => config.allowSignup && (!config.localSignupOnly || isLocalRequest(req));
+const SIGNUP_ON_PC_ONLY = 'Create your account in the ChatGPT app on your PC, then log in here with the same email and password.';
+
 export function registerApi(r) {
   // ---------- public config ----------
   r.get('/api/config', (req, res) => sendJson(res, 200, {
     appName: config.appName,
-    signupEnabled: config.allowSignup,
+    signupEnabled: signupAllowed(req),
     googleEnabled: googleEnabled(),
     resetEnabled: !!(config.resend.apiKey && config.resend.from),
     imagesEnabled: imageBackends().length > 0,
@@ -45,12 +50,14 @@ export function registerApi(r) {
     sendJson(res, 200, {
       urls, publicUrl: config.publicUrl || null,
       appUrl: process.env.APP_DOWNLOAD_URL || 'https://github.com/ah2233092/Mr/releases/tag/chatgpt-desktop-latest',
+      apkUrl: process.env.APK_DOWNLOAD_URL || 'https://github.com/ah2233092/Mr/releases/download/chatgpt-desktop-latest/ChatGPT-Android.apk',
     });
   });
 
   // ---------- auth ----------
   r.post('/api/auth/signup', async (req, res) => {
     if (!config.allowSignup) throw new HttpError(403, 'Sign-ups are closed.');
+    if (!signupAllowed(req)) throw new HttpError(403, SIGNUP_ON_PC_ONLY);
     const b = await readJson(req, 10_000);
     const email = normalizeEmail(b.email);
     const password = validatePassword(b.password);
@@ -133,7 +140,7 @@ export function registerApi(r) {
         if (user.disabled) return redirect(res, '/?auth_error=disabled');
         q('UPDATE users SET google_sub=?, avatar=COALESCE(avatar, ?) WHERE id=?').run(info.sub, info.picture || null, user.id);
       } else {
-        if (!config.allowSignup) return redirect(res, '/?auth_error=closed');
+        if (!signupAllowed(req)) return redirect(res, '/?auth_error=closed');
         user = createUser({ email, name: cleanName(info.name, email.split('@')[0]), googleSub: info.sub, avatar: info.picture || null });
       }
       createSession(req, res, user.id);

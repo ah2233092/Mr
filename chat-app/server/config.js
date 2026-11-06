@@ -27,6 +27,8 @@ export const config = {
   trustProxy: bool(env.TRUST_PROXY, true),
   adminEmails: list(env.ADMIN_EMAILS).map((e) => e.toLowerCase()),
   allowSignup: bool(env.ALLOW_SIGNUP, true),
+  // Desktop app: new accounts only from the PC itself; other devices (your phone) just log in.
+  localSignupOnly: bool(env.LOCAL_SIGNUP_ONLY, false),
   sessionDays: int(env.SESSION_DAYS, 30),
   signupsPerIpPerHour: int(env.SIGNUPS_PER_IP_PER_HOUR, 30),
 
