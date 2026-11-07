@@ -39,6 +39,22 @@ await probe('text.pollinations.ai/openai with a thinking level', 'https://text.p
 await probe('gen.pollinations.ai/v1/chat/completions', 'https://gen.pollinations.ai/v1/chat/completions', { method: 'POST', headers: json, body: chatBody('openai') });
 await probe('gen.pollinations.ai/image', 'https://gen.pollinations.ai/image/' + encodeURIComponent('a red fox') + '?width=512&height=512');
 
+// Streaming, as the page asks for it: first bytes of the answer per model / thinking level.
+async function streamProbe(model, effort) {
+  const t0 = Date.now();
+  try {
+    const body = { model, stream: true, messages: [{ role: 'user', content: 'Say hello in five words.' }] };
+    if (effort) body.reasoning_effort = effort;
+    const r = await fetch('https://text.pollinations.ai/openai', { method: 'POST', headers: json, body: JSON.stringify(body), signal: AbortSignal.timeout(40000) });
+    const reader = r.body.getReader(); const dec = new TextDecoder(); let out = '';
+    while (out.length < 700) { const { value, done } = await reader.read(); if (done) break; out += dec.decode(value, { stream: true }); }
+    reader.cancel().catch(() => {});
+    const content = [...out.matchAll(/"content":"([^"]*)"/g)].map((x) => x[1]).join('');
+    log(`- stream ${model}${effort ? ` effort=${effort}` : ''}: HTTP ${r.status} ${(r.headers.get('content-type') || '').split(';')[0]} in ${Date.now() - t0} ms, content so far "${content.slice(0, 60)}" — ${out.replace(/\s+/g, ' ').slice(0, 220)}`);
+  } catch (e) { log(`- stream ${model}${effort ? ` effort=${effort}` : ''}: FAILED after ${Date.now() - t0} ms ${e.message}`); }
+}
+for (const [m, e] of [['openai'], ['openai', 'low'], ['openai-fast'], ['openai-fast', 'low']]) await streamProbe(m, e);
+
 // Which Pollinations text models answer without a key (used to back the menu levels).
 try {
   const list = await (await fetch('https://text.pollinations.ai/models', { signal: AbortSignal.timeout(20000) })).json();
@@ -69,6 +85,7 @@ const browser = await chromium.launch(channel ? { channel } : {});
 const page = await browser.newPage();
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
+page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text().slice(0, 200)); });
 let textOk = false;
 log('\n## The website in Chrome');
 try {
@@ -99,9 +116,19 @@ try {
   textOk = !!a1.tag;
   log(`- text reply: ${textOk ? 'OK' : 'NO ANSWER'} — "${a1.text.slice(0, 200)}" — ${a1.tag || 'no model tag'}`);
 
+  // A thinking level from the menu (GPT-6 Pro) must answer too.
+  await page.click('#modelBtn');
+  await page.waitForSelector('#modelMenu:not([hidden])');
+  await page.evaluate(() => [...document.querySelectorAll('#modelMenu .model-row')].find((r) => r.dataset.key === 'alias:gpt-6-pro').click());
+  await page.fill('#input', 'What is 17 times 23? Reply with the number only.');
+  await page.click('#sendBtn');
+  const a2 = await answer(2);
+  textOk = textOk && !!a2.tag;
+  log(`- GPT-6 Pro reply: ${a2.tag ? 'OK' : 'NO ANSWER'} — "${a2.text.slice(0, 200)}" — ${a2.tag || 'no model tag'}`);
+
   await page.fill('#input', 'create an image of a red fox in the snow');
   await page.click('#sendBtn');
-  await page.waitForFunction(() => document.querySelectorAll('.msg.assistant').length >= 2, null, { timeout: 30000 });
+  await page.waitForFunction(() => document.querySelectorAll('.msg.assistant').length >= 3, null, { timeout: 30000 });
   const img = await page.waitForFunction(() => {
     const el = [...document.querySelectorAll('.gen-img img')].pop();
     if (!el) return false;

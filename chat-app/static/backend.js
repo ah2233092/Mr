@@ -88,9 +88,9 @@
       { id: 'openai/gpt-oss-120b:free' }, { id: 'meta-llama/llama-3.3-70b-instruct:free' }, { id: 'deepseek/deepseek-chat-v3.1:free' }], discover: true });
   }
   if (CFG.pollinations !== false) {
-    // Without a key Pollinations serves GPT-OSS 20B ("openai-fast"); "openai" is its backup and gets photos.
+    // Without a key Pollinations serves GPT-OSS ("openai", checked live by scripts/live-check.mjs); "openai-fast" is the backup.
     providers.push({ id: 'pollinations', label: 'Pollinations', url: 'https://text.pollinations.ai/openai', key: '', models: [
-      { id: 'openai-fast', real: 'GPT-OSS 20B', effort: true }, { id: 'openai', real: 'GPT-OSS', vision: true, effort: true }] });
+      { id: 'openai', real: 'GPT-OSS', vision: true }, { id: 'openai-fast', real: 'GPT-OSS 20B' }] });
   }
   if (CFG.mock) {
     providers.unshift({ id: 'mock', label: 'Mock', mock: true, models: [{ id: 'mock-fast', vision: true }] });
@@ -129,21 +129,21 @@
   // Each name is backed by free models (first available answers, then the rest).
   const ALIASES = [
     { id: 'gpt-6-instant', name: 'GPT-6 Instant', short: 'Instant', group: 'GPT-6', description: 'Answers right away', effort: 'low',
-      prefer: [/gemini-2\.5-flash(?!-lite)/, /groq:openai\/gpt-oss-120b/, /gpt-oss-120b/, /llama-3\.3-70b/, /pollinations:openai-fast/] },
+      prefer: [/gemini-2\.5-flash(?!-lite)/, /groq:openai\/gpt-oss-120b/, /gpt-oss-120b/, /llama-3\.3-70b/, /pollinations:openai$/] },
     { id: 'gpt-6-medium', name: 'GPT-6 Medium', short: 'Medium', group: 'GPT-6', description: 'Thinks a little for better answers', effort: 'medium',
-      prefer: [/gpt-oss-120b/, /gemini-2\.5-flash(?!-lite)/, /deepseek/, /llama-3\.3-70b/, /pollinations:openai-fast/] },
+      prefer: [/gpt-oss-120b/, /gemini-2\.5-flash(?!-lite)/, /deepseek/, /llama-3\.3-70b/, /pollinations:openai$/] },
     { id: 'gpt-6-high', name: 'GPT-6 High', short: 'High', group: 'GPT-6', description: 'Thinks longer for harder problems', effort: 'high',
-      prefer: [/gemini-[2-9][\d.]*-pro/, /deepseek-(r1|reasoner)/, /gpt-oss-120b/, /qwen/, /gemini-2\.5-flash(?!-lite)/, /pollinations:openai-fast/] },
+      prefer: [/gemini-[2-9][\d.]*-pro/, /deepseek-(r1|reasoner)/, /gpt-oss-120b/, /qwen/, /gemini-2\.5-flash(?!-lite)/, /pollinations:openai$/] },
     { id: 'gpt-6-extra-high', name: 'GPT-6 Extra High', short: 'Extra High', group: 'GPT-6', description: 'Thinks the longest for the hardest problems', effort: 'high',
-      prefer: [/claude-(opus|sonnet|fable)/, /gemini-[2-9][\d.]*-pro/, /deepseek-(r1|reasoner)/, /gpt-oss-120b/, /gemini-2\.5-flash(?!-lite)/, /pollinations:openai-fast/] },
+      prefer: [/claude-(opus|sonnet|fable)/, /gemini-[2-9][\d.]*-pro/, /deepseek-(r1|reasoner)/, /gpt-oss-120b/, /gemini-2\.5-flash(?!-lite)/, /pollinations:openai$/] },
     { id: 'gpt-6-pro', name: 'GPT-6 Pro', short: 'Pro', group: 'GPT-6', description: 'Research-grade intelligence', effort: 'high',
-      prefer: [/claude-(opus|fable)/, /claude-sonnet/, /gemini-[2-9][\d.]*-pro/, /deepseek-(r1|reasoner)/, /gpt-oss-120b/, /gemini-2\.5-flash(?!-lite)/, /pollinations:openai-fast/] },
+      prefer: [/claude-(opus|fable)/, /claude-sonnet/, /gemini-[2-9][\d.]*-pro/, /deepseek-(r1|reasoner)/, /gpt-oss-120b/, /gemini-2\.5-flash(?!-lite)/, /pollinations:openai$/] },
     { id: 'gpt-5.6-sol', name: 'GPT-5.6 Sol', group: 'Other models', description: 'Previous flagship', effort: 'medium',
-      prefer: [/llama-4-maverick/, /llama-3\.3-70b/, /gemini-2\.5-flash(?!-lite)/, /gpt-oss-120b/, /pollinations:openai-fast/] },
+      prefer: [/llama-4-maverick/, /llama-3\.3-70b/, /gemini-2\.5-flash(?!-lite)/, /gpt-oss-120b/, /pollinations:openai$/] },
     { id: 'gpt-5.6-terra', name: 'GPT-5.6 Terra', group: 'Other models', description: 'Balanced and dependable', effort: 'low',
-      prefer: [/mistral/, /llama-4-scout/, /llama-3\.3-70b/, /flash-lite/, /pollinations:openai-fast/] },
+      prefer: [/mistral/, /llama-4-scout/, /llama-3\.3-70b/, /flash-lite/, /pollinations:openai$/] },
     { id: 'gpt-5.6-luna', name: 'GPT-5.6 Luna', group: 'Other models', description: 'Fast for everyday tasks', effort: 'low',
-      prefer: [/llama-3\.1-8b/, /flash-lite/, /groq:openai\/gpt-oss-120b/, /pollinations:openai-fast/] },
+      prefer: [/llama-3\.1-8b/, /flash-lite/, /groq:openai\/gpt-oss-120b/, /pollinations:openai$/] },
   ];
   function chainFor(aliasKey, vision) {
     const alias = ALIASES.find((a) => 'alias:' + a.id === aliasKey) || ALIASES[0];
@@ -168,7 +168,7 @@
     if (p.key) headers.Authorization = 'Bearer ' + p.key;
     const payload = { model: m.id, messages, stream: true };
     // Thinking level from the menu (Instant / Medium / High …) for models that take it.
-    if (effort && (m.effort || /gpt-oss/i.test(m.id))) payload.reasoning_effort = effort;
+    if (effort && /gpt-oss/i.test(m.id)) payload.reasoning_effort = effort;
     let r = await realFetch(p.url, { method: 'POST', headers, signal, body: JSON.stringify(payload) });
     if (r.status === 400 && payload.reasoning_effort) {
       delete payload.reasoning_effort;
@@ -197,8 +197,9 @@
         if (d === '[DONE]') return;
         try {
           const j = JSON.parse(d);
-          const c = j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content;
-          if (c) yield c;
+          const dl = (j.choices && j.choices[0] && j.choices[0].delta) || {};
+          if (dl.content) yield dl.content;
+          else if (dl.reasoning || dl.reasoning_content) yield null; // still thinking: keeps the request alive
         } catch { /* keep-alive */ }
       }
     }
@@ -330,6 +331,7 @@ Reply in the user's language and script (Roman Urdu if they write Roman Urdu). A
           const messages = [{ role: 'system', content: systemPrompt(user, m) }, ...history(msgsOf(chat.id), m)];
           for await (const piece of streamModel(m, messages, one.signal, alias.effort)) {
             clearTimeout(timer); timer = setTimeout(stop, 90000);
+            if (piece == null) continue;
             if (!used) { used = m; send('model', { key: b.model, name: alias.name, provider: m.provider.id, providerLabel: m.provider.label, tier: 'free', fallbackFrom: [] }); }
             text += piece; send('delta', { t: piece });
           }
