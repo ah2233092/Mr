@@ -1,15 +1,23 @@
-# ChatGPT Pro — personal website
+# ChatGPT — personal website
 
-Aapki apni ChatGPT jaisi **website**: wahi look, model menu mein ChatGPT wale naam
-(GPT-6.1 Sol, GPT-6 Astra, GPT-6 Sol, GPT-6 Luna, GPT-5.1, GPT-4o). Har naam ke peeche OmniRoute ke
-free models chalte hain — ek fail ho to agla. Reply ke neeche naam par mouse rakhein to asli model dikhta hai.
+Aapki apni ChatGPT jaisi **website**: wahi look, model menu ChatGPT jaisa —
+**GPT-6:** Instant · Medium · High · Extra High · Pro, aur **Other models:** GPT-5.6 Sol · Terra · Luna.
+Har naam ke peeche free models chalte hain (OmniRoute / free keys / Pollinations) — ek fail ho to agla.
+Thinking level (Instant → High) un models ko bheja jata hai jo isay lete hain.
+Reply ke neeche naam par mouse rakhein to asli model dikhta hai.
+
+## 📄 Ek file wali website (`website/index.html`)
+Releases → **"ChatGPT (website)"** → `index.html`. Isay kisi bhi hosting par upload karein
+(Netlify Drop, GitHub Pages…) aur link mil jata hai. Sign up browser mein hota hai.
+Bina key ke AI Pollinations se chalta hai (abhi sirf GPT-OSS 20B, aur unka free raasta kabhi bhi band ho sakta hai);
+behtar jawab ke liye file ke upar `CHATGPT_CONFIG` mein free Groq / Gemini key daalein.
 
 ## 🌐 Internet par live karna (phone + PC, sign up sab ke liye)
 **[DEPLOY.md](DEPLOY.md)** dekhein — Render (free), Railway, ya apna server (`install.sh`).
 
 ## ▶️ Website chalana (sirf apne PC par)
-1. **Releases → "ChatGPT Pro (website)"** se `ChatGPT-Pro-Website.zip` download karke unzip karein.
-2. Windows: **`Start-ChatGPT-Pro.bat`** double-click · Mac/Linux: `start-chatgpt-pro.sh`.
+1. **Releases → "ChatGPT (website)"** se `ChatGPT-Website.zip` download karke unzip karein.
+2. Windows: **`Start-ChatGPT.bat`** double-click · Mac/Linux: `start-chatgpt.sh`.
 3. Browser khud **http://localhost:3000** kholega → Sign up → chat.
 
 OmniRoute isi PC par chal raha ho (`localhost:20128`) to website khud jud jati hai. OmniRoute dashboard mein

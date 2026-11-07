@@ -9,7 +9,7 @@ import { getProvider, semFor, noteFailure, noteSuccess, stats, autoOrder, isAvai
 const IDLE_TIMEOUT_MS = 90_000;
 const MAX_ATTEMPTS = 10;
 
-export async function generate({ candidates, buildMessages, signal, hadImages = false, onModel, onText, onReasoning, onReset }) {
+export async function generate({ candidates, buildMessages, signal, effort, hadImages = false, onModel, onText, onReasoning, onReset }) {
   const tried = [];
   let lastErr = null;
   const deadProviders = new Set(); // bad key / unreachable: skip that provider's other models too
@@ -43,7 +43,7 @@ export async function generate({ candidates, buildMessages, signal, hadImages = 
     let started = false, text = '', reasoning = '', served = null;
     const t0 = Date.now();
     try {
-      for await (const ev of streamChat(p, m.id, buildMessages(m), { signal: ctrl.signal })) {
+      for await (const ev of streamChat(p, m.id, buildMessages(m), { signal: ctrl.signal, effort })) {
         if (ev.type === 'served') { served = ev.model; continue; }
         if (ev.type !== 'text' && ev.type !== 'reasoning') continue;
         arm(IDLE_TIMEOUT_MS);

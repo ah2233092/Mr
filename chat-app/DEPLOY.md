@@ -1,4 +1,4 @@
-# ChatGPT Pro ko live karna (internet par)
+# ChatGPT ko live karna (internet par)
 
 Live hone ke baad ek link milega — usay **phone aur PC dono** par kahin se bhi kholein.
 **Sign up** sab ke liye khula hai; **pehla account admin** banta hai.

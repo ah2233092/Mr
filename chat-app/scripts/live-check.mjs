@@ -34,6 +34,8 @@ log('## Free AI endpoints without a key');
 await probe('text.pollinations.ai/openai (used by the page)', 'https://text.pollinations.ai/openai', { method: 'POST', headers: json, body: chatBody('openai') });
 await probe('text.pollinations.ai GET', 'https://text.pollinations.ai/' + encodeURIComponent('Reply with one word: PONG'));
 await probe('image.pollinations.ai (used by the page)', 'https://image.pollinations.ai/prompt/' + encodeURIComponent('a red fox') + '?width=512&height=512&nologo=true&model=flux');
+await probe('text.pollinations.ai/openai with a thinking level', 'https://text.pollinations.ai/openai', { method: 'POST', headers: json,
+  body: JSON.stringify({ model: 'openai-fast', reasoning_effort: 'high', messages: [{ role: 'user', content: 'What is 17*23? Reply with the number only.' }] }) });
 await probe('gen.pollinations.ai/v1/chat/completions', 'https://gen.pollinations.ai/v1/chat/completions', { method: 'POST', headers: json, body: chatBody('openai') });
 await probe('gen.pollinations.ai/image', 'https://gen.pollinations.ai/image/' + encodeURIComponent('a red fox') + '?width=512&height=512');
 

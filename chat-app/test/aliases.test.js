@@ -7,7 +7,12 @@ import os from 'node:os';
 import path from 'node:path';
 
 const asked = [];
+const reqs = []; // {model, effort, said}
+// The chat request for a message (the title request comes after it).
+const effortFor = (said) => reqs.find((r) => r.said === said)?.effort;
+const modelFor = (said) => reqs.find((r) => r.said === said)?.model;
 let failGroq = false;
+let rejectEffort = false;
 const gateway = http.createServer((req, res) => {
   let body = '';
   req.on('data', (c) => { body += c; });
@@ -25,6 +30,12 @@ const gateway = http.createServer((req, res) => {
     if (req.url === '/v1/chat/completions') {
       const j = JSON.parse(body);
       asked.push(j.model);
+      reqs.push({ model: j.model, effort: j.reasoning_effort, said: j.messages.at(-1)?.content });
+      if (rejectEffort && j.reasoning_effort) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: { message: 'unsupported parameter: reasoning_effort' } }));
+        return;
+      }
       if (failGroq && j.model.startsWith('groq/')) {
         res.writeHead(429, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: { message: 'rate limit' } }));
@@ -63,32 +74,57 @@ async function chat(body) {
   return evs.map((e) => ({ ev: e.ev, data: JSON.parse(e.data) }));
 }
 
-test('the app is called ChatGPT Pro and the menu shows ChatGPT model names', async () => {
+test('the app is called ChatGPT and the menu shows ChatGPT model names', async () => {
   const cfg = await (await fetch(`${base}/api/config`)).json();
-  assert.equal(cfg.appName, 'ChatGPT Pro');
+  assert.equal(cfg.appName, 'ChatGPT');
   const m = await (await fetch(`${base}/api/models`, { headers: { Cookie: cookie } })).json();
   assert.equal(m.aliasMode, true);
-  assert.deepEqual(m.models.map((x) => x.name), ['GPT-6.1 Sol', 'GPT-6 Astra', 'GPT-6 Sol', 'GPT-6 Luna', 'GPT-5.1', 'GPT-4o']);
-  assert.equal(m.default, 'alias:gpt-6.1-sol');
+  assert.deepEqual(m.models.map((x) => x.name), ['GPT-6 Instant', 'GPT-6 Medium', 'GPT-6 High', 'GPT-6 Extra High', 'GPT-6 Pro',
+    'GPT-5.6 Sol', 'GPT-5.6 Terra', 'GPT-5.6 Luna']);
+  assert.deepEqual(m.models.slice(0, 5).map((x) => x.short), ['Instant', 'Medium', 'High', 'Extra High', 'Pro']);
+  assert.deepEqual([...new Set(m.models.map((x) => x.group))], ['GPT-6', 'Other models']);
+  assert.equal(m.default, 'alias:gpt-6-instant');
   assert.ok(m.models.every((x) => x.available));
 });
 
 test('a ChatGPT name answers with a free model; the real one is kept for hover', async () => {
-  const ev = await chat({ content: 'hi', model: 'alias:gpt-6-luna' });
+  const ev = await chat({ content: 'hi', model: 'alias:gpt-5.6-luna' });
   const done = ev.find((e) => e.ev === 'done').data.message;
-  assert.equal(done.modelName, 'GPT-6 Luna');
+  assert.equal(done.modelName, 'GPT-5.6 Luna');
   assert.match(done.provider, /GPT-OSS 120B · Cerebras/);
   assert.equal(asked.at(-1), 'cerebras/gpt-oss-120b');
-  assert.equal(ev.find((e) => e.ev === 'model').data.name, 'GPT-6 Luna');
+  assert.equal(effortFor('hi'), 'low');
+  assert.equal(ev.find((e) => e.ev === 'model').data.name, 'GPT-5.6 Luna');
+});
+
+test('thinking levels send the matching reasoning effort to models that take it', async () => {
+  let done = (await chat({ content: 'think hard', model: 'alias:gpt-6-high' })).find((e) => e.ev === 'done').data.message;
+  assert.equal(done.modelName, 'GPT-6 High');
+  assert.equal(modelFor('think hard'), 'cerebras/gpt-oss-120b');
+  assert.equal(effortFor('think hard'), 'high');
+  done = (await chat({ content: 'quick one', model: 'alias:gpt-6-instant' })).find((e) => e.ev === 'done').data.message;
+  assert.equal(done.modelName, 'GPT-6 Instant');
+  assert.equal(modelFor('quick one'), 'gemini/gemini-2.5-flash');
+  assert.equal(effortFor('quick one'), undefined, 'no effort for models that do not take it');
+});
+
+test('a provider that rejects the thinking level is asked again without it', async () => {
+  rejectEffort = true;
+  const done = (await chat({ content: 'retry me', model: 'alias:gpt-6-high' })).find((e) => e.ev === 'done').data.message;
+  rejectEffort = false;
+  assert.equal(done.status, 'done');
+  const tries = reqs.filter((r) => r.said === 'retry me' && r.model === 'cerebras/gpt-oss-120b');
+  assert.deepEqual(tries.slice(0, 2).map((r) => r.effort), ['high', undefined]);
+  assert.match(done.provider, /Cerebras/);
 });
 
 test('if the first free model fails, the next one answers', async () => {
   failGroq = true;
   const before = asked.length;
-  const ev = await chat({ content: 'hello again', model: 'alias:gpt-5.1' }); // GPT-5.1 prefers Llama (Groq)
+  const ev = await chat({ content: 'hello again', model: 'alias:gpt-5.6-sol' }); // GPT-5.6 Sol prefers Llama (Groq)
   const done = ev.find((e) => e.ev === 'done').data.message;
   assert.equal(done.status, 'done');
-  assert.equal(done.modelName, 'GPT-5.1');
+  assert.equal(done.modelName, 'GPT-5.6 Sol');
   assert.ok(asked.slice(before).some((x) => x.startsWith('groq/')), 'tried Groq first');
   assert.ok(!/groq/i.test(done.provider), 'another provider answered');
   failGroq = false;

@@ -221,7 +221,7 @@ export function publicModels() {
     return ALIASES.map((a) => {
       const real = resolveAlias(a, state.models);
       return {
-        key: aliasKey(a), name: a.name, provider: 'alias', providerLabel: '', tier: 'free', group: 'Models',
+        key: aliasKey(a), name: a.name, short: a.short || a.name, provider: 'alias', providerLabel: '', tier: 'free', group: a.group || 'Models',
         vision: a.vision, description: a.description, featured: false,
         available: real.some(isAvailable) || autoOrder().some(isAvailable),
       };

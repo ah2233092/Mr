@@ -254,7 +254,7 @@ async function runText({ user, chat, userMsg, assistantId, modelKey, hasImages, 
   const schedule = () => { if (!flushTimer) flushTimer = setTimeout(flush, 30); };
 
   const result = await generate({
-    candidates, signal, hadImages: hasImages,
+    candidates, signal, hadImages: hasImages, effort: alias?.effort,
     buildMessages: (m) => [{ role: 'system', content: systemPrompt(user, m) }, ...buildHistory(rows, m, config.context.maxChars)],
     onModel: (m, tried, served) => {
       sse.send('model', {

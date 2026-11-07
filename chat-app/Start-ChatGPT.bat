@@ -1,5 +1,5 @@
 @echo off
-title ChatGPT Pro
+title ChatGPT
 cd /d "%~dp0"
 
 where node >nul 2>nul
@@ -9,7 +9,7 @@ if errorlevel 1 goto oldnode
 
 set LOCAL_SIGNUP_ONLY=1
 echo.
-echo   ChatGPT Pro chal raha hai:   http://localhost:3000
+echo   ChatGPT chal raha hai:   http://localhost:3000
 echo   Browser khud khul jayega. Yeh window band karne se website band ho jayegi.
 echo.
 start "" cmd /c "timeout /t 3 /nobreak >nul & start http://localhost:3000"

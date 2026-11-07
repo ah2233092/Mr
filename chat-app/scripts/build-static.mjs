@@ -31,7 +31,7 @@ swap('<script type="module" src="/app.js"></script>',
   `<script type="module">\n${js(read('public', 'app.js'))}\n</script>`);
 
 // Settings block at the very top of the file, easy to find.
-html = html.replace('<!doctype html>', '<!doctype html>\n<!-- ChatGPT Pro — single-file website. Upload this file anywhere (Netlify Drop, GitHub Pages, any host). Optional AI keys: search for CHATGPT_PRO_CONFIG below. -->');
+html = html.replace('<!doctype html>', '<!doctype html>\n<!-- ChatGPT — single-file website. Upload this file anywhere (Netlify Drop, GitHub Pages, any host). Optional AI keys: search for CHATGPT_CONFIG below. -->');
 
 const out = path.join(ROOT, 'website', 'index.html');
 fs.mkdirSync(path.dirname(out), { recursive: true });

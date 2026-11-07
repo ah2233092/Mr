@@ -270,14 +270,21 @@ async function* lines(body) {
 }
 
 // Yields {type:'text'|'reasoning', text} and finally {type:'usage', ...} if sent.
-export async function* streamChat(p, modelId, messages, { signal } = {}) {
+export async function* streamChat(p, modelId, messages, { signal, effort } = {}) {
   if (p.id === 'mock') { yield* mockStream(modelId, messages, signal); return; }
   const body = { model: modelId, messages, stream: true, ...extraBody(p) };
+  // Thinking level from the menu (Instant / Medium / High …) for models that take it.
+  if (effort && /gpt-oss/i.test(modelId)) body.reasoning_effort = effort;
   if (p.needsMaxTokens) body.max_tokens = 8192;
 
   let res;
   try {
     res = await fetch(`${p.base}/chat/completions`, { method: 'POST', headers: providerHeaders(p), body: JSON.stringify(body), signal });
+    if (res.status === 400 && body.reasoning_effort) { // provider does not take a thinking level: ask again without it
+      await res.body?.cancel().catch(() => {});
+      delete body.reasoning_effort;
+      res = await fetch(`${p.base}/chat/completions`, { method: 'POST', headers: providerHeaders(p), body: JSON.stringify(body), signal });
+    }
   } catch (e) {
     if (signal?.aborted) throw e;
     throw new ProviderError(0, `network error: ${e.cause?.code || e.message}`, { kind: 'network' });

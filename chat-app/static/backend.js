@@ -1,16 +1,16 @@
-/* ChatGPT Pro — in-browser backend for the single-file version (index.html).
+/* ChatGPT — in-browser backend for the single-file version (index.html).
  * Replaces the Node server so the page works on any static host or opened as a file:
  *  - accounts, chats and settings are stored in this browser (localStorage)
  *  - AI is called straight from the browser: OmniRoute (if reachable), free keys from
- *    CHATGPT_PRO_CONFIG, then Pollinations (no key). If one fails, the next one answers.
+ *    CHATGPT_CONFIG, then Pollinations (no key). If one fails, the next one answers.
  * It answers the same /api/* requests the server does, so app.js runs unchanged.
  */
 (function () {
   'use strict';
   window.STATIC_MODE = true;
-  const CFG = window.CHATGPT_PRO_CONFIG || {};
+  const CFG = window.CHATGPT_CONFIG || {};
   const KEYS = CFG.keys || {};
-  const APP_NAME = CFG.appName || 'ChatGPT Pro';
+  const APP_NAME = CFG.appName || 'ChatGPT';
   const realFetch = window.fetch.bind(window);
 
   // ---------------- storage ----------------
@@ -88,8 +88,9 @@
       { id: 'openai/gpt-oss-120b:free' }, { id: 'meta-llama/llama-3.3-70b-instruct:free' }, { id: 'deepseek/deepseek-chat-v3.1:free' }], discover: true });
   }
   if (CFG.pollinations !== false) {
+    // Without a key Pollinations serves GPT-OSS 20B ("openai-fast"); "openai" is its backup and gets photos.
     providers.push({ id: 'pollinations', label: 'Pollinations', url: 'https://text.pollinations.ai/openai', key: '', models: [
-      { id: 'openai', vision: true }, { id: 'mistral' }], getUrl: 'https://text.pollinations.ai/' });
+      { id: 'openai-fast', real: 'GPT-OSS 20B', effort: true }, { id: 'openai', real: 'GPT-OSS', vision: true, effort: true }] });
   }
   if (CFG.mock) {
     providers.unshift({ id: 'mock', label: 'Mock', mock: true, models: [{ id: 'mock-fast', vision: true }] });
@@ -124,14 +125,25 @@
     return s.replace(/\b[a-z]/g, (c) => c.toUpperCase()).replace(/\bInstruct\b|\bVersatile\b/g, '').trim() || id;
   }
 
-  // ChatGPT-style names, each backed by free models (first available answers, then the rest).
+  // Same menu as ChatGPT: GPT-6 with its thinking levels, then the older models.
+  // Each name is backed by free models (first available answers, then the rest).
   const ALIASES = [
-    { id: 'gpt-6.1-sol', name: 'GPT-6.1 Sol', description: 'Newest flagship · best answers', prefer: [/gemini-2\.5-flash(?!-lite)/, /deepseek/, /gpt-oss-120b/, /llama-3\.3-70b/, /pollinations:openai/] },
-    { id: 'gpt-6-astra', name: 'GPT-6 Astra', description: 'Thinks longer for hard problems', prefer: [/deepseek/, /gpt-oss-120b/, /gemini-2\.5-flash(?!-lite)/, /pollinations:openai/] },
-    { id: 'gpt-6-sol', name: 'GPT-6 Sol', description: 'Great for most questions', prefer: [/gemini-2\.5-flash(?!-lite)/, /gpt-oss-120b/, /llama-3\.3-70b/, /pollinations:openai/] },
-    { id: 'gpt-6-luna', name: 'GPT-6 Luna', description: 'Fastest replies', prefer: [/groq:openai\/gpt-oss-120b/, /llama-3\.1-8b/, /flash-lite/, /pollinations:mistral/, /pollinations:openai/] },
-    { id: 'gpt-5.1', name: 'GPT-5.1', description: 'Previous generation', prefer: [/llama-3\.3-70b/, /llama-4/, /mistral/, /pollinations/] },
-    { id: 'gpt-4o', name: 'GPT-4o', description: 'Understands photos', vision: true, prefer: [/gemini/, /llama-4-scout/, /pollinations:openai/] },
+    { id: 'gpt-6-instant', name: 'GPT-6 Instant', short: 'Instant', group: 'GPT-6', description: 'Answers right away', effort: 'low',
+      prefer: [/gemini-2\.5-flash(?!-lite)/, /groq:openai\/gpt-oss-120b/, /gpt-oss-120b/, /llama-3\.3-70b/, /pollinations:openai-fast/] },
+    { id: 'gpt-6-medium', name: 'GPT-6 Medium', short: 'Medium', group: 'GPT-6', description: 'Thinks a little for better answers', effort: 'medium',
+      prefer: [/gpt-oss-120b/, /gemini-2\.5-flash(?!-lite)/, /deepseek/, /llama-3\.3-70b/, /pollinations:openai-fast/] },
+    { id: 'gpt-6-high', name: 'GPT-6 High', short: 'High', group: 'GPT-6', description: 'Thinks longer for harder problems', effort: 'high',
+      prefer: [/gemini-[2-9][\d.]*-pro/, /deepseek-(r1|reasoner)/, /gpt-oss-120b/, /qwen/, /gemini-2\.5-flash(?!-lite)/, /pollinations:openai-fast/] },
+    { id: 'gpt-6-extra-high', name: 'GPT-6 Extra High', short: 'Extra High', group: 'GPT-6', description: 'Thinks the longest for the hardest problems', effort: 'high',
+      prefer: [/claude-(opus|sonnet|fable)/, /gemini-[2-9][\d.]*-pro/, /deepseek-(r1|reasoner)/, /gpt-oss-120b/, /gemini-2\.5-flash(?!-lite)/, /pollinations:openai-fast/] },
+    { id: 'gpt-6-pro', name: 'GPT-6 Pro', short: 'Pro', group: 'GPT-6', description: 'Research-grade intelligence', effort: 'high',
+      prefer: [/claude-(opus|fable)/, /claude-sonnet/, /gemini-[2-9][\d.]*-pro/, /deepseek-(r1|reasoner)/, /gpt-oss-120b/, /gemini-2\.5-flash(?!-lite)/, /pollinations:openai-fast/] },
+    { id: 'gpt-5.6-sol', name: 'GPT-5.6 Sol', group: 'Other models', description: 'Previous flagship', effort: 'medium',
+      prefer: [/llama-4-maverick/, /llama-3\.3-70b/, /gemini-2\.5-flash(?!-lite)/, /gpt-oss-120b/, /pollinations:openai-fast/] },
+    { id: 'gpt-5.6-terra', name: 'GPT-5.6 Terra', group: 'Other models', description: 'Balanced and dependable', effort: 'low',
+      prefer: [/mistral/, /llama-4-scout/, /llama-3\.3-70b/, /flash-lite/, /pollinations:openai-fast/] },
+    { id: 'gpt-5.6-luna', name: 'GPT-5.6 Luna', group: 'Other models', description: 'Fast for everyday tasks', effort: 'low',
+      prefer: [/llama-3\.1-8b/, /flash-lite/, /groq:openai\/gpt-oss-120b/, /pollinations:openai-fast/] },
   ];
   function chainFor(aliasKey, vision) {
     const alias = ALIASES.find((a) => 'alias:' + a.id === aliasKey) || ALIASES[0];
@@ -142,7 +154,7 @@
     return { alias, chain: [...out.filter((m) => !isCool(m.key) && !isCool(m.provider.id)), ...out.filter((m) => isCool(m.key) || isCool(m.provider.id))] };
   }
 
-  async function* streamModel(m, messages, signal) {
+  async function* streamModel(m, messages, signal, effort) {
     const p = m.provider;
     if (p.mock) {
       const last = messages[messages.length - 1];
@@ -154,7 +166,14 @@
     }
     const headers = { 'Content-Type': 'application/json' };
     if (p.key) headers.Authorization = 'Bearer ' + p.key;
-    const r = await realFetch(p.url, { method: 'POST', headers, signal, body: JSON.stringify({ model: m.id, messages, stream: true }) });
+    const payload = { model: m.id, messages, stream: true };
+    // Thinking level from the menu (Instant / Medium / High …) for models that take it.
+    if (effort && (m.effort || /gpt-oss/i.test(m.id))) payload.reasoning_effort = effort;
+    let r = await realFetch(p.url, { method: 'POST', headers, signal, body: JSON.stringify(payload) });
+    if (r.status === 400 && payload.reasoning_effort) {
+      delete payload.reasoning_effort;
+      r = await realFetch(p.url, { method: 'POST', headers, signal, body: JSON.stringify(payload) });
+    }
     if (!r.ok) {
       const e = new Error('HTTP ' + r.status); e.status = r.status; throw e;
     }
@@ -186,7 +205,7 @@
   }
 
   function systemPrompt(user, m) {
-    let s = `You are ${APP_NAME}, a helpful, friendly and highly capable AI assistant. You are running on the model "${prettyName(m.id)}". If asked which model you are, say that truthfully. Current date: ${new Date().toDateString()}.
+    let s = `You are ${APP_NAME}, a helpful, friendly and highly capable AI assistant. You are running on the model "${m.real || prettyName(m.id)}". If asked which model you are, say that truthfully. Current date: ${new Date().toDateString()}.
 Reply in the user's language and script (Roman Urdu if they write Roman Urdu). Answer first, then details. Use Markdown (headings, lists, tables, fenced code with language). Be accurate; say so when unsure.`;
     if (user.customInstructions) s += `\n\nThe user's custom instructions:\n${user.customInstructions}`;
     return s;
@@ -309,7 +328,7 @@ Reply in the user's language and script (Roman Urdu if they write Roman Urdu). A
         let timer = setTimeout(stop, 25000);
         try {
           const messages = [{ role: 'system', content: systemPrompt(user, m) }, ...history(msgsOf(chat.id), m)];
-          for await (const piece of streamModel(m, messages, one.signal)) {
+          for await (const piece of streamModel(m, messages, one.signal, alias.effort)) {
             clearTimeout(timer); timer = setTimeout(stop, 90000);
             if (!used) { used = m; send('model', { key: b.model, name: alias.name, provider: m.provider.id, providerLabel: m.provider.label, tier: 'free', fallbackFrom: [] }); }
             text += piece; send('delta', { t: piece });
@@ -332,7 +351,7 @@ Reply in the user's language and script (Roman Urdu if they write Roman Urdu). A
       const note = status === 'error' ? 'Could not get a reply right now. Please try again.' : '';
       if (status === 'error') send('error', { message: note });
       finish({ id: assistantId, role: 'assistant', content: text, reasoning: '', attachments: [], model: b.model,
-        modelName: used ? alias.name : null, provider: used ? `${prettyName(used.id)} · ${used.provider.label}` : null,
+        modelName: used ? alias.name : null, provider: used ? `${used.real || prettyName(used.id)} · ${used.provider.label}` : null,
         status, note, rating: null, latencyMs: now() - t0, createdAt: now() });
     })();
 
@@ -406,7 +425,7 @@ Reply in the user's language and script (Roman Urdu if they write Roman Urdu). A
       const any = allModels().length > 0;
       return json(200, {
         default: 'alias:' + ALIASES[0].id, images: true, openaiConfigured: false, isAdmin: false, aliasMode: true,
-        models: ALIASES.map((a) => ({ key: 'alias:' + a.id, name: a.name, provider: 'alias', providerLabel: '', tier: 'free', group: 'Models', vision: !!a.vision, description: a.description, featured: false, available: any })),
+        models: ALIASES.map((a) => ({ key: 'alias:' + a.id, name: a.name, short: a.short || a.name, provider: 'alias', providerLabel: '', tier: 'free', group: a.group, vision: false, description: a.description, featured: false, available: any })),
       });
     }
 

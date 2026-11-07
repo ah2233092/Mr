@@ -1,4 +1,4 @@
-// ChatGPT Pro — client app (vanilla JS, no build step).
+// ChatGPT — client app (vanilla JS, no build step).
 /* global marked, DOMPurify, hljs */
 
 // ---------------- utilities ----------------
@@ -33,7 +33,7 @@ async function copyText(text) {
 
 // ---------------- state ----------------
 const S = {
-  config: { appName: 'ChatGPT Pro' }, me: null, usage: null, limits: null,
+  config: { appName: 'ChatGPT' }, me: null, usage: null, limits: null,
   models: [], imagesEnabled: false, openaiConfigured: false, chats: [], chatId: null, messages: [],
   model: store.get('model', null), tool: null, attachments: [], streaming: null,
   sendOnEnter: store.get('sendOnEnter', '1') === '1',
@@ -136,7 +136,7 @@ async function boot() {
   applyTheme();
   registerSW();
   try { S.config = await api('/api/config'); } catch {}
-  setAppName(S.config.appName || 'ChatGPT Pro');
+  setAppName(S.config.appName || 'ChatGPT');
   const params = new URLSearchParams(location.search);
   const resetToken = params.get('reset');
   const authErr = params.get('auth_error');
@@ -493,7 +493,7 @@ function renderModelBtn() {
 function modelRow(m, selected) {
   const badge = '';
   return `<button class="model-row${m.available === false ? ' off' : ''}" data-key="${esc(m.key)}" data-search="${esc((m.name + ' ' + (m.providerLabel || '') + ' ' + m.key).toLowerCase())}">
-    <span class="mt"><span class="mn">${esc(m.name)} ${badge}${m.vision ? `<span title="Can see images">${icon('i-eye', 'i sm')}</span>` : ''}</span>
+    <span class="mt"><span class="mn">${esc(m.short || m.name)} ${badge}${m.vision ? `<span title="Can see images">${icon('i-eye', 'i sm')}</span>` : ''}</span>
     <span class="md2">${esc(m.description)}${m.available === false ? ' · busy right now' : ''}</span></span>
     ${selected ? icon('i-check', 'i sm') : ''}</button>`;
 }
