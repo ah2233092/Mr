@@ -7,7 +7,7 @@ import path from 'node:path';
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sukhan-test-'));
 Object.assign(process.env, {
-  SKIP_DOTENV: '1', DATA_DIR: dir, ENABLE_MOCK: '1', ENABLE_POLLINATIONS: 'false', MOCK_TOKEN_DELAY_MS: '1', OMNIROUTE_BASE_URL: 'off',
+  SKIP_DOTENV: '1', DATA_DIR: dir, ENABLE_MOCK: '1', ENABLE_POLLINATIONS: 'false', MOCK_TOKEN_DELAY_MS: '1', OMNIROUTE_BASE_URL: 'off', MODEL_ALIASES: 'off',
   ADMIN_EMAILS: 'admin@test.dev', HOST: '127.0.0.1', IMAGE_PROMPT_ENHANCE: 'true',
   // Fixed ChatGPT model list (no network discovery) to check menu order + default.
   OPENAI_API_KEY: 'sk-test-dummy', OPENAI_MODELS: 'gpt-5-mini,gpt-6-sol,gpt-5.1,gpt-6.1-sol', OPENAI_IMAGES: 'false',

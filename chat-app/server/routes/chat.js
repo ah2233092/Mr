@@ -11,6 +11,7 @@ import { candidatesFor, getModel, semFor } from '../engine/registry.js';
 import { generate, quickComplete } from '../engine/engine.js';
 import { looksLikeImageRequest, planImage, generateImage, imageBackends } from '../engine/images.js';
 import { prettyName } from '../engine/providers.js';
+import { findAlias } from '../engine/aliases.js';
 
 // The name to show for the model that answered. For a gateway "Auto" route,
 // use the model the gateway says it actually ran.
@@ -225,8 +226,10 @@ export function registerChat(r) {
 
 async function runText({ user, chat, userMsg, assistantId, modelKey, hasImages, sse, signal, onStarted }) {
   let notice = '';
-  let chosen = modelKey !== 'auto' ? getModel(modelKey) : null;
-  if (modelKey !== 'auto' && !chosen) notice = 'The selected model is no longer available, so Auto was used.';
+  // ChatGPT-style menu name (see engine/aliases.js): shown everywhere, real model on hover.
+  const alias = findAlias(modelKey);
+  let chosen = !alias && modelKey !== 'auto' ? getModel(modelKey) : null;
+  if (!alias && modelKey !== 'auto' && !chosen) notice = 'The selected model is no longer available, so Auto was used.';
   if (chosen?.tier === 'paid' && config.limits.paidPerDay > 0 && getUsage(user.id).paid_msgs >= config.limits.paidPerDay) {
     notice = `You used today's ${config.limits.paidPerDay} premium messages, so a free model answered. Premium resets at midnight (UTC).`;
     chosen = null;
@@ -235,7 +238,7 @@ async function runText({ user, chat, userMsg, assistantId, modelKey, hasImages, 
   if (notice) sse.send('notice', { message: notice });
 
   const rows = q('SELECT * FROM messages WHERE chat_id=? ORDER BY seq').all(chat.id).map(rowToMessage);
-  const candidates = candidatesFor(chosen ? chosen.key : 'auto', { vision: hasImages });
+  const candidates = candidatesFor(alias ? modelKey : chosen ? chosen.key : 'auto', { vision: hasImages });
   if (!candidates.length) {
     const err = new Error(hasImages ? 'No vision-capable model is configured, so images can’t be read yet.' : 'No AI is connected yet. Open OmniRoute (http://localhost:20128) → Providers and connect a free provider such as Groq, Gemini or Cerebras. It shows up here within a few minutes.');
     err.expose = true; throw err;
@@ -255,7 +258,7 @@ async function runText({ user, chat, userMsg, assistantId, modelKey, hasImages, 
     buildMessages: (m) => [{ role: 'system', content: systemPrompt(user, m) }, ...buildHistory(rows, m, config.context.maxChars)],
     onModel: (m, tried, served) => {
       sse.send('model', {
-        key: m.key, name: answeredName(m, served), provider: m.provider, providerLabel: m.providerLabel, tier: m.tier,
+        key: alias ? modelKey : m.key, name: alias ? alias.name : answeredName(m, served), provider: m.provider, providerLabel: m.providerLabel, tier: m.tier,
         // Only mention a fallback when the user picked a specific model.
         fallbackFrom: chosen && tried[0]?.key === chosen.key ? [chosen.name] : [],
       });
@@ -287,7 +290,9 @@ async function runText({ user, chat, userMsg, assistantId, modelKey, hasImages, 
   }
   q(`INSERT INTO messages(id, chat_id, seq, role, content, reasoning, model, model_name, provider, status, note, latency_ms, created_at)
      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(assistantId, chat.id, nextSeq(chat.id), 'assistant', result.text || '', result.reasoning || null,
-    m?.key || null, answeredName(m, result.served), m?.providerLabel || null, status, note || (notice || null), result.latencyMs || null, now());
+    m?.key || null, alias && m ? alias.name : answeredName(m, result.served),
+    alias && m ? `${answeredName(m, result.served)} · ${m.providerLabel}` : (m?.providerLabel || null),
+    status, note || (notice || null), result.latencyMs || null, now());
   q('UPDATE chats SET updated_at=? WHERE id=?').run(now(), chat.id);
   const saved = rowToMessage(q('SELECT * FROM messages WHERE id=?').get(assistantId));
   if (status === 'error') sse.send('error', { message: note, message_id: assistantId });

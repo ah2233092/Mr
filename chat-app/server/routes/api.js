@@ -12,6 +12,7 @@ import {
   createResetToken, consumeResetToken, sendMail, googleEnabled, googleAuthUrl, googleExchange,
 } from '../auth.js';
 import { publicModels, defaultModelKey, engineSnapshot, refreshModels } from '../engine/registry.js';
+import { aliasMode } from '../engine/aliases.js';
 import { imageBackends } from '../engine/images.js';
 
 // The request comes from this computer itself (not from the phone / another device).
@@ -50,7 +51,6 @@ export function registerApi(r) {
     sendJson(res, 200, {
       urls, publicUrl: config.publicUrl || null,
       appUrl: process.env.APP_DOWNLOAD_URL || 'https://github.com/ah2233092/Mr/releases/tag/app-latest',
-      apkUrl: process.env.APK_DOWNLOAD_URL || 'https://github.com/ah2233092/Mr/releases/download/app-latest/Sukhan-AI-Pro-Android.apk',
     });
   });
 
@@ -205,7 +205,7 @@ export function registerApi(r) {
     const u = requireUser(req);
     sendJson(res, 200, {
       default: defaultModelKey(), models: publicModels(), images: imageBackends().length > 0,
-      openaiConfigured: !!process.env.OPENAI_API_KEY, isAdmin: publicUser(u).isAdmin,
+      openaiConfigured: !!process.env.OPENAI_API_KEY, isAdmin: publicUser(u).isAdmin, aliasMode: aliasMode(),
     });
   });
 

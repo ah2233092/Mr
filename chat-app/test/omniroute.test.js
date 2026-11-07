@@ -73,7 +73,7 @@ await new Promise((r) => gateway.listen(0, '127.0.0.1', r));
 
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'omniroute-test-'));
 Object.assign(process.env, {
-  SKIP_DOTENV: '1', DATA_DIR: dir, HOST: '127.0.0.1', ENABLE_POLLINATIONS: 'false',
+  SKIP_DOTENV: '1', DATA_DIR: dir, HOST: '127.0.0.1', ENABLE_POLLINATIONS: 'false', MODEL_ALIASES: 'off',
   // Only the address is given: no key, no image model — the app sets those up by itself.
   OMNIROUTE_BASE_URL: `http://127.0.0.1:${gateway.address().port}/v1`, IMAGE_PROMPT_ENHANCE: 'false',
   // backup engine for when the gateway is down

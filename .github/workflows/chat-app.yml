@@ -1,6 +1,5 @@
-# Builds the desktop app for Windows, macOS and Linux and puts the
-# installers on the repository's Releases page ("Sukhan AI Pro").
-name: Sukhan AI Pro app
+# Tests the ChatGPT Pro website and puts a ready-to-run zip on the Releases page.
+name: ChatGPT Pro website
 
 on:
   push:
@@ -24,107 +23,32 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Server tests
+      - name: Tests
         working-directory: chat-app
         run: npm test
 
-  desktop:
-    needs: test
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: windows-latest
-            script: dist:win
-            files: chat-app/desktop/dist/*.exe
-          - os: macos-latest
-            script: dist:mac
-            files: chat-app/desktop/dist/*.dmg
-          - os: ubuntu-latest
-            script: dist:linux
-            files: chat-app/desktop/dist/*.AppImage
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Install
-        working-directory: chat-app/desktop
-        run: npm ci
-      - name: Build installer
-        working-directory: chat-app/desktop
-        run: npm run ${{ matrix.script }}
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
-      - uses: actions/upload-artifact@v4
-        with:
-          name: App-${{ runner.os }}
-          path: ${{ matrix.files }}
-          if-no-files-found: error
-
-  android:
+  website:
     needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.14.3'
-      # Signing key: created once, kept only in this repository's private Actions cache.
-      - name: Restore signing key
-        uses: actions/cache@v4
-        with:
-          path: ~/.android-signing
-          key: android-signing-v1
-      - name: Prepare signing key
+      - name: Package the website
         run: |
-          mkdir -p ~/.android-signing
-          if [ ! -f ~/.android-signing/release.p12 ]; then
-            openssl rand -hex 24 > ~/.android-signing/pass
-            P=$(cat ~/.android-signing/pass)
-            keytool -genkeypair -keystore ~/.android-signing/release.p12 -storetype PKCS12 -alias chatgpt \
-              -keyalg RSA -keysize 2048 -validity 10000 -storepass "$P" -keypass "$P" -dname "CN=ChatGPT Personal"
-          fi
-          P=$(cat ~/.android-signing/pass)
-          echo "::add-mask::$P"
-          echo "ANDROID_KEYSTORE=$HOME/.android-signing/release.p12" >> "$GITHUB_ENV"
-          echo "ANDROID_KEYSTORE_PASSWORD=$P" >> "$GITHUB_ENV"
-      - name: Build APK
-        working-directory: chat-app/android
-        run: gradle assembleRelease --no-daemon --stacktrace
-      - name: Name the APK
-        run: cp chat-app/android/app/build/outputs/apk/release/app-release.apk Sukhan-AI-Pro-Android.apk
-      - uses: actions/upload-artifact@v4
-        with:
-          name: App-Android
-          path: Sukhan-AI-Pro-Android.apk
-          if-no-files-found: error
-
-  release:
-    needs: [desktop, android]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          path: out
-          merge-multiple: true
+          mkdir -p out/ChatGPT-Pro
+          cd chat-app
+          cp -r server public package.json .env.example Start-ChatGPT-Pro.bat start-chatgpt-pro.sh ../out/ChatGPT-Pro/
+          cd ../out
+          zip -qr ../ChatGPT-Pro-Website.zip ChatGPT-Pro
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: app-latest
-          name: Sukhan AI Pro (PC + Android)
+          tag_name: website-latest
+          name: ChatGPT Pro (website)
           target_commitish: ${{ github.sha }}
-          files: out/*
+          files: ChatGPT-Pro-Website.zip
           body: |
-            Download the file for your computer:
-            - **Windows:** `Sukhan-AI-Pro-Setup-1.0.0.exe` → open it (if Windows says "protected your PC": More info → Run anyway).
-            - **Mac (Apple chip M1/M2/M3…):** `Sukhan-AI-Pro-1.0.0-arm64.dmg` · **Mac (Intel):** `Sukhan-AI-Pro-1.0.0-x64.dmg` → drag to Applications, then right-click the app → Open.
-            - **Linux:** `Sukhan-AI-Pro-1.0.0.AppImage` → make it executable and run.
-            - **Android:** `Sukhan-AI-Pro-Android.apk` → open it on the phone and allow "Install unknown apps" once. On first open, enter your app address (shown on your PC/server: profile menu → Phone app).
-            - **iPhone:** open your app address in Safari → Share → Add to Home Screen.
+            1. Download `ChatGPT-Pro-Website.zip` and unzip it.
+            2. Windows: double-click `Start-ChatGPT-Pro.bat` · Mac/Linux: run `start-chatgpt-pro.sh`.
+            3. Your browser opens http://localhost:3000 — sign up and chat.
 
-            First launch: create your account (the first account is the admin). The app connects to OmniRoute on your PC by itself — connect free providers (Groq, Gemini, Cerebras) in the OmniRoute dashboard and their models appear in the app.
+            Needs Node.js 22+ (the start file opens the download page if it is missing).
+            AI comes from OmniRoute on the same computer (localhost:20128): connect free providers there.

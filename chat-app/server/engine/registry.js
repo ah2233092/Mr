@@ -5,6 +5,7 @@ import { enabledProviders, discoverModels, isChatModel, prettyName, supportsVisi
 import { Semaphore, Cooldowns } from './limiter.js';
 import { ensureOmniRoute } from './omniroute.js';
 import { isOfficialGatewayModel } from './providers.js';
+import { ALIASES, aliasKey, aliasMode, findAlias, resolveAlias } from './aliases.js';
 
 const MAX_PER_PROVIDER = parseInt(process.env.MAX_MODELS_PER_PROVIDER || '14', 10);
 const MAX_OPENAI = parseInt(process.env.MAX_OPENAI_MODELS || '40', 10);
@@ -175,6 +176,13 @@ export function autoOrder({ vision = false } = {}) {
 // Candidate chain for one request: chosen model first, then healthy
 // fallbacks. Providers with free capacity are preferred so load spreads out.
 export function candidatesFor(modelKey, { vision = false } = {}) {
+  const alias = findAlias(modelKey);
+  if (alias) {
+    // ChatGPT-style menu name: its own model list first, then everything else as backup.
+    const own = resolveAlias(vision ? { ...alias, vision: true } : alias, state.models);
+    const chain = [...own, ...autoOrder({ vision }).filter((m) => !own.includes(m))];
+    return [...chain.filter(isAvailable), ...chain.filter((m) => !isAvailable(m))];
+  }
   const chosen = modelKey && modelKey !== 'auto' ? getModel(modelKey) : null;
   let chain = autoOrder({ vision });
   if (chosen && (!vision || chosen.vision)) {
@@ -202,12 +210,23 @@ export function candidatesFor(modelKey, { vision = false } = {}) {
 
 // Default selection: DEFAULT_MODEL if set, else the best ChatGPT model, else Auto.
 export function defaultModelKey() {
-  if (config.models.default && state.byKey.has(config.models.default)) return config.models.default;
+  if (config.models.default && (state.byKey.has(config.models.default) || findAlias(config.models.default))) return config.models.default;
+  if (aliasMode()) return aliasKey(ALIASES[0]);
   const best = state.models.filter((m) => m.group === 'ChatGPT models').sort((a, b) => b.score - a.score)[0];
   return best ? best.key : 'auto';
 }
 
 export function publicModels() {
+  if (aliasMode()) {
+    return ALIASES.map((a) => {
+      const real = resolveAlias(a, state.models);
+      return {
+        key: aliasKey(a), name: a.name, provider: 'alias', providerLabel: '', tier: 'free', group: 'Models',
+        vision: a.vision, description: a.description, featured: false,
+        available: real.some(isAvailable) || autoOrder().some(isAvailable),
+      };
+    });
+  }
   const featured = new Set(config.models.featured);
   return state.models.filter((m) => !m.hidden).map((m) => ({
     key: m.key, name: m.name, provider: m.provider, providerLabel: m.providerLabel, tier: m.tier, group: m.group,

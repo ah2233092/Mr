@@ -1,4 +1,4 @@
-// Sukhan AI Pro — client app (vanilla JS, no build step).
+// ChatGPT Pro — client app (vanilla JS, no build step).
 /* global marked, DOMPurify, hljs */
 
 // ---------------- utilities ----------------
@@ -33,7 +33,7 @@ async function copyText(text) {
 
 // ---------------- state ----------------
 const S = {
-  config: { appName: 'Sukhan AI Pro' }, me: null, usage: null, limits: null,
+  config: { appName: 'ChatGPT Pro' }, me: null, usage: null, limits: null,
   models: [], imagesEnabled: false, openaiConfigured: false, chats: [], chatId: null, messages: [],
   model: store.get('model', null), tool: null, attachments: [], streaming: null,
   sendOnEnter: store.get('sendOnEnter', '1') === '1',
@@ -136,7 +136,7 @@ async function boot() {
   applyTheme();
   registerSW();
   try { S.config = await api('/api/config'); } catch {}
-  setAppName(S.config.appName || 'Sukhan AI Pro');
+  setAppName(S.config.appName || 'ChatGPT Pro');
   const params = new URLSearchParams(location.search);
   const resetToken = params.get('reset');
   const authErr = params.get('auth_error');
@@ -262,7 +262,8 @@ async function enterApp(me) {
   S.models = models.models;
   S.imagesEnabled = models.images;
   S.openaiConfigured = models.openaiConfigured;
-  if (!S.model || (S.model !== 'auto' && !S.models.some((m) => m.key === S.model))) S.model = models.default || 'auto';
+  S.aliasMode = !!models.aliasMode;
+  if (!S.model || ((S.model !== 'auto' || S.aliasMode) && !S.models.some((m) => m.key === S.model))) S.model = models.default || 'auto';
   $('#plusImage').hidden = !S.imagesEnabled;
   renderModelBtn();
   S.chats = chats.chats;
@@ -506,8 +507,10 @@ function renderModelMenu() {
     for (const m of chatgpt) html += modelRow(m, S.model === m.key);
     groups.delete('ChatGPT models');
   }
-  html += '<div class="menu-label" data-group>Free & fast</div>';
-  html += modelRow({ key: 'auto', name: 'Auto', description: 'Picks the fastest free model that’s available right now', tier: 'free' }, S.model === 'auto');
+  if (!S.aliasMode) {
+    html += '<div class="menu-label" data-group>Free & fast</div>';
+    html += modelRow({ key: 'auto', name: 'Auto', description: 'Picks the fastest free model that’s available right now', tier: 'free' }, S.model === 'auto');
+  }
   const featured = S.models.filter((m) => m.featured);
   if (featured.length) {
     html += '<div class="menu-label" data-group>Recommended</div>';
@@ -1313,11 +1316,10 @@ async function openPhone() {
     <div class="phone-addr">${addresses.map((u) => `<div class="pa-row"><span>${esc(u)}</span><button class="btn" data-copy-url="${esc(u)}">Copy</button></div>`).join('')}</div>
     <ol class="phone-steps">
       <li>Put your phone on the <b>same Wi-Fi</b> as this PC.</li>
-      <li>Install the app on your phone — <a class="link" href="${esc(d.apkUrl || d.appUrl)}" target="_blank" rel="noopener">Download for Android</a>.</li>
-      <li>Open it and type the address above.</li>
+      <li>Open the address above in your phone’s <b>browser</b> (Chrome / Safari).</li>
       <li>Log in with the <b>same email and password</b>. Done!</li>
     </ol>
-    <p style="font-size:12px;color:var(--text-3)">iPhone: open the address in Safari → Share → Add to Home Screen.</p>`;
+    <p style="font-size:12px;color:var(--text-3)">Tip: browser menu → “Add to Home screen” puts an icon on your phone.</p>`;
   body.querySelectorAll('[data-copy-url]').forEach((b) => b.addEventListener('click', async () => {
     if (await copyText(b.dataset.copyUrl)) { b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy'; }, 1500); }
   }));

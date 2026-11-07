@@ -1,8 +1,18 @@
-# Sukhan AI Pro — apna multi-model AI chat
+# ChatGPT Pro — personal website
 
-Aapka apna, **personal** ChatGPT jaisa app: wohi look, apna backend engine, login, model menu mein
-**sab se upar asli ChatGPT models** (GPT-6.x, GPT-5.x, o-series), free fast models, image generation,
-aur desktop + mobile par **install hone wala app** (PWA). App ki taraf se **koi limit nahi**.
+Aapki apni ChatGPT jaisi **website**: wahi look, model menu mein ChatGPT wale naam
+(GPT-6.1 Sol, GPT-6 Astra, GPT-6 Sol, GPT-6 Luna, GPT-5.1, GPT-4o). Har naam ke peeche OmniRoute ke
+free models chalte hain — ek fail ho to agla. Reply ke neeche naam par mouse rakhein to asli model dikhta hai.
+
+## ▶️ Website chalana (apne PC par)
+1. **Releases → "ChatGPT Pro (website)"** se `ChatGPT-Pro-Website.zip` download karke unzip karein.
+2. Windows: **`Start-ChatGPT-Pro.bat`** double-click · Mac/Linux: `start-chatgpt-pro.sh`.
+3. Browser khud **http://localhost:3000** kholega → Sign up → chat.
+
+OmniRoute isi PC par chal raha ho (`localhost:20128`) to website khud jud jati hai. OmniRoute dashboard mein
+free providers (Groq, Gemini, Cerebras, OpenRouter, Cloudflare images) connect karein.
+Phone se: profile menu → **Open on phone** wala address phone ke browser mein kholein (same Wi-Fi).
+Asli model naam dekhne hon to `MODEL_ALIASES=off`.
 
 ---
 
