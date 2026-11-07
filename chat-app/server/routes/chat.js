@@ -240,7 +240,7 @@ async function runText({ user, chat, userMsg, assistantId, modelKey, hasImages, 
   const rows = q('SELECT * FROM messages WHERE chat_id=? ORDER BY seq').all(chat.id).map(rowToMessage);
   const candidates = candidatesFor(alias ? modelKey : chosen ? chosen.key : 'auto', { vision: hasImages });
   if (!candidates.length) {
-    const err = new Error(hasImages ? 'No vision-capable model is configured, so images can’t be read yet.' : 'No AI is connected yet. Open OmniRoute (http://localhost:20128) → Providers and connect a free provider such as Groq, Gemini or Cerebras. It shows up here within a few minutes.');
+    const err = new Error(hasImages ? 'No vision-capable model is configured, so images can’t be read yet.' : 'No AI is connected yet. Add a free key (Groq, Gemini or Cerebras) in the hosting settings, or connect a provider in OmniRoute — see DEPLOY.md. It shows up here within a few minutes.');
     err.expose = true; throw err;
   }
 

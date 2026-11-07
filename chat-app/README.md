@@ -4,7 +4,10 @@ Aapki apni ChatGPT jaisi **website**: wahi look, model menu mein ChatGPT wale na
 (GPT-6.1 Sol, GPT-6 Astra, GPT-6 Sol, GPT-6 Luna, GPT-5.1, GPT-4o). Har naam ke peeche OmniRoute ke
 free models chalte hain — ek fail ho to agla. Reply ke neeche naam par mouse rakhein to asli model dikhta hai.
 
-## ▶️ Website chalana (apne PC par)
+## 🌐 Internet par live karna (phone + PC, sign up sab ke liye)
+**[DEPLOY.md](DEPLOY.md)** dekhein — Render (free), Railway, ya apna server (`install.sh`).
+
+## ▶️ Website chalana (sirf apne PC par)
 1. **Releases → "ChatGPT Pro (website)"** se `ChatGPT-Pro-Website.zip` download karke unzip karein.
 2. Windows: **`Start-ChatGPT-Pro.bat`** double-click · Mac/Linux: `start-chatgpt-pro.sh`.
 3. Browser khud **http://localhost:3000** kholega → Sign up → chat.

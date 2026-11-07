@@ -27,8 +27,26 @@ jobs:
         working-directory: chat-app
         run: npm test
 
-  website:
+  # The same image Render / Railway / a VPS build: run it like a hosting service would.
+  docker:
     needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t chatgpt-pro chat-app
+      - name: Run like a hosting service (own PORT) and check sign up + chat
+        run: |
+          docker run -d --name site -e PORT=10000 -e ENABLE_MOCK=1 -e OMNIROUTE_BASE_URL=off -p 10000:10000 chatgpt-pro
+          for i in $(seq 1 30); do curl -fs http://127.0.0.1:10000/healthz && break; sleep 1; done
+          curl -fs -c jar -H 'Content-Type: application/json' -d '{"email":"ci@test.dev","password":"password123"}' http://127.0.0.1:10000/api/auth/signup
+          curl -fs -b jar -H 'Content-Type: application/json' -d '{"content":"hello"}' http://127.0.0.1:10000/api/chat | grep -q 'event: done'
+          sleep 35
+          test "$(docker inspect -f '{{.State.Health.Status}}' site)" = healthy
+          echo "Docker image OK"
+
+  website:
+    needs: [test, docker]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +54,8 @@ jobs:
         run: |
           mkdir -p out/ChatGPT-Pro
           cd chat-app
-          cp -r server public package.json .env.example Start-ChatGPT-Pro.bat start-chatgpt-pro.sh ../out/ChatGPT-Pro/
+          cp -r server public package.json .env.example Start-ChatGPT-Pro.bat start-chatgpt-pro.sh \
+            Dockerfile .dockerignore docker-compose.yml Caddyfile install.sh DEPLOY.md ../out/ChatGPT-Pro/
           cd ../out
           zip -qr ../ChatGPT-Pro-Website.zip ChatGPT-Pro
       - uses: softprops/action-gh-release@v2
@@ -46,9 +65,8 @@ jobs:
           target_commitish: ${{ github.sha }}
           files: ChatGPT-Pro-Website.zip
           body: |
-            1. Download `ChatGPT-Pro-Website.zip` and unzip it.
-            2. Windows: double-click `Start-ChatGPT-Pro.bat` · Mac/Linux: run `start-chatgpt-pro.sh`.
-            3. Your browser opens http://localhost:3000 — sign up and chat.
+            **Live on the internet (phone + PC, sign up for everyone):** follow `DEPLOY.md` inside the zip —
+            Render (free), Railway, or your own server with `install.sh`.
 
-            Needs Node.js 22+ (the start file opens the download page if it is missing).
-            AI comes from OmniRoute on the same computer (localhost:20128): connect free providers there.
+            **Only on this PC:** unzip, double-click `Start-ChatGPT-Pro.bat` (Mac/Linux: `start-chatgpt-pro.sh`),
+            the browser opens http://localhost:3000.
