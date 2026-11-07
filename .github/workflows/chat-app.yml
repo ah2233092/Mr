@@ -30,6 +30,27 @@ jobs:
         working-directory: chat-app
         run: node scripts/build-static.mjs && git diff --exit-code website/index.html
 
+  # The single-file website against the real free AI (no mock): does it answer and draw?
+  live-ai:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Website answers and makes images in Chrome
+        working-directory: chat-app
+        run: |
+          npm i --no-save --no-package-lock playwright-core@1.49.1
+          node scripts/live-check.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-check-screenshot
+          path: chat-app/live-check.png
+          if-no-files-found: ignore
+
   # The same image Render / Railway / a VPS build: run it like a hosting service would.
   docker:
     needs: test
