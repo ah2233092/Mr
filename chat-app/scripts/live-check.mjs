@@ -37,6 +37,23 @@ await probe('image.pollinations.ai (used by the page)', 'https://image.pollinati
 await probe('gen.pollinations.ai/v1/chat/completions', 'https://gen.pollinations.ai/v1/chat/completions', { method: 'POST', headers: json, body: chatBody('openai') });
 await probe('gen.pollinations.ai/image', 'https://gen.pollinations.ai/image/' + encodeURIComponent('a red fox') + '?width=512&height=512');
 
+// Which Pollinations text models answer without a key (used to back the menu levels).
+try {
+  const list = await (await fetch('https://text.pollinations.ai/models', { signal: AbortSignal.timeout(20000) })).json();
+  log(`\n## Pollinations text models (${list.length})`);
+  for (const m of list.slice(0, 25)) {
+    const id = m.name || m.id;
+    const t0 = Date.now();
+    try {
+      const r = await fetch('https://text.pollinations.ai/openai', { method: 'POST', headers: json, body: chatBody(id), signal: AbortSignal.timeout(45000) });
+      const j = r.ok ? await r.json().catch(() => ({})) : {};
+      const said = (j.choices?.[0]?.message?.content || '').replace(/\s+/g, ' ').slice(0, 30);
+      log(`- ${id}: HTTP ${r.status} in ${Date.now() - t0} ms, served "${j.model || '-'}", said "${said}" — ${m.description || ''}${m.reasoning ? ' [reasoning]' : ''}${m.vision || (m.input_modalities || []).includes('image') ? ' [vision]' : ''}${m.tier ? ` tier=${m.tier}` : ''}`);
+    } catch (e) { log(`- ${id}: FAILED ${e.message}`); }
+    await new Promise((r) => setTimeout(r, 3000));
+  }
+} catch (e) { log(`- models list FAILED ${e.message}`); }
+
 // ---- the real page in a real browser ----
 const html = fs.readFileSync(path.join(ROOT, 'website', 'index.html'));
 const server = http.createServer((req, res) => { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(html); });
