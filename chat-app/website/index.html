@@ -2153,10 +2153,17 @@ window.CHATGPT_CONFIG = {
     const payload = { model: m.id, messages, stream: true };
     // Thinking level from the menu (Instant / Medium / High …) for models that take it.
     if (effort && /gpt-oss/i.test(m.id)) payload.reasoning_effort = effort;
-    let r = await realFetch(p.url, { method: 'POST', headers, signal, body: JSON.stringify(payload) });
-    if (r.status === 400 && payload.reasoning_effort) {
-      delete payload.reasoning_effort;
+    let r;
+    for (let busy = 0; ; ) {
       r = await realFetch(p.url, { method: 'POST', headers, signal, body: JSON.stringify(payload) });
+      if (r.status === 400 && payload.reasoning_effort) { delete payload.reasoning_effort; continue; }
+      // Free tiers allow only a few requests per minute: wait a little and ask again instead of failing.
+      if (r.status !== 429 || busy >= 3) break;
+      const wait = Math.min(15, Number(r.headers.get('retry-after')) || [3, 6, 10][busy]) * 1000;
+      busy++;
+      yield null; // keeps the request alive while waiting
+      await new Promise((res) => { const t = setTimeout(res, wait); signal.addEventListener('abort', () => { clearTimeout(t); res(); }, { once: true }); });
+      if (signal.aborted) return;
     }
     if (!r.ok) {
       const e = new Error('HTTP ' + r.status); e.status = r.status; throw e;

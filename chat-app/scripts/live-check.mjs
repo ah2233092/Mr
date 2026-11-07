@@ -30,48 +30,6 @@ async function probe(name, url, init = {}) {
 const chatBody = (model) => JSON.stringify({ model, messages: [{ role: 'user', content: 'Reply with one word: PONG' }] });
 const json = { 'Content-Type': 'application/json' };
 
-log('## Free AI endpoints without a key');
-await probe('text.pollinations.ai/openai (used by the page)', 'https://text.pollinations.ai/openai', { method: 'POST', headers: json, body: chatBody('openai') });
-await probe('text.pollinations.ai GET', 'https://text.pollinations.ai/' + encodeURIComponent('Reply with one word: PONG'));
-await probe('image.pollinations.ai (used by the page)', 'https://image.pollinations.ai/prompt/' + encodeURIComponent('a red fox') + '?width=512&height=512&nologo=true&model=flux');
-await probe('text.pollinations.ai/openai with a thinking level', 'https://text.pollinations.ai/openai', { method: 'POST', headers: json,
-  body: JSON.stringify({ model: 'openai-fast', reasoning_effort: 'high', messages: [{ role: 'user', content: 'What is 17*23? Reply with the number only.' }] }) });
-await probe('gen.pollinations.ai/v1/chat/completions', 'https://gen.pollinations.ai/v1/chat/completions', { method: 'POST', headers: json, body: chatBody('openai') });
-await probe('gen.pollinations.ai/image', 'https://gen.pollinations.ai/image/' + encodeURIComponent('a red fox') + '?width=512&height=512');
-
-// Streaming, as the page asks for it: first bytes of the answer per model / thinking level.
-async function streamProbe(model, effort) {
-  const t0 = Date.now();
-  try {
-    const body = { model, stream: true, messages: [{ role: 'user', content: 'Say hello in five words.' }] };
-    if (effort) body.reasoning_effort = effort;
-    const r = await fetch('https://text.pollinations.ai/openai', { method: 'POST', headers: json, body: JSON.stringify(body), signal: AbortSignal.timeout(40000) });
-    const reader = r.body.getReader(); const dec = new TextDecoder(); let out = '';
-    while (out.length < 700) { const { value, done } = await reader.read(); if (done) break; out += dec.decode(value, { stream: true }); }
-    reader.cancel().catch(() => {});
-    const content = [...out.matchAll(/"content":"([^"]*)"/g)].map((x) => x[1]).join('');
-    log(`- stream ${model}${effort ? ` effort=${effort}` : ''}: HTTP ${r.status} ${(r.headers.get('content-type') || '').split(';')[0]} in ${Date.now() - t0} ms, content so far "${content.slice(0, 60)}" — ${out.replace(/\s+/g, ' ').slice(0, 220)}`);
-  } catch (e) { log(`- stream ${model}${effort ? ` effort=${effort}` : ''}: FAILED after ${Date.now() - t0} ms ${e.message}`); }
-}
-for (const [m, e] of [['openai'], ['openai', 'low'], ['openai-fast'], ['openai-fast', 'low']]) await streamProbe(m, e);
-
-// Which Pollinations text models answer without a key (used to back the menu levels).
-try {
-  const list = await (await fetch('https://text.pollinations.ai/models', { signal: AbortSignal.timeout(20000) })).json();
-  log(`\n## Pollinations text models (${list.length})`);
-  for (const m of list.slice(0, 25)) {
-    const id = m.name || m.id;
-    const t0 = Date.now();
-    try {
-      const r = await fetch('https://text.pollinations.ai/openai', { method: 'POST', headers: json, body: chatBody(id), signal: AbortSignal.timeout(45000) });
-      const j = r.ok ? await r.json().catch(() => ({})) : {};
-      const said = (j.choices?.[0]?.message?.content || '').replace(/\s+/g, ' ').slice(0, 30);
-      log(`- ${id}: HTTP ${r.status} in ${Date.now() - t0} ms, served "${j.model || '-'}", said "${said}" — ${m.description || ''}${m.reasoning ? ' [reasoning]' : ''}${m.vision || (m.input_modalities || []).includes('image') ? ' [vision]' : ''}${m.tier ? ` tier=${m.tier}` : ''}`);
-    } catch (e) { log(`- ${id}: FAILED ${e.message}`); }
-    await new Promise((r) => setTimeout(r, 3000));
-  }
-} catch (e) { log(`- models list FAILED ${e.message}`); }
-
 // ---- the real page in a real browser ----
 const html = fs.readFileSync(path.join(ROOT, 'website', 'index.html'));
 const server = http.createServer((req, res) => { res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(html); });
@@ -87,7 +45,7 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text().slice(0, 200)); });
 let textOk = false;
-log('\n## The website in Chrome');
+log('## The website in Chrome');
 try {
   await page.goto(url);
   await page.waitForSelector('#auth:not([hidden])', { timeout: 20000 });
@@ -144,6 +102,50 @@ try {
   await browser.close();
   server.close();
 }
+
+
+// ---- diagnostics (after the page, so they do not use up the free tier's request budget) ----
+log('\n## Free AI endpoints without a key');
+await probe('text.pollinations.ai/openai (used by the page)', 'https://text.pollinations.ai/openai', { method: 'POST', headers: json, body: chatBody('openai') });
+await probe('text.pollinations.ai GET', 'https://text.pollinations.ai/' + encodeURIComponent('Reply with one word: PONG'));
+await probe('image.pollinations.ai (used by the page)', 'https://image.pollinations.ai/prompt/' + encodeURIComponent('a red fox') + '?width=512&height=512&nologo=true&model=flux');
+await probe('text.pollinations.ai/openai with a thinking level', 'https://text.pollinations.ai/openai', { method: 'POST', headers: json,
+  body: JSON.stringify({ model: 'openai-fast', reasoning_effort: 'high', messages: [{ role: 'user', content: 'What is 17*23? Reply with the number only.' }] }) });
+await probe('gen.pollinations.ai/v1/chat/completions', 'https://gen.pollinations.ai/v1/chat/completions', { method: 'POST', headers: json, body: chatBody('openai') });
+await probe('gen.pollinations.ai/image', 'https://gen.pollinations.ai/image/' + encodeURIComponent('a red fox') + '?width=512&height=512');
+
+// Streaming, as the page asks for it: first bytes of the answer per model / thinking level.
+async function streamProbe(model, effort) {
+  const t0 = Date.now();
+  try {
+    const body = { model, stream: true, messages: [{ role: 'user', content: 'Say hello in five words.' }] };
+    if (effort) body.reasoning_effort = effort;
+    const r = await fetch('https://text.pollinations.ai/openai', { method: 'POST', headers: json, body: JSON.stringify(body), signal: AbortSignal.timeout(40000) });
+    const reader = r.body.getReader(); const dec = new TextDecoder(); let out = '';
+    while (out.length < 700) { const { value, done } = await reader.read(); if (done) break; out += dec.decode(value, { stream: true }); }
+    reader.cancel().catch(() => {});
+    const content = [...out.matchAll(/"content":"([^"]*)"/g)].map((x) => x[1]).join('');
+    log(`- stream ${model}${effort ? ` effort=${effort}` : ''}: HTTP ${r.status} ${(r.headers.get('content-type') || '').split(';')[0]} in ${Date.now() - t0} ms, content so far "${content.slice(0, 60)}" — ${out.replace(/\s+/g, ' ').slice(0, 220)}`);
+  } catch (e) { log(`- stream ${model}${effort ? ` effort=${effort}` : ''}: FAILED after ${Date.now() - t0} ms ${e.message}`); }
+}
+for (const [m, e] of [['openai'], ['openai', 'low'], ['openai-fast'], ['openai-fast', 'low']]) await streamProbe(m, e);
+
+// Which Pollinations text models answer without a key (used to back the menu levels).
+try {
+  const list = await (await fetch('https://text.pollinations.ai/models', { signal: AbortSignal.timeout(20000) })).json();
+  log(`\n## Pollinations text models (${list.length})`);
+  for (const m of list.slice(0, 25)) {
+    const id = m.name || m.id;
+    const t0 = Date.now();
+    try {
+      const r = await fetch('https://text.pollinations.ai/openai', { method: 'POST', headers: json, body: chatBody(id), signal: AbortSignal.timeout(45000) });
+      const j = r.ok ? await r.json().catch(() => ({})) : {};
+      const said = (j.choices?.[0]?.message?.content || '').replace(/\s+/g, ' ').slice(0, 30);
+      log(`- ${id}: HTTP ${r.status} in ${Date.now() - t0} ms, served "${j.model || '-'}", said "${said}" — ${m.description || ''}${m.reasoning ? ' [reasoning]' : ''}${m.vision || (m.input_modalities || []).includes('image') ? ' [vision]' : ''}${m.tier ? ` tier=${m.tier}` : ''}`);
+    } catch (e) { log(`- ${id}: FAILED ${e.message}`); }
+    await new Promise((r) => setTimeout(r, 3000));
+  }
+} catch (e) { log(`- models list FAILED ${e.message}`); }
 
 if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary.join('\n') + '\n');
 process.exit(textOk ? 0 : 1);
