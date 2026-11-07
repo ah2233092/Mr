@@ -160,8 +160,16 @@ function setAppName(name) {
   document.title = name;
 }
 
+// URLs: the server version uses /c/<id>; the single-file version (window.STATIC_MODE)
+// uses #/c/<id>, which works on any static host and when opened as a file.
+function currentPath() { return window.STATIC_MODE ? (location.hash.replace(/^#/, '') || '/') : location.pathname; }
+function nav(path, replace = false) {
+  const url = window.STATIC_MODE ? (path === '/' ? location.pathname + location.search : `#${path}`) : path;
+  history[replace ? 'replaceState' : 'pushState']({}, '', url);
+}
+
 function registerSW() {
-  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  if ('serviceWorker' in navigator && location.protocol !== 'file:' && !window.STATIC_MODE) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
 }
@@ -247,7 +255,7 @@ $('#authForm').addEventListener('submit', async (e) => {
 async function logout() {
   try { await api('/api/auth/logout', { method: 'POST' }); } catch {}
   S.chats = []; S.messages = []; S.chatId = null;
-  history.replaceState({}, '', '/');
+  nav('/', true);
   showAuth('login');
 }
 
@@ -283,7 +291,7 @@ function renderProfile() {
 }
 
 function route() {
-  const m = location.pathname.match(/^\/c\/([\w-]+)/);
+  const m = currentPath().match(/^\/c\/([\w-]+)/);
   if (m) openChat(m[1], { push: false }); else newChat({ push: false });
 }
 window.addEventListener('popstate', () => { if (S.me) route(); });
@@ -302,7 +310,7 @@ function setEmpty(empty) {
 function newChat({ push = true } = {}) {
   if (S.streaming) S.streaming.ctrl.abort();
   S.chatId = null; S.messages = [];
-  if (push && location.pathname !== '/') history.pushState({}, '', '/');
+  if (push && currentPath() !== '/') nav('/');
   $('#thread').innerHTML = '';
   setEmpty(true);
   renderChatList();
@@ -314,7 +322,7 @@ function newChat({ push = true } = {}) {
 async function openChat(id, { push = true } = {}) {
   if (S.streaming) S.streaming.ctrl.abort();
   S.chatId = id;
-  if (push) history.pushState({}, '', `/c/${id}`);
+  if (push) nav(`/c/${id}`);
   setEmpty(false);
   $('#thread').innerHTML = '';
   renderChatList();
@@ -585,7 +593,7 @@ function assistantActions(m, isLast) {
   let h = '<div class="msg-actions">';
   if (isImage) {
     const a = m.attachments.find((x) => x.type === 'image');
-    h += `<a class="act" href="${esc(a.url)}?download=1" download title="Download">${icon('i-download')}</a>`;
+    h += `<a class="act" href="${esc(dlUrl(a.url))}" download title="Download">${icon('i-download')}</a>`;
   } else if (m.content) {
     h += `<button class="act" data-act="copy" title="Copy">${icon('i-copy')}</button>`;
     h += `<button class="act${m.rating === 1 ? ' on' : ''}" data-act="up" title="Good response">${icon('i-up-thumb')}</button>`;
@@ -597,9 +605,12 @@ function assistantActions(m, isLast) {
   return h + '</div>';
 }
 
+// Our own files get ?download=1 (a real download); other image links are used as they are.
+function dlUrl(u) { return String(u || '').startsWith('/files/') ? `${u}?download=1` : u; }
+
 function imageBlock(a) {
   return `<div class="gen-img" data-aspect="${esc(a.aspect || '1:1')}"><img src="${esc(a.url)}" alt="${esc(a.prompt || 'Generated image')}" data-zoom loading="lazy">
-    <div class="img-tools"><a href="${esc(a.url)}?download=1" download title="Download"><button type="button" tabindex="-1">${icon('i-download', 'i sm')}</button></a></div></div>`;
+    <div class="img-tools"><a href="${esc(dlUrl(a.url))}" download title="Download"><button type="button" tabindex="-1">${icon('i-download', 'i sm')}</button></a></div></div>`;
 }
 
 function assistantMessageEl(m, isLast) {
@@ -1013,7 +1024,7 @@ function handleEvent(ev, d, live, ctx, finalize) {
       live.el.dataset.id = d.assistantId;
       if (!S.chatId || d.isNew) {
         S.chatId = d.chatId;
-        history.pushState({}, '', `/c/${d.chatId}`);
+        nav(`/c/${d.chatId}`);
       }
       touchChat(d.chatId, d.isNew ? d.title : undefined);
       if (ctx.tmp) {
@@ -1126,7 +1137,7 @@ function openLightbox(src) {
 }
 $('#lbDownload').addEventListener('click', () => {
   const a = document.createElement('a');
-  a.href = $('#lbImg').src + '?download=1'; a.download = ''; document.body.appendChild(a); a.click(); a.remove();
+  a.href = dlUrl($('#lbImg').getAttribute('src')); a.download = ''; document.body.appendChild(a); a.click(); a.remove();
 });
 $('#lightbox').addEventListener('click', (e) => { if (e.target === $('#lightbox')) $('#lightbox').close(); });
 

@@ -26,6 +26,9 @@ jobs:
       - name: Tests
         working-directory: chat-app
         run: npm test
+      - name: Single-file index.html is up to date
+        working-directory: chat-app
+        run: node scripts/build-static.mjs && git diff --exit-code website/index.html
 
   # The same image Render / Railway / a VPS build: run it like a hosting service would.
   docker:
@@ -63,8 +66,13 @@ jobs:
           tag_name: website-latest
           name: ChatGPT Pro (website)
           target_commitish: ${{ github.sha }}
-          files: ChatGPT-Pro-Website.zip
+          files: |
+            chat-app/website/index.html
+            ChatGPT-Pro-Website.zip
           body: |
+            **Single file:** `index.html` — upload it to any website host (Netlify Drop, GitHub Pages…) and you get a link.
+            Sign up works in the browser; AI works without keys (Pollinations), optional free keys at the top of the file.
+
             **Live on the internet (phone + PC, sign up for everyone):** follow `DEPLOY.md` inside the zip —
             Render (free), Railway, or your own server with `install.sh`.
 
