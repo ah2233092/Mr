@@ -1,7 +1,10 @@
 # ChatGPT — personal website
 
-Aapki apni ChatGPT jaisi **website**: wahi look, model menu ChatGPT jaisa —
-**GPT-6:** Instant · Medium · High · Extra High · Pro, aur **Other models:** GPT-5.6 Sol · Terra · Luna.
+Aapki apni ChatGPT jaisi **website**: wahi look, model menu mein ChatGPT ke **saare 44 models, A se Z** —
+**GPT-6:** Instant · Medium · High · Extra High · Pro · Astra · Sol · Luna, **GPT-6.1** Sol/Terra,
+**GPT-5.6 / 5.5 / 5.4 / 5.3 / 5.2 / 5.1 / 5** (Instant, Thinking, Pro, mini, Codex), **o-series** (o3-pro, o3,
+o4-mini-high, o4-mini, o3-mini, o1-pro, o1, o1-mini), **GPT-4** (4.5, 4.1, 4.1 mini, 4o, 4o mini, 4) aur GPT-3.5.
+Poori list ek jagah hai: `server/engine/menu.js`.
 Har naam ke peeche free models chalte hain (OmniRoute / free keys / Pollinations) — ek fail ho to agla.
 Thinking level (Instant → High) un models ko bheja jata hai jo isay lete hain.
 Reply ke neeche naam par mouse rakhein to asli model dikhta hai.

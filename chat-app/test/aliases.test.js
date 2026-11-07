@@ -79,10 +79,17 @@ test('the app is called ChatGPT and the menu shows ChatGPT model names', async (
   assert.equal(cfg.appName, 'ChatGPT');
   const m = await (await fetch(`${base}/api/models`, { headers: { Cookie: cookie } })).json();
   assert.equal(m.aliasMode, true);
-  assert.deepEqual(m.models.map((x) => x.name), ['GPT-6 Instant', 'GPT-6 Medium', 'GPT-6 High', 'GPT-6 Extra High', 'GPT-6 Pro',
-    'GPT-5.6 Sol', 'GPT-5.6 Terra', 'GPT-5.6 Luna']);
+  const names = m.models.map((x) => x.name);
+  assert.deepEqual(names.slice(0, 5), ['GPT-6 Instant', 'GPT-6 Medium', 'GPT-6 High', 'GPT-6 Extra High', 'GPT-6 Pro']);
   assert.deepEqual(m.models.slice(0, 5).map((x) => x.short), ['Instant', 'Medium', 'High', 'Extra High', 'Pro']);
-  assert.deepEqual([...new Set(m.models.map((x) => x.group))], ['GPT-6', 'Other models']);
+  // Every ChatGPT model, A to Z.
+  for (const n of ['GPT-6 Astra', 'GPT-6 Sol', 'GPT-6 Luna', 'GPT-6.1 Sol', 'GPT-6.1 Terra', 'GPT-5.6 Sol', 'GPT-5.5 Thinking', 'GPT-5.5 Pro',
+    'GPT-5.4 Pro', 'GPT-5.3 Codex', 'GPT-5.2 Thinking', 'GPT-5.1 Instant', 'GPT-5 Pro', 'GPT-5 mini', 'o3-pro', 'o3', 'o4-mini-high', 'o4-mini',
+    'o1', 'GPT-4.5', 'GPT-4.1', 'GPT-4o', 'GPT-4o mini', 'GPT-4', 'GPT-3.5']) assert.ok(names.includes(n), n);
+  assert.equal(names.length, 44);
+  assert.equal(new Set(m.models.map((x) => x.key)).size, 44, 'every entry has its own key');
+  assert.deepEqual([...new Set(m.models.map((x) => x.group))], ['GPT-6', 'GPT-6.1', 'GPT-5.6', 'GPT-5.5', 'GPT-5.4', 'GPT-5.3', 'GPT-5.2',
+    'GPT-5.1', 'GPT-5', 'o-series', 'GPT-4', 'GPT-3.5']);
   assert.equal(m.default, 'alias:gpt-6-instant');
   assert.ok(m.models.every((x) => x.available));
 });
@@ -106,6 +113,15 @@ test('thinking levels send the matching reasoning effort to models that take it'
   assert.equal(done.modelName, 'GPT-6 Instant');
   assert.equal(modelFor('quick one'), 'gemini/gemini-2.5-flash');
   assert.equal(effortFor('quick one'), undefined, 'no effort for models that do not take it');
+});
+
+test('older models answer too (o3 thinks hard, GPT-4o answers fast)', async () => {
+  let done = (await chat({ content: 'o3 here', model: 'alias:o3' })).find((e) => e.ev === 'done').data.message;
+  assert.equal(done.modelName, 'o3');
+  assert.equal(effortFor('o3 here'), 'high');
+  done = (await chat({ content: 'four oh', model: 'alias:gpt-4o' })).find((e) => e.ev === 'done').data.message;
+  assert.equal(done.modelName, 'GPT-4o');
+  assert.equal(modelFor('four oh'), 'gemini/gemini-2.5-flash');
 });
 
 test('a provider that rejects the thinking level is asked again without it', async () => {

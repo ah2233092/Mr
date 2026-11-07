@@ -25,8 +25,10 @@ swap('<script src="/boot.js"></script>', `<script>\n${js(read('public', 'boot.js
 swap('<script src="/vendor/marked.umd.js"></script>', `<script>\n${js(read('public', 'vendor', 'marked.umd.js'))}\n</script>`);
 swap('<script src="/vendor/purify.min.js"></script>', `<script>\n${js(read('public', 'vendor', 'purify.min.js'))}\n</script>`);
 swap('<script src="/vendor/highlight.min.js"></script>', `<script>\n${js(read('public', 'vendor', 'highlight.min.js'))}\n</script>`);
+const { MENU } = await import('../server/engine/menu.js');
 swap('<script type="module" src="/app.js"></script>',
   `<script>\n${js(read('static', 'config.js'))}\n</script>\n` +
+  `<script>\nwindow.CHATGPT_MENU = ${js(JSON.stringify(MENU))};\n</script>\n` +
   `<script>\n${js(read('static', 'backend.js'))}\n</script>\n` +
   `<script type="module">\n${js(read('public', 'app.js'))}\n</script>`);
 

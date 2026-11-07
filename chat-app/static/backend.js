@@ -125,26 +125,20 @@
     return s.replace(/\b[a-z]/g, (c) => c.toUpperCase()).replace(/\bInstruct\b|\bVersatile\b/g, '').trim() || id;
   }
 
-  // Same menu as ChatGPT: GPT-6 with its thinking levels, then the older models.
-  // Each name is backed by free models (first available answers, then the rest).
-  const ALIASES = [
-    { id: 'gpt-6-instant', name: 'GPT-6 Instant', short: 'Instant', group: 'GPT-6', description: 'Answers right away', effort: 'low',
-      prefer: [/gemini-2\.5-flash(?!-lite)/, /groq:openai\/gpt-oss-120b/, /gpt-oss-120b/, /llama-3\.3-70b/, /pollinations:openai$/] },
-    { id: 'gpt-6-medium', name: 'GPT-6 Medium', short: 'Medium', group: 'GPT-6', description: 'Thinks a little for better answers', effort: 'medium',
-      prefer: [/gpt-oss-120b/, /gemini-2\.5-flash(?!-lite)/, /deepseek/, /llama-3\.3-70b/, /pollinations:openai$/] },
-    { id: 'gpt-6-high', name: 'GPT-6 High', short: 'High', group: 'GPT-6', description: 'Thinks longer for harder problems', effort: 'high',
-      prefer: [/gemini-[2-9][\d.]*-pro/, /deepseek-(r1|reasoner)/, /gpt-oss-120b/, /qwen/, /gemini-2\.5-flash(?!-lite)/, /pollinations:openai$/] },
-    { id: 'gpt-6-extra-high', name: 'GPT-6 Extra High', short: 'Extra High', group: 'GPT-6', description: 'Thinks the longest for the hardest problems', effort: 'high',
-      prefer: [/claude-(opus|sonnet|fable)/, /gemini-[2-9][\d.]*-pro/, /deepseek-(r1|reasoner)/, /gpt-oss-120b/, /gemini-2\.5-flash(?!-lite)/, /pollinations:openai$/] },
-    { id: 'gpt-6-pro', name: 'GPT-6 Pro', short: 'Pro', group: 'GPT-6', description: 'Research-grade intelligence', effort: 'high',
-      prefer: [/claude-(opus|fable)/, /claude-sonnet/, /gemini-[2-9][\d.]*-pro/, /deepseek-(r1|reasoner)/, /gpt-oss-120b/, /gemini-2\.5-flash(?!-lite)/, /pollinations:openai$/] },
-    { id: 'gpt-5.6-sol', name: 'GPT-5.6 Sol', group: 'Other models', description: 'Previous flagship', effort: 'medium',
-      prefer: [/llama-4-maverick/, /llama-3\.3-70b/, /gemini-2\.5-flash(?!-lite)/, /gpt-oss-120b/, /pollinations:openai$/] },
-    { id: 'gpt-5.6-terra', name: 'GPT-5.6 Terra', group: 'Other models', description: 'Balanced and dependable', effort: 'low',
-      prefer: [/mistral/, /llama-4-scout/, /llama-3\.3-70b/, /flash-lite/, /pollinations:openai$/] },
-    { id: 'gpt-5.6-luna', name: 'GPT-5.6 Luna', group: 'Other models', description: 'Fast for everyday tasks', effort: 'low',
-      prefer: [/llama-3\.1-8b/, /flash-lite/, /groq:openai\/gpt-oss-120b/, /pollinations:openai$/] },
-  ];
+  // Every ChatGPT model, A to Z (server/engine/menu.js, put into the page by build-static.mjs).
+  // Each name is answered by free models of its kind; the first one that works answers.
+  const TIERS = {
+    pro: [/claude-(opus|fable)/, /claude-sonnet/, /gemini-[2-9][\d.]*-pro/, /deepseek-(r1|reasoner)/, /gpt-oss-120b/, /gemini-2\.5-flash(?!-lite)/, /pollinations:openai$/],
+    think: [/gemini-[2-9][\d.]*-pro/, /deepseek-(r1|reasoner)/, /gpt-oss-120b/, /qwen/, /gemini-2\.5-flash(?!-lite)/, /pollinations:openai$/],
+    smart: [/gemini-2\.5-flash(?!-lite)/, /groq:openai\/gpt-oss-120b/, /gpt-oss-120b/, /llama-3\.3-70b/, /pollinations:openai$/],
+    balanced: [/llama-4-maverick/, /llama-3\.3-70b/, /gemini-2\.5-flash(?!-lite)/, /gpt-oss-120b/, /pollinations:openai$/],
+    fast: [/llama-3\.1-8b/, /flash-lite/, /groq:openai\/gpt-oss-120b/, /pollinations:openai$/],
+    vision: [/gemini/, /llama-4-scout/, /pollinations:openai$/],
+    code: [/qwen.*coder/, /gpt-oss-120b/, /deepseek/, /llama-3\.3-70b/, /pollinations:openai$/],
+  };
+  const MENU = (window.CHATGPT_MENU && window.CHATGPT_MENU.length) ? window.CHATGPT_MENU
+    : [{ id: 'gpt-6-instant', name: 'GPT-6 Instant', short: 'Instant', group: 'GPT-6', description: 'Answers right away', tier: 'smart', effort: 'low' }];
+  const ALIASES = MENU.map((e) => ({ ...e, prefer: TIERS[e.tier] || TIERS.smart }));
   function chainFor(aliasKey, vision) {
     const alias = ALIASES.find((a) => 'alias:' + a.id === aliasKey) || ALIASES[0];
     const pool = allModels().filter((m) => !vision || m.vision);
